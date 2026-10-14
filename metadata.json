@@ -1,0 +1,6 @@
+{
+  "name": "Pappy Earning Hub",
+  "description": "Pappy Earning Hub — Modern Earning & Automated Campaign Growth Platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
