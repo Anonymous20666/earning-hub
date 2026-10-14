@@ -7,10 +7,13 @@ import { WorkerAuth } from './components/WorkerAuth';
 import { AdvertiserAuth } from './components/AdvertiserAuth';
 import { CommandPalette } from './components/CommandPalette';
 import { TerminalDrawer } from './components/TerminalDrawer';
+import { KeyboardShortcutsHelpModal } from './components/KeyboardShortcutsHelpModal';
+import { GeminiChatbotModal } from './components/GeminiChatbotModal';
 import { EarnerWorkspace } from './components/EarnerWorkspace';
 import { AdvertiserStudio } from './components/AdvertiserStudio';
 import { AdminCommandCenter } from './components/AdminCommandCenter';
 import { BrandLogo } from './components/BrandLogo';
+import { FirestoreService } from './services/firestoreService';
 import { 
   Radio, 
   Send, 
@@ -24,7 +27,9 @@ import {
   ArrowLeft,
   LogOut,
   AlertTriangle,
-  UserCheck
+  UserCheck,
+  Keyboard,
+  Bot
 } from 'lucide-react';
 
 type AppView = 'LANDING' | 'WORKER_AUTH' | 'ADVERTISER_AUTH' | 'DASHBOARD';
@@ -35,6 +40,8 @@ export function App() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isTerminalOpen, setIsTerminalOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [permissionAlert, setPermissionAlert] = useState<string | null>(null);
 
   // Initialize and check active session
@@ -54,6 +61,104 @@ export function App() {
       }));
     }
   }, []);
+
+  // Real-time Firestore wallet subscription when user is authenticated
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    const unsub = FirestoreService.subscribeToWallet(currentUser.id, (wallet) => {
+      if (wallet) {
+        setState(prev => ({ ...prev, wallet }));
+      }
+    });
+    return () => unsub();
+  }, [currentUser?.id]);
+
+  // Centralized Global Keyboard Navigation & Accessibility Hotkey Listener
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target && (
+        target.tagName === 'INPUT' || 
+        target.tagName === 'TEXTAREA' || 
+        target.tagName === 'SELECT' || 
+        target.isContentEditable
+      );
+
+      // Cmd+K or Ctrl+K: Global Command Palette Toggle
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setIsHelpOpen(false);
+        setIsChatOpen(false);
+        setIsCommandOpen(prev => !prev);
+        return;
+      }
+
+      // Pappy AI Assistant Chat: Cmd/Ctrl + J
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'j' || e.key === 'J')) {
+        e.preventDefault();
+        setIsHelpOpen(false);
+        setIsCommandOpen(false);
+        setIsChatOpen(prev => !prev);
+        return;
+      }
+
+      // Help Modal: '?' or Shift + '?' or Cmd/Ctrl + '/' (when not typing in form inputs)
+      if (!isInput && (e.key === '?' || (e.shiftKey && e.key === '?') || ((e.metaKey || e.ctrlKey) && e.key === '/'))) {
+        e.preventDefault();
+        setIsCommandOpen(false);
+        setIsChatOpen(false);
+        setIsHelpOpen(prev => !prev);
+        return;
+      }
+
+      // Live Terminal Drawer: Cmd/Ctrl + `
+      if ((e.metaKey || e.ctrlKey) && (e.key === '`' || e.key === '~')) {
+        e.preventDefault();
+        setIsTerminalOpen(prev => !prev);
+        return;
+      }
+
+      // Quick Workspace Switching: Alt + 1 (Worker), Alt + 2 (Advertiser), Alt + 3 (Admin), Alt + H (Landing)
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        if (e.key === '1') {
+          e.preventDefault();
+          handleRoleSwitch('EARNER');
+          setCurrentView('DASHBOARD');
+        } else if (e.key === '2') {
+          e.preventDefault();
+          handleRoleSwitch('ADVERTISER');
+          setCurrentView('DASHBOARD');
+        } else if (e.key === '3') {
+          e.preventDefault();
+          handleRoleSwitch('ADMIN');
+          setCurrentView('DASHBOARD');
+        } else if (e.key === 'h' || e.key === 'H') {
+          e.preventDefault();
+          setCurrentView('LANDING');
+        }
+      }
+
+      // Escape key to dismiss top-level active modals
+      if (e.key === 'Escape') {
+        if (isChatOpen) {
+          e.preventDefault();
+          setIsChatOpen(false);
+        } else if (isHelpOpen) {
+          e.preventDefault();
+          setIsHelpOpen(false);
+        } else if (isCommandOpen) {
+          e.preventDefault();
+          setIsCommandOpen(false);
+        } else if (isTerminalOpen) {
+          e.preventDefault();
+          setIsTerminalOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, [isHelpOpen, isCommandOpen, isTerminalOpen, isChatOpen]);
 
   // Helper log emitter
   const handleAddLog = (log: typeof state.terminalLogs[0]) => {
@@ -167,6 +272,27 @@ export function App() {
     }
   };
 
+  // Shared Modal Actions
+  const handleOpenWithdraw = () => {
+    handleRoleSwitch('EARNER');
+    setCurrentView('DASHBOARD');
+  };
+
+  const handleOpenPairModal = () => {
+    handleRoleSwitch('EARNER');
+    setCurrentView('DASHBOARD');
+  };
+
+  const handleOpenJoinManager = () => {
+    handleRoleSwitch('EARNER');
+    setCurrentView('DASHBOARD');
+  };
+
+  const handleOpenValidatorHub = () => {
+    handleRoleSwitch('ADMIN');
+    setCurrentView('DASHBOARD');
+  };
+
   // RENDER VIEW 1: WORKER AUTH PAGE
   if (currentView === 'WORKER_AUTH') {
     return (
@@ -202,6 +328,8 @@ export function App() {
             setCurrentView('DASHBOARD');
           }}
           onSignOut={handleSignOut}
+          onOpenHelp={() => setIsHelpOpen(true)}
+          onOpenChat={() => setIsChatOpen(true)}
         />
         {/* State-Plane Live Terminal Drawer */}
         <TerminalDrawer
@@ -218,24 +346,61 @@ export function App() {
             handleRoleSwitch(role);
             setCurrentView('DASHBOARD');
           }}
-          onOpenWithdraw={() => {
-            handleRoleSwitch('EARNER');
-            setCurrentView('DASHBOARD');
-          }}
-          onOpenPairModal={() => {
-            handleRoleSwitch('EARNER');
-            setCurrentView('DASHBOARD');
-          }}
-          onOpenJoinManager={() => {
-            handleRoleSwitch('EARNER');
-            setCurrentView('DASHBOARD');
-          }}
-          onOpenValidatorHub={() => {
-            handleRoleSwitch('ADMIN');
-            setCurrentView('DASHBOARD');
-          }}
+          onOpenWithdraw={handleOpenWithdraw}
+          onOpenPairModal={handleOpenPairModal}
+          onOpenJoinManager={handleOpenJoinManager}
+          onOpenValidatorHub={handleOpenValidatorHub}
           onOpenLiveTerminal={() => setIsTerminalOpen(true)}
+          onOpenHelp={() => setIsHelpOpen(true)}
+          onOpenChat={() => setIsChatOpen(true)}
         />
+        {/* 'Help' Overlay & Keyboard Shortcuts Modal */}
+        <KeyboardShortcutsHelpModal
+          isOpen={isHelpOpen}
+          onClose={() => setIsHelpOpen(false)}
+          onOpenCommandPalette={() => {
+            setIsHelpOpen(false);
+            setIsCommandOpen(true);
+          }}
+          onToggleTerminal={() => {
+            setIsHelpOpen(false);
+            setIsTerminalOpen(prev => !prev);
+          }}
+          onSelectRole={role => {
+            handleRoleSwitch(role);
+            setCurrentView('DASHBOARD');
+          }}
+          onOpenWithdraw={handleOpenWithdraw}
+          onOpenPairModal={handleOpenPairModal}
+          onOpenJoinManager={handleOpenJoinManager}
+          onOpenValidatorHub={handleOpenValidatorHub}
+          onNavigateHome={() => setCurrentView('LANDING')}
+          onOpenChat={() => setIsChatOpen(true)}
+        />
+        {/* Gemini 3.8 Flash Multi-Turn AI Assistant Modal */}
+        <GeminiChatbotModal
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          currentUser={currentUser}
+          currentRole={state.currentRole}
+        />
+        {/* Floating Pappy AI Button */}
+        <button
+          onClick={() => setIsChatOpen(true)}
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-slate-900/95 hover:bg-slate-800 border border-emerald-500/40 text-white shadow-xl shadow-emerald-950/60 backdrop-blur-md transition-all hover:scale-105 active:scale-95 group cursor-pointer"
+          title="Open Pappy AI Chat (Gemini 3.8 Flash, Cmd+J / Ctrl+J)"
+          aria-label="Open Pappy AI Assistant Chat"
+        >
+          <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-bold shadow-sm">
+            <Bot className="w-4 h-4" />
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="text-xs font-semibold leading-tight text-white group-hover:text-emerald-300">Pappy AI</span>
+            <span className="text-[10px] text-slate-400 flex items-center gap-1 leading-tight">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" /> Gemini 3.8
+            </span>
+          </div>
+        </button>
       </>
     );
   }
@@ -251,7 +416,7 @@ export function App() {
             <button
               onClick={() => setCurrentView('LANDING')}
               className="flex items-center gap-2 text-xs font-mono text-slate-400 hover:text-white transition-colors cursor-pointer mr-1"
-              title="Return to Public Landing Page"
+              title="Return to Public Landing Page (Alt+H)"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Landing</span>
@@ -272,6 +437,7 @@ export function App() {
                   ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-900/50'
                   : 'text-slate-400 hover:text-white'
               }`}
+              title="Worker Workspace (Alt+1)"
             >
               <Radio className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Worker</span>
@@ -287,6 +453,7 @@ export function App() {
                   ? 'bg-cyan-600 text-white shadow-sm shadow-cyan-900/50'
                   : 'text-slate-400 hover:text-white'
               }`}
+              title="Advertiser Studio (Alt+2)"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Advertiser</span>
@@ -299,6 +466,7 @@ export function App() {
                   ? 'bg-white/15 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
+              title="Admin Command Center (Alt+3)"
             >
               <ShieldCheck className="w-3.5 h-3.5" />
               <span>Admin</span>
@@ -314,9 +482,27 @@ export function App() {
               </div>
             )}
 
+            {/* Pappy AI Assistant Chat Button */}
+            <button
+              onClick={() => setIsChatOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 border border-emerald-500/30 text-xs font-medium text-emerald-300 hover:text-white transition-all shadow-sm cursor-pointer"
+              title="Chat with Pappy AI Assistant (Gemini 3.8 Flash, ⌘J / Ctrl+J)"
+              aria-label="Open Pappy AI Chat"
+            >
+              <Bot className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Pappy AI</span>
+              <kbd className="hidden sm:inline text-[10px] font-mono bg-white/10 px-1 py-0.5 rounded text-slate-300">
+                ⌘J
+              </kbd>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            </button>
+
+            {/* Quick Command Palette Button */}
             <button
               onClick={() => setIsCommandOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] text-xs text-slate-400 transition-colors cursor-pointer"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] text-xs text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+              title="Open Command Palette (⌘K / Ctrl+K)"
+              aria-label="Open Command Palette"
             >
               <Search className="w-3.5 h-3.5" />
               <kbd className="hidden sm:inline text-[10px] font-mono bg-white/10 px-1.5 py-0.5 rounded text-slate-300">
@@ -324,18 +510,35 @@ export function App() {
               </kbd>
             </button>
 
+            {/* Keyboard Shortcuts & Accessibility Help Modal Button */}
+            <button
+              onClick={() => setIsHelpOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+              title="Keyboard Shortcuts & Accessibility Help (?)"
+              aria-label="Keyboard Shortcuts and Accessibility Help"
+            >
+              <Keyboard className="w-3.5 h-3.5 text-slate-300" />
+              <kbd className="hidden sm:inline text-[10px] font-mono bg-white/10 px-1.5 py-0.5 rounded text-slate-300">
+                ?
+              </kbd>
+            </button>
+
+            {/* Terminal Drawer Button */}
             <button
               onClick={() => setIsTerminalOpen(prev => !prev)}
               className="p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] text-emerald-400 transition-colors cursor-pointer"
-              title="Toggle State-Plane Live Terminal"
+              title="Toggle State-Plane Live Terminal (⌘` / Ctrl+`)"
+              aria-label="Toggle Live Terminal"
             >
               <Terminal className="w-4 h-4" />
             </button>
 
+            {/* Sign Out Button */}
             <button
               onClick={handleSignOut}
               className="p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
               title="Sign Out"
+              aria-label="Sign Out"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -425,24 +628,64 @@ export function App() {
           handleRoleSwitch(role);
           setCurrentView('DASHBOARD');
         }}
-        onOpenWithdraw={() => {
-          handleRoleSwitch('EARNER');
-          setCurrentView('DASHBOARD');
-        }}
-        onOpenPairModal={() => {
-          handleRoleSwitch('EARNER');
-          setCurrentView('DASHBOARD');
-        }}
-        onOpenJoinManager={() => {
-          handleRoleSwitch('EARNER');
-          setCurrentView('DASHBOARD');
-        }}
-        onOpenValidatorHub={() => {
-          handleRoleSwitch('ADMIN');
-          setCurrentView('DASHBOARD');
-        }}
+        onOpenWithdraw={handleOpenWithdraw}
+        onOpenPairModal={handleOpenPairModal}
+        onOpenJoinManager={handleOpenJoinManager}
+        onOpenValidatorHub={handleOpenValidatorHub}
         onOpenLiveTerminal={() => setIsTerminalOpen(true)}
+        onOpenHelp={() => setIsHelpOpen(true)}
+        onOpenChat={() => setIsChatOpen(true)}
       />
+
+      {/* 'HELP' OVERLAY & KEYBOARD SHORTCUTS MODAL */}
+      <KeyboardShortcutsHelpModal
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+        onOpenCommandPalette={() => {
+          setIsHelpOpen(false);
+          setIsCommandOpen(true);
+        }}
+        onToggleTerminal={() => {
+          setIsHelpOpen(false);
+          setIsTerminalOpen(prev => !prev);
+        }}
+        onSelectRole={role => {
+          handleRoleSwitch(role);
+          setCurrentView('DASHBOARD');
+        }}
+        onOpenWithdraw={handleOpenWithdraw}
+        onOpenPairModal={handleOpenPairModal}
+        onOpenJoinManager={handleOpenJoinManager}
+        onOpenValidatorHub={handleOpenValidatorHub}
+        onNavigateHome={() => setCurrentView('LANDING')}
+        onOpenChat={() => setIsChatOpen(true)}
+      />
+
+      {/* GEMINI 3.8 FLASH MULTI-TURN AI CHATBOT MODAL */}
+      <GeminiChatbotModal
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        currentUser={currentUser}
+        currentRole={state.currentRole}
+      />
+
+      {/* FLOATING PAPPY AI TRIGGER BUTTON */}
+      <button
+        onClick={() => setIsChatOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full bg-slate-900/95 hover:bg-slate-800 border border-emerald-500/40 text-white shadow-xl shadow-emerald-950/60 backdrop-blur-md transition-all hover:scale-105 active:scale-95 group cursor-pointer"
+        title="Open Pappy AI Chat (Gemini 3.8 Flash, ⌘J / Ctrl+J)"
+        aria-label="Open Pappy AI Assistant Chat"
+      >
+        <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-bold shadow-sm">
+          <Bot className="w-4 h-4" />
+        </div>
+        <div className="flex flex-col text-left">
+          <span className="text-xs font-semibold leading-tight text-white group-hover:text-emerald-300">Pappy AI</span>
+          <span className="text-[10px] text-slate-400 flex items-center gap-1 leading-tight">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" /> Gemini 3.8
+          </span>
+        </div>
+      </button>
     </div>
   );
 }

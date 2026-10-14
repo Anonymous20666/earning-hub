@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role, email, and authentication details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "name": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["EARNER", "ADVERTISER", "ADMIN"] },
+        "avatarUrl": { "type": "string", "maxLength": 1024 },
+        "isEmailVerified": { "type": "boolean" },
+        "authProvider": { "type": "string", "enum": ["google", "email"] },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "email", "name", "role", "authProvider"]
+    },
+    "Wallet": {
+      "title": "Wallet",
+      "description": "User wallet ledger tracking balances, locked bonus and payouts",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "locked_bonus": { "type": "number" },
+        "earned_balance": { "type": "number" },
+        "pending_referral_balance": { "type": "number" },
+        "bonus_claimed": { "type": "boolean" },
+        "total_withdrawn": { "type": "number" }
+      },
+      "required": ["id", "userId", "locked_bonus", "earned_balance"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Multi-turn Gemini AI assistant message history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["user", "model"] },
+        "text": { "type": "string", "maxLength": 10000 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "role", "text", "createdAt"]
+    },
+    "Campaign": {
+      "title": "Campaign",
+      "description": "Marketing campaign created by advertisers",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "advertiserId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "targetUrl": { "type": "string", "maxLength": 1024 },
+        "broadcastMode": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "advertiserId", "title", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile document containing authentication and role details"
+    },
+    "/wallets/{userId}": {
+      "schema": "Wallet",
+      "description": "Wallet balance and accounting record keyed by user UID"
+    },
+    "/users/{userId}/chatMessages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Multi-turn Gemini AI chatbot conversation log subcollection"
+    },
+    "/campaigns/{campaignId}": {
+      "schema": "Campaign",
+      "description": "Advertiser marketing campaigns"
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Radio, Send, ShieldCheck, ArrowDownCircle, Users, Bot, Terminal, X } from 'lucide-react';
+import { Search, Radio, Send, ShieldCheck, ArrowDownCircle, Users, Bot, Terminal, X, Keyboard, HelpCircle } from 'lucide-react';
 import { UserRole } from '../types';
 
 interface CommandPaletteProps {
@@ -11,6 +11,8 @@ interface CommandPaletteProps {
   onOpenJoinManager: () => void;
   onOpenValidatorHub: () => void;
   onOpenLiveTerminal: () => void;
+  onOpenHelp?: () => void;
+  onOpenChat?: () => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -22,6 +24,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onOpenJoinManager,
   onOpenValidatorHub,
   onOpenLiveTerminal,
+  onOpenHelp,
+  onOpenChat,
 }) => {
   const [query, setQuery] = useState('');
 
@@ -29,8 +33,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        if (isOpen) onClose();
-        else onClose(); // parent handles toggle
+        onClose();
       }
       if (e.key === 'Escape' && isOpen) {
         onClose();
@@ -43,6 +46,28 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   if (!isOpen) return null;
 
   const actions = [
+    {
+      id: 'ai-assistant',
+      title: 'Ask Pappy AI Assistant (Gemini 3.8 Flash)',
+      desc: 'Instant answers on bonus unlocks, earning rates, country campaigns, and anti-ban rules',
+      icon: Bot,
+      category: 'AI Assistant',
+      run: () => {
+        onClose();
+        if (onOpenChat) setTimeout(onOpenChat, 50);
+      },
+    },
+    {
+      id: 'help',
+      title: 'Open Keyboard Shortcuts & Help Directory (?)',
+      desc: 'View all keyboard shortcuts, accessibility controls, and platform hotkeys',
+      icon: Keyboard,
+      category: 'Help',
+      run: () => { 
+        onClose(); 
+        if (onOpenHelp) setTimeout(onOpenHelp, 50); 
+      },
+    },
     {
       id: 'earner',
       title: 'Switch to Earner Workspace',
@@ -122,7 +147,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           <Search className="w-5 h-5 text-slate-400 mr-3" />
           <input
             type="text"
-            placeholder="Type a command or jump to feature (e.g., withdraw, pair, join manager)..."
+            placeholder="Type a command or jump to feature (e.g., help, withdraw, pair, join manager)..."
             value={query}
             onChange={e => setQuery(e.target.value)}
             className="flex-1 bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none"
@@ -145,7 +170,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 <button
                   key={action.id}
                   onClick={action.run}
-                  className="w-full flex items-center gap-3.5 p-3 rounded-xl text-left hover:bg-white/[0.04] transition-colors group"
+                  className="w-full flex items-center gap-3.5 p-3 rounded-xl text-left hover:bg-white/[0.04] transition-colors group cursor-pointer"
                 >
                   <div className="w-9 h-9 rounded-lg bg-white/[0.03] border border-white/10 flex items-center justify-center text-emerald-400 group-hover:border-emerald-500/40">
                     <Icon className="w-4 h-4" />
@@ -170,7 +195,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         <div className="px-4 py-2.5 bg-black/40 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-500">
-          <span>Tip: Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-mono">ESC</kbd> to exit</span>
+          <div className="flex items-center gap-3">
+            <span>Tip: Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-mono">ESC</kbd> to exit</span>
+            <span>•</span>
+            <button 
+              onClick={() => { onClose(); if (onOpenHelp) setTimeout(onOpenHelp, 50); }}
+              className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2 cursor-pointer"
+            >
+              Shortcuts Guide (<kbd className="px-1 py-0.2 rounded bg-white/10 text-slate-300 font-mono">?</kbd>)
+            </button>
+          </div>
           <span>Pappy Earning Hub v2.026</span>
         </div>
       </div>

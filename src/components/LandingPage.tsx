@@ -32,7 +32,8 @@ import {
   Bot, 
   DollarSign, 
   LogOut,
-  UserCheck
+  UserCheck,
+  Keyboard
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -41,6 +42,8 @@ interface LandingPageProps {
   onNavigateToAdvertiserAuth: () => void;
   onNavigateToDashboard: (role: UserRole) => void;
   onSignOut: () => void;
+  onOpenHelp?: () => void;
+  onOpenChat?: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
@@ -49,6 +52,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onNavigateToAdvertiserAuth,
   onNavigateToDashboard,
   onSignOut,
+  onOpenHelp,
+  onOpenChat,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [howItWorksTab, setHowItWorksTab] = useState<'WORKER' | 'ADVERTISER'>('WORKER');
@@ -146,6 +151,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Right Action Buttons */}
           <div className="hidden sm:flex items-center gap-3">
+            <button
+              onClick={onOpenChat}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-500/15 to-teal-500/15 hover:from-emerald-500/25 hover:to-teal-500/25 text-xs font-medium text-emerald-300 hover:text-white border border-emerald-500/30 transition-all shadow-sm cursor-pointer"
+              title="Chat with Pappy AI Assistant (Gemini 3.8 Flash)"
+              aria-label="Open Pappy AI Assistant Chat"
+            >
+              <Bot className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Pappy AI</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            </button>
+
+            <button
+              onClick={onOpenHelp}
+              className="inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-xs text-slate-300 hover:text-white border border-white/10 transition-colors cursor-pointer"
+              title="Keyboard Shortcuts & Accessibility Help (?)"
+              aria-label="Keyboard Shortcuts and Accessibility Help"
+            >
+              <Keyboard className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden xl:inline">Shortcuts</span>
+              <kbd className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded font-mono text-slate-300">?</kbd>
+            </button>
+
             {currentUser ? (
               <div className="flex items-center gap-3">
                 <div className="text-right">
@@ -218,6 +245,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </button>
               <button onClick={() => { scrollToSection('faq'); }} className="text-left py-1 hover:text-white">
                 FAQ
+              </button>
+              <button 
+                onClick={() => { setMobileMenuOpen(false); onOpenChat?.(); }} 
+                className="text-left py-1 text-slate-300 hover:text-white flex items-center justify-between"
+              >
+                <span className="flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-emerald-400" />
+                  <span>Pappy AI Assistant (Gemini)</span>
+                </span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              </button>
+              <button 
+                onClick={() => { setMobileMenuOpen(false); onOpenHelp?.(); }} 
+                className="text-left py-1 text-slate-300 hover:text-white flex items-center justify-between"
+              >
+                <span className="flex items-center gap-2">
+                  <Keyboard className="w-4 h-4 text-emerald-400" />
+                  <span>Keyboard Shortcuts &amp; a11y</span>
+                </span>
+                <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-slate-300 font-mono text-[10px]">?</kbd>
               </button>
             </div>
 
@@ -788,6 +835,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <li><span>Privacy &amp; Data Security</span></li>
               <li><span>Anti-Spam &amp; JID Ledger</span></li>
               <li><span>Telegram: @OurGrowthBot</span></li>
+              <li>
+                <button 
+                  onClick={onOpenHelp} 
+                  className="hover:text-emerald-400 flex items-center gap-1.5 cursor-pointer text-slate-400 transition-colors"
+                >
+                  <Keyboard className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Keyboard Shortcuts &amp; Help</span>
+                  <kbd className="text-[9px] bg-white/10 px-1 py-0.2 rounded font-mono text-slate-300">?</kbd>
+                </button>
+              </li>
             </ul>
           </div>
         </div>

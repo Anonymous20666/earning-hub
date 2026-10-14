@@ -1,4 +1,6 @@
 import { AuthUser, AuthSession, UserRole } from '../types';
+import { auth, googleProvider, signInWithPopup, firebaseSignOut } from './firebase';
+import { FirestoreService } from './firestoreService';
 
 const STORAGE_SESSION_KEY = 'pappy_auth_session';
 const STORAGE_USERS_KEY = 'pappy_registered_users';
@@ -91,8 +93,7 @@ export class AuthService {
     password: string,
     enforceRole?: UserRole
   ): Promise<{ success: boolean; session?: AuthSession; error?: string }> {
-    // Artificial latency for realistic async feedback
-    await new Promise(res => setTimeout(res, 450));
+    await new Promise(res => setTimeout(res, 350));
 
     const cleanEmail = email.trim().toLowerCase();
     const users = this.getStoredUsers();
@@ -108,7 +109,6 @@ export class AuthService {
 
     // Role Guard Check: Ensure user matches expected flow
     if (enforceRole && found.user.role !== enforceRole && found.user.role !== 'ADMIN') {
-      const targetFlow = enforceRole === 'EARNER' ? 'Worker' : 'Advertiser';
       const actualRole = found.user.role === 'EARNER' ? 'Worker' : 'Advertiser';
       return {
         success: false,
@@ -119,10 +119,19 @@ export class AuthService {
     const session: AuthSession = {
       token: `ns_tok_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`,
       user: found.user,
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
     };
 
     localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(session));
+
+    // Async sync with Firestore in background
+    FirestoreService.saveUserProfile(found.user).catch(err => {
+      console.warn('Background Firestore profile sync:', err);
+    });
+    FirestoreService.getOrCreateWallet(found.user.id).catch(err => {
+      console.warn('Background Firestore wallet sync:', err);
+    });
+
     return { success: true, session };
   }
 
@@ -136,7 +145,7 @@ export class AuthService {
     name: string,
     role: UserRole
   ): Promise<{ success: boolean; session?: AuthSession; error?: string }> {
-    await new Promise(res => setTimeout(res, 550));
+    await new Promise(res => setTimeout(res, 400));
 
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail.includes('@') || !cleanEmail.includes('.')) {
@@ -176,52 +185,86 @@ export class AuthService {
     };
 
     localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(session));
+
+    // Initialize in Firestore
+    await FirestoreService.saveUserProfile(newUser).catch(console.warn);
+    await FirestoreService.getOrCreateWallet(newUser.id).catch(console.warn);
+
     return { success: true, session };
   }
 
   /**
-   * Continue with Google OAuth
+   * Real Google Sign-in with Firebase Auth & Firestore Persistence
    */
   public static async signInWithGoogle(
     role: UserRole
   ): Promise<{ success: boolean; session?: AuthSession; error?: string }> {
-    await new Promise(res => setTimeout(res, 600));
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const fbUser = result.user;
 
-    // Simulated Google OAuth response based on client email/profile
-    const googleEmail = `${role.toLowerCase()}.${Math.floor(100 + Math.random() * 900)}@gmail.com`;
-    const users = this.getStoredUsers();
-    let existing = users.find(u => u.user.email.toLowerCase() === googleEmail.toLowerCase());
+      const userEmail = fbUser.email || `${role.toLowerCase()}.${Date.now()}@gmail.com`;
+      const displayName = fbUser.displayName || (role === 'EARNER' ? 'Google Earner' : 'Google Advertiser');
+      const photoURL = fbUser.photoURL || undefined;
 
-    if (!existing) {
-      const newUser: AuthUser = {
-        id: `usr_g_${Date.now()}`,
-        email: googleEmail,
-        name: role === 'EARNER' ? 'Google Worker' : 'Google Advertiser',
-        role,
-        isEmailVerified: true,
-        authProvider: 'google',
-        createdAt: new Date().toISOString(),
+      // Check if user profile already stored in Firestore
+      let existingProfile = await FirestoreService.getUserProfile(fbUser.uid).catch(() => null);
+
+      let finalUser: AuthUser;
+      if (existingProfile) {
+        finalUser = {
+          ...existingProfile,
+          name: displayName,
+          avatarUrl: photoURL || existingProfile.avatarUrl,
+        };
+      } else {
+        finalUser = {
+          id: fbUser.uid,
+          email: userEmail,
+          name: displayName,
+          role,
+          avatarUrl: photoURL,
+          isEmailVerified: fbUser.emailVerified || true,
+          authProvider: 'google',
+          createdAt: new Date().toISOString(),
+        };
+      }
+
+      // Persist user and wallet in Firestore
+      await FirestoreService.saveUserProfile(finalUser);
+      await FirestoreService.getOrCreateWallet(finalUser.id);
+
+      const session: AuthSession = {
+        token: await fbUser.getIdToken().catch(() => `fb_tok_${Date.now()}`),
+        user: finalUser,
+        expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
       };
-      users.push({ user: newUser, passwordHash: 'GOOGLE_OAUTH_MANAGED' });
-      this.saveUsers(users);
-      existing = { user: newUser, passwordHash: 'GOOGLE_OAUTH_MANAGED' };
+
+      localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(session));
+      return { success: true, session };
+    } catch (error: any) {
+      console.error('Firebase Google Sign-In error:', error);
+      
+      // If user closes popup or popup is blocked, provide friendly message
+      if (error?.code === 'auth/popup-closed-by-user') {
+        return { success: false, error: 'Sign-in popup was closed before completing authentication.' };
+      }
+      if (error?.code === 'auth/popup-blocked') {
+        return { success: false, error: 'Sign-in popup was blocked by browser. Please allow popups for this site.' };
+      }
+
+      return { 
+        success: false, 
+        error: error?.message || 'Google authentication failed. Please try again.' 
+      };
     }
-
-    const session: AuthSession = {
-      token: `ns_g_tok_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`,
-      user: existing.user,
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-    };
-
-    localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(session));
-    return { success: true, session };
   }
 
   /**
    * Password Reset Flow
    */
   public static async requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
-    await new Promise(res => setTimeout(res, 400));
+    await new Promise(res => setTimeout(res, 300));
     return {
       success: true,
       message: `Password reset instructions have been dispatched to ${email}. Check your inbox or spam folder.`,
@@ -233,6 +276,7 @@ export class AuthService {
    */
   public static signOut() {
     try {
+      firebaseSignOut(auth).catch(() => {});
       localStorage.removeItem(STORAGE_SESSION_KEY);
     } catch (e) {
       console.error('Sign out error', e);
@@ -252,6 +296,10 @@ export class AuthService {
       user: updatedUser,
     };
     localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(updatedSession));
+    
+    // Sync updated role to Firestore
+    FirestoreService.saveUserProfile(updatedUser).catch(console.warn);
+
     return updatedSession;
   }
 }
