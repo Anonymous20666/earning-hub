@@ -1,26 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  MessageCircle,
-  Send,
-  Check,
-  Link2,
-  Pause,
-  Play,
-  Users,
-} from "lucide-react";
+import { MessageCircle, Send, Check, Link2, Users } from "lucide-react";
 export function LiveScene() {
   const root = useRef<HTMLDivElement>(null);
-  const [moving, setMoving] = useState(() => {
-    try {
-      const saved = localStorage.getItem("pappy-motion");
-      return saved
-        ? saved === "playing"
-        : !matchMedia("(prefers-reduced-motion: reduce)").matches &&
-            !(navigator as any).connection?.saveData;
-    } catch {
-      return false;
-    }
-  });
+  const [moving, setMoving] = useState(
+    () =>
+      !matchMedia("(prefers-reduced-motion: reduce)").matches &&
+      !(navigator as any).connection?.saveData,
+  );
+  // A brief decorative entrance settles automatically; no playback controls or consent prompts.
+  useEffect(() => {
+    if (!moving) return;
+    const timer = setTimeout(() => setMoving(false), 4500);
+    return () => clearTimeout(timer);
+  }, [moving]);
   const [visible, setVisible] = useState(true),
     [inView, setInView] = useState(true);
   useEffect(() => {
@@ -28,7 +20,7 @@ export function LiveScene() {
     document.addEventListener("visibilitychange", changed);
     const reduced = matchMedia("(prefers-reduced-motion: reduce)"),
       onReduced = () => {
-        if (reduced.matches) setMoving(false);
+        setMoving(!reduced.matches && !(navigator as any).connection?.saveData);
       };
     reduced.addEventListener("change", onReduced);
     const observer =
@@ -42,18 +34,11 @@ export function LiveScene() {
       observer?.disconnect();
     };
   }, []);
-  function toggle() {
-    setMoving((v) => {
-      try {
-        localStorage.setItem("pappy-motion", v ? "paused" : "playing");
-      } catch {}
-      return !v;
-    });
-  }
   return (
     <div
       className={`live-hero-scene ${moving && visible && inView ? "is-playing" : "is-paused"}`}
       ref={root}
+      aria-hidden="true"
     >
       <div className="scene-label">
         <span />A LITTLE CONNECTION. A NEW POSSIBILITY.
@@ -86,7 +71,7 @@ export function LiveScene() {
             </div>
             <div className="phone-groups">
               <Users size={19} />
-              <span>Your groups. Your choice.</span>
+              <span>Your groups. One message.</span>
             </div>
             <div className="phone-send">
               <span>Share with permission</span>
@@ -113,13 +98,6 @@ export function LiveScene() {
         </div>
         <div className="scene-pebble pebble-one" />
         <div className="scene-pebble pebble-two" />
-      </div>
-      <div className="scene-footer">
-        <span>3D-style illustration · not live account activity</span>
-        <button type="button" onClick={toggle} aria-pressed={!moving}>
-          {moving ? <Pause size={15} /> : <Play size={15} />}
-          <span>{moving ? "Pause movement" : "Play movement"}</span>
-        </button>
       </div>
     </div>
   );

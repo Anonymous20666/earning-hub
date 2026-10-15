@@ -1,6 +1,6 @@
 export const EARNING_RULES = Object.freeze({
   coinToNgn: 1,
-  referralMilli: 5000,
+  referralMilli: 100000,
   maxAccounts: 2,
   maxCampaignsPerDay: 10,
   minMembers: 100,
@@ -103,3 +103,13 @@ export function parseNgnMilli(value: unknown) {
     throw Error("Amount outside supported DECIMAL(12,3) range");
   return milli;
 }
+
+// A disclosed illustration, not a daily ceiling, forecast, or funded job offer.
+export const DAILY_EARNING_EXAMPLE = Object.freeze({
+  groups: 50,
+  members: 1000,
+  campaigns: EARNING_RULES.maxCampaignsPerDay,
+  surfaces: 2,
+  dailyMilli:
+    50 * placementRewardMilli(1000) * 2 * EARNING_RULES.maxCampaignsPerDay,
+});

@@ -74,8 +74,25 @@ export function registerReferral(
   if (!ref || ref.user_id === referredId)
     throw Error("Referral code not found");
   db.prepare(
-    "INSERT INTO referrals(id,referrer_id,referred_id,created_at) VALUES(?,?,?,?)",
-  ).run(randomUUID(), ref.user_id, referredId, now());
+    "INSERT INTO referrals(id,referrer_id,referred_id,created_at,reward_milli) VALUES(?,?,?,?,?)",
+  ).run(
+    randomUUID(),
+    ref.user_id,
+    referredId,
+    now(),
+    EARNING_RULES.referralMilli,
+  );
+}
+// Invoke inside the caller's transaction before affordability checks/reserving cash.
+export function currentPendingReferral(db: Database, referred: string) {
+  db.prepare(
+    "UPDATE referrals SET reward_milli=? WHERE referred_id=? AND status='PENDING' AND reward_milli<>?",
+  ).run(EARNING_RULES.referralMilli, referred, EARNING_RULES.referralMilli);
+  return one(
+    db,
+    "SELECT * FROM referrals WHERE referred_id=? AND status='PENDING'",
+    referred,
+  );
 }
 export function referralSummary(db: Database, userId: string) {
   const counts = one(
@@ -386,11 +403,7 @@ export function reserveNextDelivery(db: Database, campaignId: string) {
         w && !w.bonus_claimed
           ? Math.max(0, w.locked_milli - w.bonus_backed_milli)
           : 0;
-      const ref = one(
-        db,
-        "SELECT * FROM referrals WHERE referred_id=? AND status='PENDING'",
-        candidate.user_id,
-      );
+      const ref = currentPendingReferral(db, candidate.user_id);
       if (ref) {
         sideCost += ref.reward_milli;
         const rw = one(
@@ -416,11 +429,7 @@ export function reserveNextDelivery(db: Database, campaignId: string) {
     const id = randomUUID(),
       reward = Math.min(g.member_count, 1000);
     ensureBonusBacking(db, g.user_id);
-    const ref = one(
-      db,
-      "SELECT * FROM referrals WHERE referred_id=? AND status='PENDING'",
-      g.user_id,
-    );
+    const ref = currentPendingReferral(db, g.user_id);
     if (ref) {
       ensureBonusBacking(db, ref.referrer_id);
       move(db, -ref.reward_milli, ref.reward_milli, 0, 0);
@@ -576,6 +585,7 @@ export function failUnsentDelivery(
         db.prepare(
           "UPDATE referrals SET status='PENDING',reserved_job_id=NULL WHERE id=?",
         ).run(reservedRef.id);
+        currentPendingReferral(db, reservedRef.referred_id);
       }
     }
     event(db, "UNSENT_RELEASED", `fail:${j.id}`, j.reward_milli, null, {

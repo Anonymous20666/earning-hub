@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Opt-in per repository: git config --local core.hooksPath .githooks
+repo="$(git rev-parse --show-toplevel)" || exit 0
+if ! "$repo/deploy/push-source-backup.sh"; then
+  echo 'GitHub source backup PENDING. Your local commit is saved; fix write access and rerun deploy/push-source-backup.sh.' >&2
+fi
+exit 0

@@ -175,7 +175,7 @@ export function Auth({
                 />
                 <span className="field-help">
                   An invited worker’s first verified qualifying delivery unlocks
-                  a 5.000 Coin reward for their referrer. Signup alone does not
+                  a 100 Coin reward for their referrer. Signup alone does not
                   earn it.
                 </span>
               </label>

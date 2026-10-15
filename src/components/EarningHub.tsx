@@ -1,3 +1,7 @@
+import {
+  EARNING_RULES,
+  DAILY_EARNING_EXAMPLE,
+} from "../../shared/earningRules";
 import React, { useEffect, useState } from "react";
 import {
   ArrowRight,
@@ -308,10 +312,12 @@ export function EarningHub({
           <div className="workspace-banner">
             <Users size={22} />
             <div>
-              <strong>Invite someone. Keep the reward transparent.</strong>
+              <strong>
+                Invite a friend. Earn 100 Coins when they qualify.
+              </strong>
               <p>
-                ₦5 = 5.000 Coins. A signup alone does not create an earned
-                reward.
+                100 Coins per qualifying friend. A signup alone does not create
+                an earned reward.
               </p>
             </div>
           </div>
@@ -380,7 +386,7 @@ export function EarningHub({
               <li>
                 <span>03</span>
                 <div>
-                  <strong>5.000 Coins becomes earned</strong>
+                  <strong>100 Coins becomes earned</strong>
                   <p>
                     Credited once. The standard withdrawal rules still apply.
                   </p>
@@ -459,14 +465,17 @@ function Stat({
 }
 function EarningCalculator() {
   const [members, setMembers] = useState(""),
-    [broadcasts, setBroadcasts] = useState(1);
+    [broadcasts, setBroadcasts] = useState(1),
+    [mode, setMode] = useState("ALLSTATUS");
   const tokens = members.trim() ? members.trim().split(/[\s,;]+/) : [];
   const valid = tokens.every(
     (t) => /^\d{1,7}$/.test(t) && Number.isSafeInteger(Number(t)),
   );
   const counts = valid ? tokens.map(Number) : [],
     qualifying = counts.filter((n) => n >= 100),
-    total = qualifying.reduce((sum, n) => sum + Math.min(n, 1000), 0);
+    total =
+      qualifying.reduce((sum, n) => sum + Math.min(n, 1000), 0) *
+      (mode === "DOUBLE" ? 2 : 1);
   return (
     <>
       <div className="workspace-banner">
@@ -513,6 +522,31 @@ function EarningCalculator() {
               Use whole member counts only, up to seven digits each.
             </p>
           )}
+          <label htmlFor="earning-surface">Post type</label>
+          <select
+            id="earning-surface"
+            value={mode}
+            onChange={(e) => setMode(e.target.value)}
+          >
+            <option value="ALLSTATUS">Group status</option>
+            <option value="ALLCHAT">Group chat</option>
+            <option value="DOUBLE">Both — status and chat confirmed</option>
+          </select>
+          <button
+            type="button"
+            className="button button-outline potential-preset"
+            onClick={() => {
+              setMembers(
+                Array(DAILY_EARNING_EXAMPLE.groups)
+                  .fill(String(DAILY_EARNING_EXAMPLE.members))
+                  .join("\n"),
+              );
+              setBroadcasts(DAILY_EARNING_EXAMPLE.campaigns);
+              setMode("DOUBLE");
+            }}
+          >
+            Try the 1,000-Coin daily example
+          </button>
           <label htmlFor="daily-broadcasts">
             Hypothetical broadcasts in one day
           </label>
@@ -553,13 +587,10 @@ function EarningCalculator() {
               </span>
               <strong>{coins(total * broadcasts)} Coins</strong>
             </p>
-            <p>
-              <span>NGN reference value</span>
-              <strong>₦{coins(total * broadcasts)}</strong>
-            </p>
           </div>
           <p className="earning-formula">
-            Reward = min(members, 1,000) ÷ 1,000 Coins per successful group.
+            Reward = min(members, 1,000) ÷ 1,000 Coins per confirmed post type.
+            Both mode needs both status and chat to succeed for the full result.
           </p>
           <div className="notice">
             <ShieldCheck size={18} />
@@ -575,10 +606,11 @@ function EarningCalculator() {
         <h2>The rules stay consistent.</h2>
         <div>
           <p>
-            <strong>1 Coin = ₦1 worldwide.</strong>
+            <strong>Your balance is measured in Coins.</strong>
             <br />
-            500 Coins means ₦500 value, not 500 units of another currency. FX
-            and fees require a real quote.
+            Coins are platform reward units, not your local currency. Supported
+            cashout locations, conversion quotes and fees will be shown before
+            you confirm a withdrawal. Cashout is not live yet.
           </p>
           <p>
             <strong>Your welcome bonus stays locked.</strong>

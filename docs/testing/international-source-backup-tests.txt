@@ -1,0 +1,24 @@
+To /tmp/tmp.cmecbbMnUC/origin.git
+*	HEAD:refs/heads/backup/earning-hub	[new branch]
+Done
+Source backup pushed: d464f23 -> backup/earning-hub
+PASS: dedicated branch pushes source without touching main
+Use a dedicated backup branch, not the default branch.
+PASS: default branch cannot be overwritten
+Commit all intended source changes before backing up. Data/secrets must remain ignored.
+PASS: dirty source is not claimed as backed up
+To /tmp/tmp.cmecbbMnUC/origin.git
+ 	HEAD:refs/heads/backup/earning-hub	d464f23..84df11c
+Done
+Source backup pushed: 84df11c -> backup/earning-hub
+PASS: post-commit hook backs up later commits
+fatal: '/tmp/tmp.cmecbbMnUC/nonexistent.git' does not appear to be a git repository
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+GitHub source backup PENDING. Your local commit is saved; fix write access and rerun deploy/push-source-backup.sh.
+Synthetic offline local commit retained
+PASS: failed remote backup preserves local commit
+Sensitive paths found in Git history. Stop and review before any push.
+PASS: sensitive filename in reachable history blocks push

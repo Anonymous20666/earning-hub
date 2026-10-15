@@ -548,7 +548,7 @@ test("same group on two numbers has only one paid status/chat pair and cannot en
     f.db.close();
   }
 });
-test("new paid placement activates the backed ₦5 referral once; second placement never doubles it", () => {
+test("new paid placement activates the backed 100-Coin referral once; second placement never doubles it", () => {
   const f = fixture();
   try {
     user(f.db, "referrer");
@@ -573,7 +573,7 @@ test("new paid placement activates the backed ₦5 referral once; second placeme
           .prepare("SELECT earned_milli FROM wallets WHERE user_id='referrer'")
           .get() as any
       ).earned_milli,
-      5000,
+      100000,
     );
     check(f.db);
   } finally {
@@ -757,7 +757,7 @@ test("personal submissions do not consume the ten funded-campaign participation 
     f.db.close();
   }
 });
-test("cancelling a legacy reservation transfers the ₦5 referral hold to outstanding new paid work", () => {
+test("cancelling a legacy reservation transfers the 100-Coin referral hold to outstanding new paid work", () => {
   const f = fixture();
   try {
     user(f.db, "referrer");
@@ -789,7 +789,7 @@ test("cancelling a legacy reservation transfers the ₦5 referral hold to outsta
           .prepare("SELECT earned_milli FROM wallets WHERE user_id='referrer'")
           .get() as any
       ).earned_milli,
-      5000,
+      100000,
     );
     check(f.db);
   } finally {
@@ -965,7 +965,7 @@ test("a small-group success cannot consume a referral hold belonging to qualifyi
           .prepare("SELECT earned_milli FROM wallets WHERE user_id='referrer'")
           .get() as any
       ).earned_milli,
-      5000,
+      100000,
     );
     check(f.db);
   } finally {

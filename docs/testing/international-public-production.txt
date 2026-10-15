@@ -1,0 +1,1 @@
+{"passed":28,"accountsCreated":0,"whatsappRequests":0}

@@ -157,27 +157,31 @@ function InfoPage({ path }: { path: string }) {
               <h2>1. What is available</h2>
               <p>
                 You can register, manage your profile, save advertiser campaign
-                drafts and submit support requests. Messaging, earning,
-                payments, withdrawals, email delivery, social sign-in and AI are
-                not configured. Creating an account does not guarantee income,
-                reach, campaign delivery or a launch date.
+                drafts and submit support requests. Personal WhatsApp posting is
+                an owner-linked-device pilot where configured. Paid earning,
+                checkout, withdrawals, email delivery, social sign-in and AI are
+                not live. Creating an account does not guarantee income, reach,
+                campaign delivery or a launch date.
               </p>
             </section>
             <section>
               <h2>2. Coins and conditional bonuses</h2>
               <p>
-                The documented reference value is 1.000 Coin = ₦1.00. A worker
-                account receives a 200.000 Coin locked registration bonus. It is
-                not immediately withdrawable and is not an earned balance. The
-                first payout requires at least 300.000 earned Coins and a
-                minimum cashout of 500.000 Coins. When used, the locked bonus is
-                consumed once. Subsequent payouts require at least 500.000
-                earned Coins.
+                Coins track your platform rewards; they are not the same as your
+                local currency. A worker account receives a 200.000 Coin locked
+                registration bonus. It is not immediately withdrawable and is
+                not an earned balance. The first payout requires at least
+                300.000 earned Coins and a minimum cashout of 500.000 Coins.
+                When used, the locked bonus is consumed once. Subsequent payouts
+                require at least 500.000 earned Coins.
               </p>
               <p>
                 If a reused messaging account is disqualified from a bonus, the
                 minimum 500.000 Coin cashout still applies. No payout can exceed
                 the available eligible balance. Live payouts remain disabled.
+                Before cashout becomes available, supported countries, payout
+                currencies, the conversion quote and any fees will be shown
+                before confirmation. No global payout availability is promised.
               </p>
             </section>
             <section>
@@ -197,14 +201,16 @@ function InfoPage({ path }: { path: string }) {
                 estimate is not an active worker reward mode.
               </p>
               <p>
-                Referrals award ₦5 (5.000 Coins) once, after the invited worker
-                pairs and completes their first qualifying verified campaign
-                delivery. Pending referral amounts are conditional, not earned
-                or withdrawable. Signup alone does not qualify. Referral codes
-                must be attached at registration. Self-referrals and multiple
-                owner accounts for the same paired phone number are not
-                permitted. Shared or dynamic IP addresses do not, by themselves,
-                establish someone’s identity.
+                New qualifying referrals award 100.000 Coins once, after the
+                invited worker pairs and completes their first qualifying
+                verified campaign delivery. Previously earned or
+                already-reserved rewards keep their recorded amounts. Pending
+                referral amounts are conditional, not earned or withdrawable.
+                Signup alone does not qualify. Referral codes must be attached
+                at registration. Self-referrals and multiple owner accounts for
+                the same paired phone number are not permitted. Shared or
+                dynamic IP addresses do not, by themselves, establish someone’s
+                identity.
               </p>
             </section>
             <section>

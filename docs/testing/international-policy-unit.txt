@@ -1,0 +1,36 @@
+TAP version 13
+# (node:41656) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: v4 referral rebuild preserves identities, child foreign keys, settled ledger and booked rates; only pending reward changes
+ok 1 - v4 referral rebuild preserves identities, child foreign keys, settled ledger and booked rates; only pending reward changes
+  ---
+  duration_ms: 10.69131
+  type: 'test'
+  ...
+# Subtest: 100-Coin referral funding is atomic down to one milli-Coin and remains conditional, not signup earnings
+ok 2 - 100-Coin referral funding is atomic down to one milli-Coin and remains conditional, not signup earnings
+  ---
+  duration_ms: 10.407327
+  type: 'test'
+  ...
+# Subtest: published daily example is exactly derived from unchanged funded placement rules, not a daily guarantee or upper earning cap
+ok 3 - published daily example is exactly derived from unchanged funded placement rules, not a daily guarantee or upper earning cap
+  ---
+  duration_ms: 0.425776
+  type: 'test'
+  ...
+# Subtest: failed legacy rebuild rolls back the table, pending rate and migration marker, and restores FK enforcement
+ok 4 - failed legacy rebuild rolls back the table, pending rate and migration marker, and restores FK enforcement
+  ---
+  duration_ms: 5.75758
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 644.61813

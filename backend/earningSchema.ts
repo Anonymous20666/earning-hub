@@ -27,7 +27,7 @@ export function migrateEarningSchema(db: DatabaseSync) {
  CREATE TABLE IF NOT EXISTS referral_codes(user_id TEXT PRIMARY KEY REFERENCES users(id), code TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS referrals(
    id TEXT PRIMARY KEY, referrer_id TEXT NOT NULL REFERENCES users(id), referred_id TEXT NOT NULL UNIQUE REFERENCES users(id),
-   reward_milli INTEGER NOT NULL DEFAULT 5000 CHECK(reward_milli=5000),
+   reward_milli INTEGER NOT NULL DEFAULT 100000 CHECK(typeof(reward_milli)='integer' AND reward_milli IN(5000,100000)),
    status TEXT NOT NULL DEFAULT 'PENDING' CHECK(status IN ('PENDING','RESERVED','EARNED','DISQUALIFIED')),
    reserved_job_id TEXT, created_at TEXT NOT NULL, earned_at TEXT,
    CHECK(referrer_id<>referred_id));

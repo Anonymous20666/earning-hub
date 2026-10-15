@@ -58,7 +58,7 @@ test("new earnings and treasury APIs reject anonymous access", async () => {
   assert.equal((await req("/earnings")).status, 401);
   assert.equal((await req("/admin/treasury")).status, 401);
 });
-test("worker referral link is real; signup registers one pending ₦5 reward without earning cash", async () => {
+test("worker referral link is real; signup registers one pending 100-Coin reward without earning cash", async () => {
   inviter = await signup("earning-inviter");
   const before = await req("/earnings", inviter);
   assert.match(before.body.referrals.code, /^[a-f0-9]{20}$/);
@@ -70,7 +70,7 @@ test("worker referral link is real; signup registers one pending ₦5 reward wit
   );
   const after = await req("/earnings", inviter);
   assert.equal(after.body.referrals.total, 1);
-  assert.equal(after.body.referrals.pending_milli, 5000);
+  assert.equal(after.body.referrals.pending_milli, 100000);
   assert.equal(after.body.referrals.earned_milli, 0);
   assert.equal((await req("/workspace", inviter)).body.wallet.earned_milli, 0);
   assert.equal((await req("/workspace", invitee)).body.wallet.earned_milli, 0);

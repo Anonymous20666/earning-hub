@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-test("landing motion can be paused, respects reduced motion and does not create horizontal overflow", async ({
+test("landing has no design/playback controls; reduced-motion is automatic and the decorative entrance settles", async ({
   page,
 }, info) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -9,33 +9,22 @@ test("landing motion can be paused, respects reduced motion and does not create 
     "One post.",
   );
   await expect(
-    page.getByRole("button", { name: "Play movement" }),
-  ).toBeVisible();
+    page.getByRole("button", { name: /Play movement|Pause movement|3D/i }),
+  ).toHaveCount(0);
+  await expect(page.getByText(/3D-style illustration/)).toHaveCount(0);
   expect(
     await page.locator(".scene-phone").evaluate((el) => {
-      const style = getComputedStyle(el);
-      return style.animationName === "none"
-        ? "paused"
-        : style.animationPlayState;
+      const s = getComputedStyle(el);
+      return s.animationName === "none" || s.animationPlayState === "paused";
     }),
-  ).toBe("paused");
+  ).toBe(true);
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.getByRole("button", { name: "Play movement" }).click();
-  await expect(
-    page.getByRole("button", { name: "Pause movement" }),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Pause movement" }).click();
-  await expect(
-    page.getByRole("button", { name: "Play movement" }),
-  ).toBeVisible();
-  expect(
-    await page.locator(".scene-phone").evaluate((el) => {
-      const style = getComputedStyle(el);
-      return style.animationName === "none"
-        ? "paused"
-        : style.animationPlayState;
-    }),
-  ).toBe("paused");
+  await page.goto("/");
+  await page.locator(".live-hero-scene").scrollIntoViewIfNeeded();
+  await expect(page.locator(".live-hero-scene")).toHaveClass(/is-playing/);
+  await expect(page.locator(".live-hero-scene")).toHaveClass(/is-paused/, {
+    timeout: 6000,
+  });
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,
@@ -49,7 +38,7 @@ test("landing motion can be paused, respects reduced motion and does not create 
     ).violations,
   ).toEqual([]);
   await page.screenshot({
-    path: `docs/screenshots/easy-landing-${info.project.name}.png`,
+    path: `docs/screenshots/international-landing-${info.project.name}.png`,
     fullPage: true,
   });
 });
@@ -150,10 +139,18 @@ test("overview guides a connected owner forward and approved small groups use au
   await expect(
     page.getByRole("heading", { name: "Send a post to your groups." }),
   ).toBeVisible();
-  await expect(page.getByRole('checkbox',{name:/Select SYNTHETIC/})).toHaveCount(0);
-  await page.getByLabel('Your text or link').fill('SYNTHETIC personal text only');
-  await expect(page.getByRole('button',{name:'Review & continue'})).toBeEnabled();
-  await expect(page.getByText(/All connected groups with the right admin permission/)).toBeVisible();
+  await expect(
+    page.getByRole("checkbox", { name: /Select SYNTHETIC/ }),
+  ).toHaveCount(0);
+  await page
+    .getByLabel("Your text or link")
+    .fill("SYNTHETIC personal text only");
+  await expect(
+    page.getByRole("button", { name: "Review & continue" }),
+  ).toBeEnabled();
+  await expect(
+    page.getByText(/All connected groups with the right admin permission/),
+  ).toBeVisible();
   expect(
     (
       await new AxeBuilder({ page })

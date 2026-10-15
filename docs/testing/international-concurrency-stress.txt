@@ -1,0 +1,120 @@
+TAP version 13
+# (node:42050) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: independent concurrent processes cannot reserve or credit the same shared group twice
+ok 1 - independent concurrent processes cannot reserve or credit the same shared group twice
+  ---
+  duration_ms: 1233.301017
+  type: 'test'
+  ...
+# Subtest: concurrent campaign funding cannot overspend the available treasury cash
+ok 2 - concurrent campaign funding cannot overspend the available treasury cash
+  ---
+  duration_ms: 624.296005
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2049.132639
+TAP version 13
+# (node:42139) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: independent concurrent processes cannot reserve or credit the same shared group twice
+ok 1 - independent concurrent processes cannot reserve or credit the same shared group twice
+  ---
+  duration_ms: 1238.03218
+  type: 'test'
+  ...
+# Subtest: concurrent campaign funding cannot overspend the available treasury cash
+ok 2 - concurrent campaign funding cannot overspend the available treasury cash
+  ---
+  duration_ms: 626.143315
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1999.589158
+TAP version 13
+# (node:42218) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: independent concurrent processes cannot reserve or credit the same shared group twice
+ok 1 - independent concurrent processes cannot reserve or credit the same shared group twice
+  ---
+  duration_ms: 1244.824469
+  type: 'test'
+  ...
+# Subtest: concurrent campaign funding cannot overspend the available treasury cash
+ok 2 - concurrent campaign funding cannot overspend the available treasury cash
+  ---
+  duration_ms: 625.512014
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2044.936097
+TAP version 13
+# (node:42297) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: independent concurrent processes cannot reserve or credit the same shared group twice
+ok 1 - independent concurrent processes cannot reserve or credit the same shared group twice
+  ---
+  duration_ms: 1238.684946
+  type: 'test'
+  ...
+# Subtest: concurrent campaign funding cannot overspend the available treasury cash
+ok 2 - concurrent campaign funding cannot overspend the available treasury cash
+  ---
+  duration_ms: 633.054175
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2029.676517
+TAP version 13
+# (node:42376) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: independent concurrent processes cannot reserve or credit the same shared group twice
+ok 1 - independent concurrent processes cannot reserve or credit the same shared group twice
+  ---
+  duration_ms: 1241.269618
+  type: 'test'
+  ...
+# Subtest: concurrent campaign funding cannot overspend the available treasury cash
+ok 2 - concurrent campaign funding cannot overspend the available treasury cash
+  ---
+  duration_ms: 622.175599
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2015.841669

@@ -1,3 +1,4 @@
+import { migrateReferralSchema } from "./referralSchema";
 import { migratePersonalSchema } from "./personalSchema";
 import { migrateBroadcastSchema } from "./broadcastSchema";
 import { migrateEarningSchema } from "./earningSchema";
@@ -11,7 +12,7 @@ export function openDatabase(filename: string) {
   }
   const db = new DatabaseSync(filename);
   if (filename !== ":memory:") chmodSync(filename, 0o600);
-  db.exec(`PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;
+  db.exec(`PRAGMA busy_timeout=5000; PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL;
     CREATE TABLE IF NOT EXISTS schema_migrations(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS users(
       id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE COLLATE NOCASE,
@@ -52,6 +53,7 @@ export function openDatabase(filename: string) {
   migrateEarningSchema(db);
   migrateBroadcastSchema(db);
   migratePersonalSchema(db);
+  migrateReferralSchema(db);
   return db;
 }
 export type Database = ReturnType<typeof openDatabase>;

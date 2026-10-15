@@ -60,3 +60,13 @@ The founder agreed to obtain funding before paid broadcasts and authorised imple
 | Preserve money and audit under failures | Immediate transactions, unique campaign/group/funding/ledger keys, append-only monetary records, reconciliation, separate-process race tests. Actual payout execution/debits remain unimplemented. |
 
 See `FUNDING-STAGE.md` for operational boundaries, cost backing, verification evidence and remaining launch gates. The earlier mission's no-workflow restriction was superseded by build authorisation; live messaging/payment credentials and unresolved pricing were not approved by that authorisation.
+
+## Coins-first / closed-menu update — 15 October 2026, v0.6.0
+
+The founder explicitly superseded the historic 5-Coin referral rate with **100 Coins**, retaining the same first qualifying positive confirmed funded-work trigger. No signup payment, retroactive earned/reserved rate increase or relaxed funding gate. Schema 5 preserves locked financial history and updates unreserved pending rates only. Public copy is now Coins-first without changing internal 1 Coin = NGN 1 backing or pretending international payouts are available.
+
+A conditional 1,000-Coin daily illustration is derived from existing rules (50 eligible 1,000-member groups × 10 distinct funded campaigns × 2 confirmed post types), not a guarantee or new cap. Desktop and mobile navigation now start closed; design narration/playback controls are removed in favour of an automatic, bounded decorative entrance.
+
+Existing GitHub origin was found at `Anonymous20666/earning-hub`; read access works but HTTPS write access is not configured. A repository-specific public deploy key was supplied for the founder to grant write access. Source-only backup uses a separate `backup/earning-hub` branch, with no force push/default-branch replacement. No database, WhatsApp sessions or secrets belong in GitHub. Off-server encrypted private-data recovery remains unresolved.
+
+See `INTERNATIONAL-AND-MENU-0.6.0.md` for migration safeguards, verification and actual release/push outcome.

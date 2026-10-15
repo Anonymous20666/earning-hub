@@ -57,3 +57,7 @@ export function go(path: string) {
   window.location.hash = path;
   window.scrollTo({ top: 0, behavior: "instant" });
 }
+
+// User-facing planning values remain Coins; internal backing and accounting are unchanged.
+export const coinValue = (units: number) =>
+  `${units.toLocaleString("en", { minimumFractionDigits: 3, maximumFractionDigits: 3 })} Coins`;

@@ -94,7 +94,7 @@ test("earning pages show exact illustration, empty real inventory, and a real pe
   await friend.close();
   await page.getByRole("button", { name: "Refresh", exact: true }).click();
   await expect(page.locator(".earning-stat").nth(0)).toContainText("1");
-  await expect(page.locator(".earning-stat").nth(1)).toContainText("5.000");
+  await expect(page.locator(".earning-stat").nth(1)).toContainText("100.000");
   await expect(page.locator(".earning-stat").nth(2)).toContainText("0.000");
   await check(page, "referrals", info.project.name);
   await page.goto("/#/app/wallet");

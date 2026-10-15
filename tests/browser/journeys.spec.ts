@@ -142,10 +142,9 @@ test("worker registration, persistence, wallet, support, settings, logout and lo
   await expect(page.getByLabel("Full name", { exact: true })).toHaveValue(
     "Review Worker Updated",
   );
-  if (info.project.name === "mobile")
-    await page
-      .getByRole("button", { name: "Open navigation", exact: true })
-      .click();
+  await page
+    .getByRole("button", { name: "Open navigation", exact: true })
+    .click();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "One post.",

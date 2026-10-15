@@ -71,7 +71,7 @@ export interface Wallet {
   userId: string;
   locked_bonus: number; // strictly 200.000 upon registration
   earned_balance: number; // starts at 0.000, requires >= 300.000 for first payout
-  pending_referral_balance: number; // 5.000 per invited friend
+  pending_referral_balance: number; // 100.000 per qualifying invited friend
   bonus_claimed: boolean;
   total_withdrawn: number;
 }

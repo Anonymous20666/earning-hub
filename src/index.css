@@ -6179,3 +6179,209 @@ th {
     margin-left: 35px;
   }
 }
+/* Click-to-open workspace menu on every screen size. Hidden links are inert. */
+.app-shell > .sidebar {
+  width: 280px;
+  max-width: calc(100vw - 36px);
+  transform: translateX(-105%);
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform 0.2s ease,
+    visibility 0.2s;
+  box-shadow: 18px 0 65px #0b24181a;
+}
+.app-shell > .sidebar.sidebar-open {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+.app-shell > .app-content {
+  margin-left: 0;
+  width: 100%;
+}
+.workspace-header .mobile-toggle,
+.sidebar .mobile-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+.sidebar .mobile-close {
+  color: #c6d7bb;
+}
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.app-shell > .sidebar-scrim {
+  display: block;
+  position: fixed;
+  inset: 0;
+  background: #0b241870;
+  border: 0;
+  z-index: 35;
+  backdrop-filter: blur(3px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell > .sidebar {
+    transition: none;
+  }
+}
+.earning-potential {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 65px;
+  align-items: center;
+  padding: 46px 0 78px;
+}
+.potential-copy h2 {
+  font-size: clamp(30px, 3vw, 44px);
+  line-height: 1.17;
+  font-weight: 500;
+  letter-spacing: -1.5px;
+  margin: 18px 0;
+}
+.potential-copy h2 em {
+  font-family: Georgia, serif;
+  color: #315e39;
+  font-weight: 400;
+}
+.potential-copy > p {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #4b624b;
+  max-width: 420px;
+}
+.potential-copy > a {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 13px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #285736;
+}
+.potential-example {
+  padding: 30px;
+  border: 1px solid #cdddc1;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f0f6e7, #fbfcf6);
+  box-shadow: 0 14px 40px #23452508;
+}
+.potential-label {
+  font-size: 10px;
+  letter-spacing: 1.3px;
+  font-weight: 600;
+  color: #4d6545;
+}
+.potential-equation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 27px 0;
+}
+.potential-equation > span {
+  font-size: 12px;
+  line-height: 1.65;
+  color: #506249;
+  flex: 1;
+}
+.potential-equation strong {
+  display: block;
+  font-size: 32px;
+  line-height: 1.4;
+  letter-spacing: -1px;
+  font-weight: 500;
+  color: #183e29;
+}
+.potential-equation > b {
+  font-size: 19px;
+  font-weight: 400;
+  color: #6c805b;
+}
+.potential-total {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+  border-block: 1px solid #cfddc2;
+  color: #254f30;
+  flex-wrap: wrap;
+}
+.potential-total > strong {
+  font-size: 30px;
+  letter-spacing: -1px;
+  font-weight: 550;
+}
+.potential-total > span {
+  font-size: 12px;
+  color: #4f6547;
+  margin-left: auto;
+}
+.potential-example > p {
+  font-size: 12px;
+  line-height: 1.85;
+  color: #4c6145;
+  margin: 18px 0;
+}
+.potential-referral {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #e4efd6;
+  border-radius: 9px;
+  padding: 15px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #36522e;
+}
+.potential-referral > svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.potential-referral strong {
+  display: block;
+}
+.potential-example .potential-availability {
+  margin-bottom: 0;
+  color: #4c5d41;
+  font-size: 12px;
+  font-weight: 550;
+}
+.potential-preset {
+  margin: 15px 0 24px;
+  min-height: 44px;
+}
+@media (max-width: 800px) {
+  .earning-potential {
+    grid-template-columns: 1fr;
+    gap: 25px;
+    padding: 30px 0 50px;
+  }
+  .potential-copy h2 {
+    max-width: 470px;
+  }
+  .potential-example {
+    padding: 23px;
+  }
+  .potential-total > span {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+  .potential-equation {
+    gap: 9px;
+  }
+  .potential-equation > span {
+    font-size: 11px;
+  }
+  .potential-label {
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+}

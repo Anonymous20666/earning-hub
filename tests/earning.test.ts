@@ -555,11 +555,11 @@ test("unsent failure returns reward to the campaign, is idempotent and never cre
   reconciled(db);
   db.close();
 });
-test("₦5 referral is pending at signup; another simultaneous delivery may qualify it exactly once", () => {
+test("100-Coin referral is pending at signup; another simultaneous delivery may qualify it exactly once", () => {
   const db = fixture();
   user(db, "referrer");
   registerReferral(db, "worker", referralCode(db, "referrer"));
-  assert.equal(referralSummary(db, "referrer").pending_milli, 5000);
+  assert.equal(referralSummary(db, "referrer").pending_milli, 100000);
   funding(db);
   inventory(db, [256, 290]);
   const c = campaign(db);
@@ -568,16 +568,16 @@ test("₦5 referral is pending at signup; another simultaneous delivery may qual
   start(db, first);
   start(db, second);
   receipt(db, second);
-  assert.equal(referralSummary(db, "referrer").earned_milli, 5000);
+  assert.equal(referralSummary(db, "referrer").earned_milli, 100000);
   receipt(db, first);
-  assert.equal(referralSummary(db, "referrer").earned_milli, 5000);
+  assert.equal(referralSummary(db, "referrer").earned_milli, 100000);
   assert.equal(
     (
       db
         .prepare("SELECT earned_milli FROM wallets WHERE user_id=?")
         .get("referrer") as any
     ).earned_milli,
-    5000,
+    100000,
   );
   reconciled(db);
   db.close();
@@ -599,7 +599,7 @@ test("referral funding is transferred to another in-flight delivery, not prematu
   );
   start(db, b);
   receipt(db, b);
-  assert.equal(referralSummary(db, "referrer").earned_milli, 5000);
+  assert.equal(referralSummary(db, "referrer").earned_milli, 100000);
   reconciled(db);
   db.close();
 });
@@ -612,7 +612,7 @@ test("failed first delivery releases conditional referral cash but preserves sep
   const c = campaign(db);
   const j = reserved(db, c);
   failUnsentDelivery(db, j.id, "CANCELLED_BEFORE_SEND");
-  assert.equal(referralSummary(db, "referrer").pending_milli, 5000);
+  assert.equal(referralSummary(db, "referrer").pending_milli, 100000);
   assert.equal(
     (db.prepare("SELECT bonus_backing_milli FROM treasury").get() as any)
       .bonus_backing_milli,

@@ -33,7 +33,7 @@ import {
   Globe2,
 } from "lucide-react";
 import { Brand } from "./Brand";
-import { api, send, coins, money, date, User, go } from "../api";
+import { api, send, coins, money, coinValue, date, User, go } from "../api";
 import type { LucideIcon } from "lucide-react";
 import { DraftInput } from "../../shared/rules";
 
@@ -223,12 +223,54 @@ export function Workspace({
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true),
     [toast, setToast] = useState(""),
-    [mobile, setMobile] = useState(false),
+    [navigationOpen, setNavigationOpen] = useState(false),
     [modal, setModal] = useState<"campaign" | "ticket" | null>(null),
     [editing, setEditing] = useState<any>(null),
     [deleting, setDeleting] = useState<string | null>(null),
     [logoutBusy, setLogoutBusy] = useState(false);
   const [earningRevision, setEarningRevision] = useState(0);
+  const navigationRef = useRef<HTMLElement>(null),
+    menuButtonRef = useRef<HTMLButtonElement>(null),
+    closeMenuRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!navigationOpen) return;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const frame = requestAnimationFrame(() => {
+      navigationRef.current?.getBoundingClientRect();
+      closeMenuRef.current?.focus({ preventScroll: true });
+    });
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setNavigationOpen(false);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const items = Array.from(
+        navigationRef.current?.querySelectorAll<HTMLElement>(
+          'a[href],button:not([disabled]),[tabindex="0"]',
+        ) || [],
+      ).filter((el) => el.getClientRects().length > 0);
+      if (!items.length) return;
+      const first = items[0],
+        last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = overflow;
+      menuButtonRef.current?.focus({ preventScroll: true });
+    };
+  }, [navigationOpen]);
   const worker = user.role === "EARNER",
     admin = user.role === "ADMIN";
   const nav: Array<[string, string, LucideIcon]> = [
@@ -268,7 +310,7 @@ export function Workspace({
     refresh();
   }, [user.id]);
   useEffect(() => {
-    setMobile(false);
+    setNavigationOpen(false);
     setToast("");
     document.title = `${currentNav?.[1] || "Service status"} · Pappy Earning Hub`;
   }, [page]);
@@ -344,12 +386,30 @@ export function Workspace({
       >
         Skip to content
       </a>
-      <aside className={`sidebar ${mobile ? "sidebar-open" : ""}`}>
+      <aside
+        id="workspace-navigation"
+        ref={navigationRef}
+        className={`sidebar ${navigationOpen ? "sidebar-open" : ""}`}
+        aria-hidden={!navigationOpen}
+        inert={!navigationOpen}
+        role={navigationOpen ? "dialog" : undefined}
+        aria-modal={navigationOpen ? true : undefined}
+        aria-label="Workspace menu"
+        onTransitionEnd={(event) => {
+          if (
+            navigationOpen &&
+            event.target === navigationRef.current &&
+            !navigationRef.current?.contains(document.activeElement)
+          )
+            closeMenuRef.current?.focus({ preventScroll: true });
+        }}
+      >
         <div className="sidebar-brand">
           <Brand light />
           <button
+            ref={closeMenuRef}
             className="icon-button mobile-close"
-            onClick={() => setMobile(false)}
+            onClick={() => setNavigationOpen(false)}
             aria-label="Close navigation"
           >
             <X />
@@ -434,21 +494,24 @@ export function Workspace({
           </div>
         </div>
       </aside>
-      {mobile && (
+      {navigationOpen && (
         <button
           className="sidebar-scrim"
-          aria-label="Close navigation"
-          onClick={() => setMobile(false)}
+          aria-label="Close navigation backdrop"
+          tabIndex={-1}
+          onClick={() => setNavigationOpen(false)}
         />
       )}
-      <div className="app-content">
+      <div className="app-content" inert={navigationOpen}>
         <header className="workspace-header">
           <div>
             <button
+              ref={menuButtonRef}
               className="icon-button mobile-toggle"
+              aria-controls="workspace-navigation"
               aria-label="Open navigation"
-              aria-expanded={mobile}
-              onClick={() => setMobile(true)}
+              aria-expanded={navigationOpen}
+              onClick={() => setNavigationOpen(true)}
             >
               <Menu size={21} />
             </button>
@@ -600,7 +663,7 @@ export function Workspace({
                         />
                         <Metric
                           label="Total charged"
-                          value={money(0)}
+                          value={coinValue(0)}
                           note="No payments processed"
                           icon={Wallet}
                         />
@@ -792,7 +855,7 @@ export function Workspace({
                         label="Earned balance"
                         value={coins(wallet?.earned_milli || 0)}
                         unit="Coins"
-                        note="1 Coin = ₦1 reference value"
+                        note="Your earned platform rewards"
                         icon={Coins}
                         featured
                       />
@@ -857,8 +920,9 @@ export function Workspace({
                         </div>
                         <p className="muted">
                           Each unique qualifying successful group uses this Coin
-                          formula. There is no 100-group earning ceiling. 1 Coin
-                          = ₦1 worldwide.
+                          formula. There is no 100-group earning ceiling.
+                          Cashout availability and conversion quotes will be
+                          shown before any withdrawal.
                         </p>
                         <ul className="plain-list">
                           <li>
@@ -1496,10 +1560,10 @@ function CampaignForm({
       {quote && (
         <div className="quote-panel" role="status">
           <span className="eyebrow">PLANNING ESTIMATE · NOT A CHARGE</span>
-          <strong>{money(quote.estimatedNgn)}</strong>
+          <strong>{coinValue(quote.estimatedNgn)}</strong>
           <div className="quote-breakdown">
             <span>Modelled worker cost</span>
-            <span>{money(quote.workerCoins)}</span>
+            <span>{coinValue(quote.workerCoins)}</span>
           </div>
           <div className="quote-breakdown">
             <span>Modelled worker budget cap</span>

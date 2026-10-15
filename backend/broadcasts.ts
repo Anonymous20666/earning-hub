@@ -3,7 +3,11 @@ import { placementRewardMilli } from "../shared/earningRules";
 import { createHash, randomUUID } from "node:crypto";
 import { type Database, transaction } from "./database";
 import { destination, safePreview } from "./safePreview";
-import { ensureBonusBacking, reconcileTreasury } from "./earning";
+import {
+  ensureBonusBacking,
+  reconcileTreasury,
+  currentPendingReferral,
+} from "./earning";
 const now = () => new Date().toISOString();
 const get = (db: Database, sql: string, ...args: any[]): any =>
   db.prepare(sql).get(...args);
@@ -417,14 +421,7 @@ export function reservePaidRun(
     if (total > c.remaining_milli)
       throw Error("Insufficient full-placement campaign reward budget");
     if (total > 0) ensureBonusBacking(db, user);
-    const ref =
-      total > 0
-        ? get(
-            db,
-            "SELECT * FROM referrals WHERE referred_id=? AND status='PENDING'",
-            user,
-          )
-        : null;
+    const ref = total > 0 ? currentPendingReferral(db, user) : null;
     if (ref) {
       ensureBonusBacking(db, ref.referrer_id);
       treasury(db, -ref.reward_milli, ref.reward_milli, 0);
@@ -596,6 +593,7 @@ export function cancelUnsentPlacement(
           db.prepare(
             "UPDATE referrals SET status='PENDING',reserved_job_id=NULL WHERE id=?",
           ).run(ref.id);
+          currentPendingReferral(db, ref.referred_id);
         }
       }
     }

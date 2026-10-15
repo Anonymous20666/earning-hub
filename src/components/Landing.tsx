@@ -1,3 +1,4 @@
+import { EarningPotential } from "./EarningPotential";
 import { LiveScene } from "./LiveScene";
 import React, { useState } from "react";
 import {
@@ -23,7 +24,7 @@ import { User } from "../api";
 const faqs = [
   [
     "What is the referral reward?",
-    "Invite a friend. You get 5 Coins (₦5) only after they connect their number and complete their first confirmed paid post in a group with 100+ members. Signing up or sending their own posts does not count. Paid jobs are not open yet.",
+    "Invite a friend. You can earn 100 Coins only after they connect their number and complete their first confirmed paid post in a group with 100+ members. Signing up or sending their own posts does not count. Paid jobs are not open yet.",
   ],
   [
     "What is Pappy Earning Hub?",
@@ -39,7 +40,7 @@ const faqs = [
   ],
   [
     "How are group rewards calculated?",
-    "Small groups can receive posts, but groups below 100 members earn no paid reward. For paid work, 100 members earn 0.100 Coins, 742 earn 0.742 Coins and 1,000 or more earn 1 Coin per confirmed post. A status post and a chat post are checked separately. Shared groups count once per post type. Your own posts never earn Coins. 1 Coin = ₦1. Paid jobs are not open yet.",
+    "Small groups can receive posts, but groups below 100 members earn no paid reward. For paid work, 100 members earn 0.100 Coins, 742 earn 0.742 Coins and 1,000 or more earn 1 Coin per confirmed post. A status post and a chat post are checked separately. Shared groups count once per post type. Your own posts never earn Coins. Paid jobs are not open yet.",
   ],
   [
     "What does a campaign estimate include?",
@@ -144,6 +145,9 @@ export function Landing({ user }: { user: User | null }) {
           </div>
           <LiveScene />
         </section>
+        <div className="wrap">
+          <EarningPotential />
+        </div>
         <div className="principle-strip">
           <div className="wrap">
             <span>
@@ -333,8 +337,13 @@ export function Landing({ user }: { user: User | null }) {
             </div>
             <div className="rules-panel">
               <div className="rule-row">
-                <span>Coin reference value</span>
-                <strong>1 Coin = ₦1</strong>
+                <span>
+                  Referral reward
+                  <small>
+                    After a friend’s first qualifying funded delivery
+                  </small>
+                </span>
+                <strong>100 Coins</strong>
               </div>
               <div className="rule-row">
                 <span>
