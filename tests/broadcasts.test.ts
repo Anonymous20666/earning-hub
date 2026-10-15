@@ -661,7 +661,7 @@ test("ten paid campaigns count independently from their two legs; eleventh campa
     f.db.close();
   }
 });
-test("paid eligibility works above 100 groups and above the personal 200-membership resource limit", () => {
+test("paid eligibility works above 100 groups without changing paid campaign capacity", () => {
   const f = fixture(100);
   try {
     const groups = Array.from({ length: 205 }, (_, i) => ({

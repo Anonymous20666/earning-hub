@@ -63,9 +63,7 @@ test("earning pages show exact illustration, empty real inventory, and a real pe
   await expect(page.locator(".earning-result-amount strong")).toHaveText(
     "0.000",
   );
-  await page
-    .getByRole("button", { name: "Try the agreed four-group example" })
-    .click();
+  await page.getByRole("button", { name: "Try a four-group example" }).click();
   await expect(page.locator(".earning-result-amount strong")).toHaveText(
     "1.290",
   );

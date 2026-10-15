@@ -92,7 +92,8 @@ small {
   width: min(1240px, calc(100% - 96px));
   margin-inline: auto;
 }
-.button {
+.button,
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -110,11 +111,13 @@ small {
     transform 0.16s;
   white-space: nowrap;
 }
-.button:hover {
+.button:hover,
+.btn:hover {
   background: #24543b;
   transform: translateY(-1px);
 }
-.button svg {
+.button svg,
+.btn svg {
   width: 18px;
 }
 .button.small {
@@ -122,12 +125,14 @@ small {
   font-size: 13px;
   gap: 10px;
 }
-.button-outline {
-  background: transparent;
+.button-outline,
+.btn-outline {
+  background: #fff;
   color: var(--ink);
   border-color: #becbbe;
 }
-.button-outline:hover {
+.button-outline:hover,
+.btn-outline:hover {
   background: #edf3e8;
 }
 .button-white {

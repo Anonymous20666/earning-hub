@@ -501,7 +501,7 @@ export function EarningCalculator({
       qualifying.reduce((sum, n) => sum + Math.min(n, 1000), 0) *
       (mode === "DOUBLE" ? 2 : 1);
   return (
-    <>
+    <div className="earning-hub earning-calculator">
       <div className="workspace-banner">
         <Calculator size={23} />
         <div>
@@ -513,117 +513,131 @@ export function EarningCalculator({
         </div>
       </div>
       <div className="earning-calc-grid">
-        <section className="panel">
+        <section className="panel calculator-input-panel">
           <div className="panel-heading">
             <div>
               <span className="eyebrow">PLAN, DON’T GUESS</span>
               <h2>What would a broadcast earn?</h2>
             </div>
           </div>
-          <label htmlFor="member-counts">
-            Members in each unique qualifying group
-          </label>
-          <p className="field-help">
-            Enter one count per line or separate with commas. Assume posting is
-            allowed and remove shared groups first.
-          </p>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={!ownedGroups.some((g) => g.isMember && !g.excluded)}
-            onClick={() => {
-              const unique = [
-                ...new Map<string, any>(
-                  ownedGroups
-                    .filter((g) => g.isMember && !g.excluded)
-                    .map((g) => [g.groupJid, g]),
-                ).values(),
-              ];
-              setMembers(unique.map((g) => String(g.memberCount)).join("\n"));
-            }}
-          >
-            Use my connected groups
-          </button>
-          {!ownedGroups.length && (
+          <div className="calculator-field calculator-groups-field">
+            <label htmlFor="member-counts">
+              Members in each unique qualifying group
+            </label>
+            <p className="field-help" id="member-counts-help">
+              Enter one count per line or separate with commas. Assume posting
+              is allowed and remove shared groups first.
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={!ownedGroups.some((g) => g.isMember && !g.excluded)}
+              onClick={() => {
+                const unique = [
+                  ...new Map<string, any>(
+                    ownedGroups
+                      .filter((g) => g.isMember && !g.excluded)
+                      .map((g) => [g.groupJid, g]),
+                  ).values(),
+                ];
+                setMembers(unique.map((g) => String(g.memberCount)).join("\n"));
+              }}
+            >
+              Use my connected groups
+            </button>
+            {!ownedGroups.length && (
+              <p className="field-help">
+                Enter your groups manually, or{" "}
+                <a href="#/app/connections">connect WhatsApp</a> to import real
+                group counts. Shared groups are imported once.
+              </p>
+            )}
+            <textarea
+              id="member-counts"
+              rows={7}
+              maxLength={100000}
+              value={members}
+              onChange={(e) => setMembers(e.target.value)}
+              aria-describedby="member-counts-help"
+              placeholder="For example:\n100\n742\n1000"
+            />
+            <button
+              className="button button-outline calculator-small-example"
+              onClick={() => setMembers("256\n290\n466\n278")}
+            >
+              Try a four-group example
+            </button>
+            {!valid && (
+              <p role="alert" className="field-error">
+                Use whole member counts only, up to seven digits each.
+              </p>
+            )}
+          </div>
+          <div className="calculator-field">
+            <label htmlFor="earning-surface">Post type</label>
+            <select
+              id="earning-surface"
+              value={mode}
+              onChange={(e) => setMode(e.target.value)}
+            >
+              <option value="ALLSTATUS">Group status</option>
+              <option value="ALLCHAT">Group chat</option>
+              <option value="DOUBLE">Both — status and chat confirmed</option>
+            </select>
+          </div>
+          <div className="calculator-field">
+            <label htmlFor="daily-broadcasts">
+              Hypothetical broadcasts in one day
+            </label>
+            <select
+              id="daily-broadcasts"
+              value={broadcasts}
+              onChange={(e) => setBroadcasts(Number(e.target.value))}
+            >
+              {Array.from({ length: 10 }, (_, i) => (
+                <option key={i + 1} value={i + 1}>
+                  {i + 1}
+                </option>
+              ))}
+            </select>
             <p className="field-help">
-              Enter your groups manually, or{" "}
-              <a href="#/app/connections">connect WhatsApp</a> to import real
-              group counts. Shared groups are imported once.
+              Up to 10 is a capacity limit, not a promised schedule or
+              guaranteed demand.
             </p>
-          )}
-          <textarea
-            id="member-counts"
-            rows={7}
-            maxLength={100000}
-            value={members}
-            onChange={(e) => setMembers(e.target.value)}
-            placeholder="Enter your group member counts"
-          />
-          <button
-            className="text-link"
-            onClick={() => setMembers("256\n290\n466\n278")}
-          >
-            Try the agreed four-group example
-          </button>
-          {!valid && (
-            <p role="alert" className="field-error">
-              Use whole member counts only, up to seven digits each.
+          </div>
+          <fieldset className="calculator-examples">
+            <legend>Try a daily example</legend>
+            <p className="field-help">
+              These examples fill in the calculator. They are not promised jobs
+              or income.
             </p>
-          )}
-          <label htmlFor="earning-surface">Post type</label>
-          <select
-            id="earning-surface"
-            value={mode}
-            onChange={(e) => setMode(e.target.value)}
-          >
-            <option value="ALLSTATUS">Group status</option>
-            <option value="ALLCHAT">Group chat</option>
-            <option value="DOUBLE">Both — status and chat confirmed</option>
-          </select>
-          <button
-            type="button"
-            className="button button-outline potential-preset"
-            onClick={() => {
-              setMembers(
-                Array(DAILY_EARNING_EXAMPLE.groups)
-                  .fill(String(DAILY_EARNING_EXAMPLE.members))
-                  .join("\n"),
-              );
-              setBroadcasts(DAILY_EARNING_EXAMPLE.campaigns);
-              setMode("DOUBLE");
-            }}
-          >
-            Try the 1,000-Coin daily example
-          </button>
-          <button
-            type="button"
-            className="button button-outline potential-preset"
-            onClick={() => {
-              setMembers(Array(250).fill("1000").join("\n"));
-              setBroadcasts(10);
-              setMode("DOUBLE");
-            }}
-          >
-            Try the 5,000-Coin daily example
-          </button>
-          <label htmlFor="daily-broadcasts">
-            Hypothetical broadcasts in one day
-          </label>
-          <select
-            id="daily-broadcasts"
-            value={broadcasts}
-            onChange={(e) => setBroadcasts(Number(e.target.value))}
-          >
-            {Array.from({ length: 10 }, (_, i) => (
-              <option key={i + 1} value={i + 1}>
-                {i + 1}
-              </option>
-            ))}
-          </select>
-          <p className="field-help">
-            Up to 10 is a capacity limit, not a promised schedule or guaranteed
-            demand.
-          </p>
+            <button
+              type="button"
+              className="button button-outline potential-preset"
+              onClick={() => {
+                setMembers(
+                  Array(DAILY_EARNING_EXAMPLE.groups)
+                    .fill(String(DAILY_EARNING_EXAMPLE.members))
+                    .join("\n"),
+                );
+                setBroadcasts(DAILY_EARNING_EXAMPLE.campaigns);
+                setMode("DOUBLE");
+              }}
+            >
+              Try the 1,000-Coin daily example
+            </button>
+            <button
+              type="button"
+              className="button button-outline potential-preset"
+              onClick={() => {
+                setMembers(Array(250).fill("1000").join("\n"));
+                setBroadcasts(10);
+                setMode("DOUBLE");
+              }}
+            >
+              Try the 5,000-Coin daily example
+            </button>
+          </fieldset>
         </section>
         <section className="panel earning-result">
           <span className="eyebrow">ILLUSTRATION ONLY</span>
@@ -693,7 +707,7 @@ export function EarningCalculator({
           </p>
         </div>
       </section>
-    </>
+    </div>
   );
 }
 export function TreasuryPanel({ revision = 0 }: { revision?: number }) {

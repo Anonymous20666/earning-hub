@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import "./worker-experience.css";
+import "./mobile-polish.css";
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { failed: boolean }

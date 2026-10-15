@@ -206,7 +206,25 @@ test("choose number two or both; searchable owned-group skip checkboxes persist 
   await page
     .getByLabel("Your text or link")
     .fill("SYNTHETIC personal test; never transmitted");
-  await page.getByRole("button", { name: "Review & continue" }).click();
+  const reviewButton = page.getByRole("button", { name: "Review & continue" });
+  expect(
+    await reviewButton.evaluate((el) => {
+      const s = getComputedStyle(el);
+      return {
+        background: s.backgroundColor,
+        border: s.borderStyle,
+        height: el.getBoundingClientRect().height,
+      };
+    }),
+  ).toMatchObject({ background: "rgb(22, 62, 45)", border: "solid" });
+  expect((await reviewButton.boundingBox())!.height).toBeGreaterThanOrEqual(52);
+  await page
+    .locator(".composer-panel")
+    .screenshot({
+      path: `docs/screenshots/mobile-polish-write-${info.project.name}.png`,
+      scale: "css",
+    });
+  await reviewButton.click();
   await expect(
     page.getByRole("heading", { name: "Is everything correct?" }),
   ).toBeFocused();
@@ -219,6 +237,25 @@ test("choose number two or both; searchable owned-group skip checkboxes persist 
   await expect(
     page.getByText("Number 2 · 42 members · Ready · no earnings"),
   ).toBeVisible();
+  const postButton = page.getByRole("button", { name: "Post to all 1 groups" });
+  await page.getByRole("checkbox", { name: /I checked this post/ }).check();
+  await expect(postButton).toBeEnabled();
+  expect(
+    await postButton.evaluate((el) => getComputedStyle(el).backgroundColor),
+  ).toBe("rgb(22, 62, 45)");
+  expect((await postButton.boundingBox())!.height).toBeGreaterThanOrEqual(52);
+  await expect(page.locator(".composer-limit-note")).toContainText(
+    "No daily posting cap",
+  );
+  await expect(page.locator(".composer-limit-note")).not.toContainText(
+    /3 posts|60 seconds|200 groups/,
+  );
+  await page
+    .locator(".composer-panel")
+    .screenshot({
+      path: `docs/screenshots/mobile-polish-review-${info.project.name}.png`,
+      scale: "css",
+    });
   expect(prepared).toBe(1);
   expect(posts).toBe(0);
   expect(

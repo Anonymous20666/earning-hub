@@ -15,12 +15,8 @@ const plainError = (text: string) => {
     return "Your group list needs an update. Open My WhatsApp and tap Find my groups.";
   if (/group-admin approval|Surface permission/.test(text))
     return "This older queued post needs its original approval. Start a fresh personal review for native posting rules; removed groups remain blocked.";
-  if (/Wait at least one minute/.test(text))
-    return "Please wait 1 minute before sending another post.";
   if (/safe preview/.test(text))
     return "We could not make a preview for this link. Try another link, or turn off the preview option to send the plain link.";
-  if (/Daily|three runs per UTC/.test(text))
-    return "You have used today’s personal posts. Try again after midnight UTC (1am in Nigeria).";
   return text;
 };
 const friendlyState = (s: string) =>

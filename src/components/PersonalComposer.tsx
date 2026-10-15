@@ -741,9 +741,8 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
           </div>
         )}
         <p className="composer-limit-note">
-          Personal beta: {data?.limits?.dailyRuns ?? 3} posts per UTC day · wait{" "}
-          {data?.limits?.minGapSeconds ?? 60} seconds between posts · up to{" "}
-          {data?.limits?.maxGroups ?? 200} groups per post.
+          No daily posting cap or group-count limit. No one-minute wait between
+          posts. Sending is paced safely; WhatsApp’s own limits still apply.
         </p>
         {data && !data.configured && (
           <div className="notice warning">

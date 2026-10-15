@@ -43,10 +43,10 @@ try {
     }),
     page = await context.newPage();
   page.on("pageerror", (e) => errors.push(e.message));
-  await check("TLS health is v0.8.1", async () => {
+  await check("TLS health is v0.9.0", async () => {
     const r = await page.request.get(origin + "/api/health");
     assert.equal(r.status(), 200);
-    assert.equal((await r.json()).version, "0.8.1");
+    assert.equal((await r.json()).version, "0.9.0");
   });
   const status = await (await page.request.get(origin + "/api/status")).json();
   for (const key of [
@@ -405,7 +405,7 @@ try {
   }
 } finally {
   await fs.writeFile(
-    "docs/testing/worker-experience-domain-readonly.json",
+    "docs/testing/mobile-polish-domain-readonly.json",
     JSON.stringify(
       {
         origin,

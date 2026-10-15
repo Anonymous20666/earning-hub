@@ -2,6 +2,10 @@
 
 A **pre-launch** worker / advertiser marketplace with a real, server-backed account and planning foundation. A real **personal WhatsApp owner-testing pilot** is available when explicitly configured. Paid earning, paid dispatch and payments remain **off**.
 
+## Current mobile/posting update (v0.9.0)
+
+Review/Post now have real, touch-friendly button styling. The calculator has stacked, labeled, full-width controls on both public and signed-in routes. Personal posts no longer have the three/day, sixty-second gap or 200-group/run quotas; ownership, confirmation, safe pacing and WhatsApp restrictions remain. Paid limits and all money rules are unchanged. See [the correction and verification notes](docs/MOBILE-POLISH-0.9.0.md). Older release sections below describe their historical versions; current personal posting uses native membership/rights rather than an extra group-admin approval command.
+
 ## Easier use and small groups (v0.4.0)
 
 Small groups can receive approved posts without earning a paid reward below 100 members. Overview now guides users through My WhatsApp → Choose groups → Send a post. Plain language, larger controls, mobile group cards and a lightweight moving 3D-style landing scene make the main path easier to use. See [the change and validation notes](docs/EASY-USE-0.4.0.md). Paid dispatch and payouts remain off.

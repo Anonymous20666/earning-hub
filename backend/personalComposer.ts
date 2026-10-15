@@ -2,12 +2,7 @@ import { appendBroadcastEvent } from "./broadcastEvents";
 export { appendBroadcastEvent } from "./broadcastEvents";
 import { createHash, randomUUID } from "node:crypto";
 import { type Database, transaction } from "./database";
-import {
-  createPersonalRun,
-  PERSONAL_LIMITS,
-  surfaces,
-  type Mode,
-} from "./broadcasts";
+import { createPersonalRun, surfaces, type Mode } from "./broadcasts";
 import { safePreview, destination, type SafePreview } from "./safePreview";
 const now = () => new Date().toISOString();
 const get = (db: Database, sql: string, ...args: any[]): any =>
@@ -136,10 +131,6 @@ export function allPersonalPlan(
           "Skipped locked chat: only admins can post here; group status will still be attempted",
       });
   }
-  if (targets.length > PERSONAL_LIMITS.maxGroups)
-    throw Error(
-      `All-mode supports ${PERSONAL_LIMITS.maxGroups} groups in this beta. Add more groups to your ignore list before posting; no group was silently left out`,
-    );
   return {
     accountIds,
     targets,

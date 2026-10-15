@@ -82,7 +82,7 @@ test("Text/link -> many ignore links -> immutable review -> confirm -> real-even
       json: {
         configured: true,
         serverNow: at,
-        limits: { dailyRuns: 3, minGapSeconds: 60, maxGroups: 200 },
+        limits: { dailyRuns: null, minGapSeconds: 0, maxGroups: null },
         groups,
         ignoredGroups: ignored,
         runs: submits
@@ -308,7 +308,7 @@ test("Media upload contract retains its caption; invalid ignore link blocks revi
     r.fulfill({
       json: {
         configured: true,
-        limits: { dailyRuns: 3, minGapSeconds: 60, maxGroups: 200 },
+        limits: { dailyRuns: null, minGapSeconds: 0, maxGroups: null },
         groups,
         ignoredGroups: [],
         runs: [],

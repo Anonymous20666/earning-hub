@@ -90,7 +90,7 @@ test("overview guides a connected owner forward and approved small groups use au
     route.fulfill({
       json: {
         configured: true,
-        limits: { maxGroups: 200, dailyRuns: 3, minGapSeconds: 60 },
+        limits: { maxGroups: null, dailyRuns: null, minGapSeconds: 0 },
         assets: [],
         runs: [],
         groups: [42, 99].map((n) => ({

@@ -1,0 +1,269 @@
+/* Real control geometry, independent of hover and of the route wrapper. */
+.btn {
+  min-height: 48px;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: 0 3px 0 #102d231a;
+}
+.btn-primary {
+  background: var(--forest);
+  color: #fff;
+  border-color: var(--forest);
+}
+.btn-outline {
+  background: #fff;
+  color: var(--forest);
+  border-color: #6c836a;
+  box-shadow: 0 2px 0 #102d2310;
+}
+.btn:disabled,
+.button:disabled {
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.65;
+}
+.btn:focus-visible,
+.button:focus-visible {
+  outline: 3px solid #529667;
+  outline-offset: 4px;
+}
+.composer-actions .btn {
+  display: inline-flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 17px 24px;
+  min-height: 56px;
+  border-radius: 10px;
+  white-space: normal;
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.45;
+  flex-shrink: 0;
+}
+.composer-actions .btn-primary {
+  background: #163e2d;
+  color: #fff;
+  border: 1px solid #163e2d;
+  box-shadow: 0 4px 0 #102d2320;
+}
+.composer-actions .btn-outline {
+  background: #fff;
+  color: #163e2d;
+  border: 1px solid #6c836a;
+}
+.composer-actions .btn:disabled {
+  box-shadow: none;
+}
+.earning-calculator {
+  min-width: 0;
+  width: 100%;
+  margin-top: 24px;
+}
+.earning-calculator .workspace-banner {
+  margin-bottom: 24px;
+}
+.earning-calculator .earning-calc-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+.earning-calculator .earning-calc-grid > .panel {
+  min-width: 0;
+  max-width: 100%;
+  margin-bottom: 0;
+  padding: 28px;
+}
+.earning-calculator .calculator-input-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+.earning-calculator .calculator-input-panel > .panel-heading {
+  margin: 0;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.earning-calculator .calculator-input-panel .panel-heading h2 {
+  font-size: 23px;
+  line-height: 1.35;
+  margin-bottom: 0;
+}
+.calculator-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  min-width: 0;
+}
+.earning-calculator .calculator-field > label {
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.55;
+  margin: 0;
+  display: block;
+}
+.earning-calculator .calculator-field > .field-help {
+  margin: 0;
+  line-height: 1.8;
+  font-size: 13px;
+}
+.earning-calculator .calculator-field > textarea,
+.earning-calculator .calculator-field > select {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 0;
+  border-radius: 10px;
+  font-size: 16px;
+  line-height: 1.6;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1px solid #7c9072;
+}
+.earning-calculator .calculator-field > textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+.earning-calculator .calculator-field > select {
+  min-height: 54px;
+}
+.earning-calculator .calculator-field > .btn,
+.earning-calculator .calculator-field > .button {
+  display: flex;
+  min-height: 50px;
+  justify-content: center;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.5;
+  padding: 13px 17px;
+  max-width: 100%;
+  gap: 10px;
+}
+.earning-calculator .calculator-small-example {
+  font-size: 14px;
+}
+.calculator-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  border: 1px solid #d2ddc7;
+  background: #f6f8ef;
+  padding: 18px;
+  border-radius: 12px;
+  margin: 0;
+}
+.calculator-examples legend {
+  padding: 0 7px;
+  font-size: 15px;
+  font-weight: 650;
+  color: #2d4d33;
+}
+.earning-calculator .calculator-examples .field-help {
+  margin: 0;
+  line-height: 1.8;
+}
+.earning-calculator .calculator-examples .potential-preset {
+  margin: 0;
+  width: 100%;
+  min-height: 50px;
+  white-space: normal;
+  line-height: 1.5;
+  padding: 13px 16px;
+  font-size: 14px;
+  text-align: center;
+  gap: 8px;
+  background: #fff;
+}
+.earning-calculator .earning-result-amount {
+  padding-top: 26px;
+}
+.earning-calculator .earning-result-amount > strong {
+  font-size: clamp(32px, 4vw, 48px);
+  overflow-wrap: anywhere;
+}
+.earning-calculator .earning-result-rows p {
+  align-items: flex-start;
+  gap: 18px;
+  line-height: 1.7;
+}
+.earning-calculator .earning-formula {
+  font-size: 13px;
+  line-height: 1.9;
+}
+.earning-calculator .earning-rules {
+  margin-top: 26px;
+}
+@media (max-width: 1050px) {
+  .earning-calculator .earning-calc-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .earning-calculator .earning-calc-grid > .panel {
+    padding: 24px;
+  }
+}
+@media (max-width: 760px) {
+  .composer-actions {
+    width: 100%;
+    align-items: stretch;
+  }
+  .composer-actions .btn {
+    width: 100%;
+    min-height: 56px;
+    padding: 16px 20px;
+  }
+  .composer-actions > p {
+    width: 100%;
+  }
+  .earning-calculator {
+    margin-top: 22px;
+  }
+  .earning-calculator .earning-calc-grid {
+    gap: 22px;
+  }
+  .earning-calculator .earning-calc-grid > .panel {
+    padding: 22px 18px;
+  }
+  .earning-calculator .calculator-input-panel {
+    gap: 24px;
+  }
+  .earning-calculator .calculator-input-panel .panel-heading h2 {
+    font-size: 21px;
+  }
+  .calculator-examples {
+    padding: 16px 12px;
+  }
+  .earning-calculator .earning-result-rows p {
+    gap: 12px;
+  }
+  .earning-calculator .earning-result-rows p > strong {
+    flex-shrink: 0;
+  }
+  .earning-guide-page .guide-intro {
+    margin-bottom: 24px;
+  }
+  .earning-guide-page .notice {
+    margin-bottom: 22px;
+  }
+  .earning-calculator .coin-value {
+    margin-top: 20px;
+  }
+  .btn,
+  .button {
+    max-width: 100%;
+  }
+}
+
+.earning-calculator .calculator-field > .button,
+.earning-calculator .calculator-examples .button {
+  border-color: #6c836a;
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}

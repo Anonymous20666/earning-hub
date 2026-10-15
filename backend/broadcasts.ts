@@ -14,9 +14,9 @@ const get = (db: Database, sql: string, ...args: any[]): any =>
 const rows = (db: Database, sql: string, ...args: any[]): any[] =>
   db.prepare(sql).all(...args) as any[];
 export const PERSONAL_LIMITS = {
-  maxGroups: 200,
-  dailyRuns: 3,
-  minGapSeconds: 60,
+  maxGroups: null,
+  dailyRuns: null,
+  minGapSeconds: 0,
 };
 export type Mode = "ALLSTATUS" | "ALLCHAT" | "DOUBLE";
 export function surfaces(mode: Mode) {
@@ -109,14 +109,8 @@ function selected(
   paid = false,
   native = false,
 ) {
-  if (
-    !Array.isArray(targets) ||
-    !targets.length ||
-    (!paid && targets.length > PERSONAL_LIMITS.maxGroups)
-  )
-    throw Error(
-      `Select 1–${PERSONAL_LIMITS.maxGroups} group memberships per personal run`,
-    );
+  if (!Array.isArray(targets) || !targets.length)
+    throw Error("Choose at least one owned group membership");
   const unique = new Map<string, any>();
   for (const t of targets) {
     if (typeof t?.accountId !== "string" || typeof t?.groupJid !== "string")
@@ -305,25 +299,6 @@ export async function createPersonalRun(
       if (again.payload_hash !== digest) throw Error("Request ID already used");
       return { id: again.run_id, idempotent: true };
     }
-    const last = get(
-      db,
-      "SELECT created_at FROM broadcast_runs WHERE user_id=? AND purpose='PERSONAL' ORDER BY created_at DESC LIMIT 1",
-      user,
-    );
-    if (
-      last &&
-      Date.parse(last.created_at) >
-        Date.now() - PERSONAL_LIMITS.minGapSeconds * 1000
-    )
-      throw Error("Wait at least one minute between personal broadcasts");
-    const count = get(
-      db,
-      "SELECT COUNT(*) n FROM broadcast_runs WHERE user_id=? AND purpose='PERSONAL' AND substr(created_at,1,10)=?",
-      user,
-      now().slice(0, 10),
-    ).n;
-    if (count >= PERSONAL_LIMITS.dailyRuns)
-      throw Error("Personal beta limit reached: three runs per UTC day");
     if (
       asset &&
       !get(

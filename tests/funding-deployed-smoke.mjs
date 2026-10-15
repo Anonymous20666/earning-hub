@@ -17,9 +17,9 @@ try{
  await checked('TLS health is v0.2.0 pre-launch',async()=>{const r=await page.request.get(origin+'/api/health');assert.equal(r.status(),200);assert.equal((await r.json()).version,'0.2.0');});
  await checked('worker registration and protected session',async()=>{await signup(page);});
  await checked('secure HttpOnly same-site session cookie',async()=>{const c=(await ctx.cookies()).find(c=>c.name==='pappy_session');assert.ok(c?.httpOnly&&c.secure&&c.sameSite==='Lax');});
- await page.goto(origin+'/#/app/calculator');await page.getByRole('button',{name:'Try the agreed four-group example'}).waitFor();
+ await page.goto(origin+'/#/app/calculator');await page.getByRole('button',{name:'Try a four-group example'}).waitFor();
  await checked('calculator starts empty without artificial earnings',async()=>assert.equal(await page.locator('.earning-result-amount strong').textContent(),'0.000'));
- await checked('four agreed groups total exactly 1.290 Coins',async()=>{await page.getByRole('button',{name:'Try the agreed four-group example'}).click();await page.waitForFunction(()=>document.querySelector('.earning-result-amount strong')?.textContent==='1.290');});
+ await checked('four agreed groups total exactly 1.290 Coins',async()=>{await page.getByRole('button',{name:'Try a four-group example'}).click();await page.waitForFunction(()=>document.querySelector('.earning-result-amount strong')?.textContent==='1.290');});
  await checked('ten hypothetical broadcasts total 12.900 Coins',async()=>{await page.getByLabel('Hypothetical broadcasts in one day').selectOption('10');assert.match(await page.locator('.earning-result-rows').textContent(),/12.900 Coins/);});
  await page.screenshot({path:'docs/screenshots/funding-domain-1440-calculator.png',fullPage:true});
  await checked('calculator does not credit wallet',async()=>{const r=await page.request.get(origin+'/api/workspace');assert.equal((await r.json()).wallet.earned_milli,0);});

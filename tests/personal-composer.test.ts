@@ -6,6 +6,7 @@ import {
   recordProviderPairing,
   syncProviderInventory,
 } from "../backend/inventory";
+import { broadcastWorkspace } from "../backend/broadcasts";
 import {
   allPersonalPlan,
   personalAccountIds,
@@ -298,7 +299,7 @@ test("changed ignore lists or group permissions invalidate review rather than si
     f.close();
   }
 });
-test("expired reviews and deleted media cannot post; a second post rotates status colour but existing rate limits remain", async () => {
+test("expired reviews and deleted media cannot post; a back-to-back second post rotates status colour", async () => {
   const f = fixture();
   try {
     const d = await preparePersonalDraft(f.db, "owner", input());
@@ -327,15 +328,6 @@ test("expired reviews and deleted media cannot post; a second post rotates statu
           .get(r.id) as any
       ).background_color;
     const d3 = await preparePersonalDraft(f.db, "owner", input("Second post"));
-    await assert.rejects(
-      () => submitPersonalDraft(f.db, "owner", d3.draftId, true),
-      /minute/,
-    );
-    f.db
-      .prepare(
-        "UPDATE broadcast_runs SET created_at=datetime('now','-61 seconds')",
-      )
-      .run();
     const r2 = await submitPersonalDraft(f.db, "owner", d3.draftId, true);
     assert.notEqual(
       (
@@ -490,7 +482,7 @@ test("completed posts cannot be relabelled stopped; cancellation logs are durabl
     f.close();
   }
 });
-test("more than 200 eligible groups is an explicit error, never a silently truncated all-status run", () => {
+test("all-status includes every owned eligible group above the former 200-group cap", async () => {
   const f = fixture();
   try {
     f.db.prepare("DELETE FROM group_inventory").run();
@@ -525,11 +517,12 @@ test("more than 200 eligible groups is an explicit error, never a silently trunc
           "SYNTHETIC admin consent",
           new Date(Date.now() + 86400000).toISOString(),
         );
-    assert.throws(
-      () => allPersonalPlan(f.db, "owner", "ALLSTATUS"),
-      /no group was silently left out/,
-    );
-    assert.equal(placements(f.db).length, 0);
+    const plan = allPersonalPlan(f.db, "owner", "ALLSTATUS");
+    assert.equal(plan.targets.length, 201);
+    const draft = await preparePersonalDraft(f.db, "owner", input());
+    const run = await submitPersonalDraft(f.db, "owner", draft.draftId, true);
+    assert.equal(placements(f.db).length, 201);
+    assert.equal(personalRunFeed(f.db, "owner", run.id).summary.pending, 201);
   } finally {
     f.close();
   }
@@ -828,6 +821,66 @@ test("late provider errors correlate to account + group + actual wire ID; receip
     assert.equal(feed.summary.failed, 1);
     assert.equal(feed.summary.accepted, 1);
     assert.equal(feed.events.filter((e) => e.kind === "FAILED").length, 1);
+  } finally {
+    f.close();
+  }
+});
+
+test("personal posts have no daily run cap or sixty-second gap, retain confirmation/idempotency and never earn", async () => {
+  const f = fixture();
+  try {
+    const initial = f.db
+      .prepare("SELECT * FROM wallets ORDER BY user_id")
+      .all();
+    assert.deepEqual(broadcastWorkspace(f.db, "owner").limits, {
+      dailyRuns: null,
+      minGapSeconds: 0,
+      maxGroups: null,
+    });
+    const ids = new Set<string>();
+    for (let n = 0; n < 8; n++) {
+      const draft = await preparePersonalDraft(
+        f.db,
+        "owner",
+        input(`SYNTHETIC uncapped post ${n}`),
+      );
+      await assert.rejects(
+        () => submitPersonalDraft(f.db, "owner", draft.draftId, false),
+        /Confirm/,
+      );
+      const run = await submitPersonalDraft(f.db, "owner", draft.draftId, true);
+      ids.add(run.id);
+      assert.equal(
+        (await submitPersonalDraft(f.db, "owner", draft.draftId, true)).id,
+        run.id,
+      );
+    }
+    assert.equal(ids.size, 8);
+    assert.equal(placements(f.db).length, 16);
+    const timestamps = f.db
+      .prepare("SELECT created_at FROM broadcast_runs WHERE user_id='owner'")
+      .all() as any[];
+    assert.ok(
+      Math.max(...timestamps.map((r) => Date.parse(r.created_at))) -
+        Math.min(...timestamps.map((r) => Date.parse(r.created_at))) <
+        60000,
+    );
+    assert.deepEqual(
+      f.db.prepare("SELECT * FROM wallets ORDER BY user_id").all(),
+      initial,
+    );
+    assert.equal(
+      (f.db.prepare("SELECT COUNT(*) n FROM ledger").get() as any).n,
+      0,
+    );
+    assert.equal(
+      (
+        f.db
+          .prepare("SELECT dispatch_enabled FROM broadcast_settings")
+          .get() as any
+      ).dispatch_enabled,
+      0,
+    );
   } finally {
     f.close();
   }
