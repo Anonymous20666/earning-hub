@@ -1,15 +1,15 @@
 // Read-only public release verification. No registration, pairing, send, join or funding.
-import {chromium} from '@playwright/test';
+import {chromium,devices} from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 const origin='https://pappy-earnig-hub.duckdns.org',checks=[],errors=[];
 async function check(name,fn){await fn();checks.push({name,passed:true});}
-async function movingAfterFiveSeconds(page){await page.emulateMedia({reducedMotion:'no-preference'});await page.locator('.live-hero-scene').scrollIntoViewIfNeeded();await page.waitForFunction(()=>document.querySelector('.live-hero-scene')?.classList.contains('is-playing'));const frames=await page.locator('.scene-phone').evaluate(async el=>{await new Promise(resolve=>setTimeout(resolve,5500));const first=getComputedStyle(el).transform;await new Promise(resolve=>setTimeout(resolve,300));return {first,second:getComputedStyle(el).transform,state:getComputedStyle(el).animationPlayState};});assert.equal(frames.state,'running');assert.notEqual(frames.first,frames.second);}
+async function movingAfterFiveSeconds(page,normalPreferences=true){if(normalPreferences)await page.emulateMedia({reducedMotion:'no-preference'});await page.locator('.live-hero-scene').scrollIntoViewIfNeeded();await page.waitForFunction(()=>document.querySelector('.live-hero-scene')?.classList.contains('is-playing'));const frames=await page.locator('.scene-phone').evaluate(async el=>{await new Promise(resolve=>setTimeout(resolve,5500));const first=getComputedStyle(el).transform;await new Promise(resolve=>setTimeout(resolve,300));return {first,second:getComputedStyle(el).transform,state:getComputedStyle(el).animationPlayState,duration:getComputedStyle(el).animationDuration,iterations:getComputedStyle(el).animationIterationCount};});assert.equal(frames.state,'running');assert.equal(frames.duration,'6s');assert.equal(frames.iterations,'infinite');assert.notEqual(frames.first,frames.second);}
 
 const browser=await chromium.launch({headless:true});
 try{
  const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
- await check('TLS health is v0.6.1',async()=>{const r=await page.request.get(origin+'/api/health');assert.equal(r.status(),200);assert.equal((await r.json()).version,'0.6.1');});
+ await check('TLS health is v0.6.2',async()=>{const r=await page.request.get(origin+'/api/health');assert.equal(r.status(),200);assert.equal((await r.json()).version,'0.6.2');});
  const status=await (await page.request.get(origin+'/api/status')).json();
  for(const key of ['paidBroadcasts','queueWorkerActive','payments','payouts'])await check(key+' remains OFF',async()=>assert.equal(status[key],false));
  await check('personal pilot configured separately from paid dispatch',async()=>{assert.equal(status.whatsapp,true);assert.equal(status.personalBroadcasts,true);});
@@ -29,5 +29,14 @@ try{
  await check('mobile 3D is still actually moving after the old 4.5-second cutoff',async()=>movingAfterFiveSeconds(page));
  await check('protected composer directs unauthenticated visitors to login',async()=>{await page.goto(origin+'/#/app/broadcasts');await page.getByRole('button',{name:'Sign in',exact:true}).waitFor();assert.equal(await page.getByRole('button',{name:/Queue personal/}).count(),0);});
  await check('no uncaught public browser application error',async()=>assert.deepEqual(errors,[]));
-}finally{await fs.writeFile('docs/testing/motion-fix-domain-readonly.json',JSON.stringify({origin,at:new Date().toISOString(),checks,notes:'Read-only public verification; no accounts created, no phone entered, no pairing, messages, joining, deposits, earning or payouts.'},null,2));await browser.close();}
+ const android=await browser.newContext({...devices['Pixel 7']});
+ try{
+  await android.addInitScript(()=>Object.defineProperty(navigator,'connection',{configurable:true,value:{saveData:true,addEventListener(){},removeEventListener(){}}}));
+  const phone=await android.newPage(),androidErrors=[];phone.on('pageerror',e=>androidErrors.push(e.message));
+  await check('Chrome Android emulation: data-saving preference no longer blocks actual CSS motion',async()=>{await phone.emulateMedia({reducedMotion:'no-preference'});await phone.goto(origin);await movingAfterFiveSeconds(phone,false);});
+  await check('Chrome Android emulation: reduced-motion stays respected until explicit opt-in',async()=>{await phone.emulateMedia({reducedMotion:'reduce'});await phone.goto(origin+'/?motion=system');await phone.locator('.live-hero-scene').scrollIntoViewIfNeeded();await phone.waitForFunction(()=>document.querySelector('.live-hero-scene')?.classList.contains('is-paused'));assert.equal(await phone.locator('.scene-phone').evaluate(el=>getComputedStyle(el).animationName),'none');});
+  await check('Chrome Android emulation: explicit motion-on moves despite both simulated preferences',async()=>{await phone.goto(origin+'/?motion=on');await movingAfterFiveSeconds(phone,false);assert.equal(await phone.locator('.live-hero-scene').getAttribute('data-motion-preference'),'on');});
+  await check('Chrome Android emulation: enabled motion survives a fresh load without the query',async()=>{await phone.goto(origin);await movingAfterFiveSeconds(phone,false);assert.equal(await phone.locator('.live-hero-scene').getAttribute('data-motion-preference'),'on');assert.deepEqual(androidErrors,[]);});
+ }finally{await android.close();}
+}finally{await fs.writeFile('docs/testing/chrome-motion-domain-readonly.json',JSON.stringify({origin,at:new Date().toISOString(),checks,notes:'Read-only public verification; no accounts created, no phone entered, no pairing, messages, joining, deposits, earning or payouts.'},null,2));await browser.close();}
 console.log(JSON.stringify({passed:checks.length,accountsCreated:0,whatsappRequests:0}));

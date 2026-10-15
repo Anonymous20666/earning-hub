@@ -44,7 +44,9 @@ async function check(page: Page, route: string, project: string) {
   ).toEqual([]);
   await page.screenshot({
     path: `docs/screenshots/funding-${project}-${route}.png`,
-    fullPage: true,
+    // Treasury drafts accumulate across isolated QA runs; an unbounded high-DPR
+    // full-page bitmap can crash Chromium after all functional assertions pass.
+    fullPage: route !== "treasury",
   });
 }
 test("earning pages show exact illustration, empty real inventory, and a real pending referral through the share link", async ({

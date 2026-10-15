@@ -1,0 +1,32 @@
+{
+  "method": "Actual production with Chrome Pixel 7 emulation and explicit simulated device preferences; not a capture from the founder device",
+  "results": [
+    {
+      "configuration": "normal",
+      "className": "live-hero-scene is-playing",
+      "reducedMotion": false,
+      "saveData": false,
+      "first": "matrix3d(0.942258, 0.0892221, 0.322784, 0, -0.132044, 0.984752, 0.113258, 0, -0.307757, -0.14934, 0.939672, 0, -100, -166.091, 0, 1)",
+      "second": "matrix3d(0.959133, 0.0756738, 0.272648, 0, -0.118851, 0.982195, 0.14549, 0, -0.256784, -0.171948, 0.95105, 0, -100, -169.745, 0, 1)",
+      "animation": "scene-phone"
+    },
+    {
+      "configuration": "data-saving",
+      "className": "live-hero-scene is-paused",
+      "reducedMotion": false,
+      "saveData": true,
+      "first": "matrix3d(0.941801, 0.0895892, 0.324014, 0, -0.132361, 0.984804, 0.112435, 0, -0.309017, -0.148778, 0.939347, 0, -100, -166, 0, 1)",
+      "second": "matrix3d(0.941801, 0.0895892, 0.324014, 0, -0.132361, 0.984804, 0.112435, 0, -0.309017, -0.148778, 0.939347, 0, -100, -166, 0, 1)",
+      "animation": "scene-phone"
+    },
+    {
+      "configuration": "reduced-motion",
+      "className": "live-hero-scene is-paused",
+      "reducedMotion": true,
+      "saveData": false,
+      "first": "matrix3d(0.941801, 0.0895892, 0.324014, 0, -0.132361, 0.984804, 0.112435, 0, -0.309017, -0.148778, 0.939347, 0, -100, -166, 0, 1)",
+      "second": "matrix3d(0.941801, 0.0895892, 0.324014, 0, -0.132361, 0.984804, 0.112435, 0, -0.309017, -0.148778, 0.939347, 0, -100, -166, 0, 1)",
+      "animation": "none"
+    }
+  ]
+}

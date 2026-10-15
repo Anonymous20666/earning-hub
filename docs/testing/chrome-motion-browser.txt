@@ -1,0 +1,81 @@
+(node:45711) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 36 tests using 1 worker
+
+  ✓   1 [desktop] › tests/browser/easy-use.spec.ts:3:1 › landing has no design/playback controls; motion keeps running beyond five seconds, pauses offscreen and respects reduced motion (9.2s)
+  ✓   2 [desktop] › tests/browser/easy-use.spec.ts:65:1 › overview guides a connected owner forward and approved small groups use automatic targeting with no earnings (3.6s)
+(node:45724) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   3 [desktop] › tests/browser/extended.spec.ts:23:1 › worker subpages: accessibility, no horizontal overflow, keyboard dialog dismissal (4.9s)
+  ✓   4 [desktop] › tests/browser/extended.spec.ts:69:1 › admin UI is only reached by server-provisioned role in isolated QA database (5.3s)
+  ✓   5 [desktop] › tests/browser/funding-stage.spec.ts:50:1 › earning pages show exact illustration, empty real inventory, and a real pending referral through the share link (7.3s)
+  ✓   6 [desktop] › tests/browser/funding-stage.spec.ts:105:1 › isolated admin can save a real house draft but cannot allocate imaginary funding (4.3s)
+  ✓   7 [desktop] › tests/browser/international-menu.spec.ts:32:1 › desktop and mobile menu starts closed, traps focus when opened, closes by Escape, outside click and navigation (3.8s)
+  ✓   8 [desktop] › tests/browser/international-menu.spec.ts:103:1 › international Coins-first copy, honest daily example and calculator agree without creating an earning balance (3.4s)
+  ✓   9 [desktop] › tests/browser/journeys.spec.ts:40:1 › landing, navigation, FAQs and honest service status (1.9s)
+  ✓  10 [desktop] › tests/browser/journeys.spec.ts:78:1 › worker registration, persistence, wallet, support, settings, logout and login (8.3s)
+  ✓  11 [desktop] › tests/browser/journeys.spec.ts:171:1 › advertiser creates, estimates, edits and deletes a persisted draft (4.3s)
+  ✓  12 [desktop] › tests/browser/journeys.spec.ts:228:1 › auth validation, password visibility and truthful reset state (1.6s)
+  ✓  13 [desktop] › tests/browser/journeys.spec.ts:262:1 › WCAG automated checks: landing, auth, workspace and campaign dialog (4.5s)
+  ✓  14 [desktop] › tests/browser/personal-composer.spec.ts:57:1 › Text/link -> many ignore links -> immutable review -> confirm -> real-event contract console, with reload but no resend (7.0s)
+  ✓  15 [desktop] › tests/browser/personal-composer.spec.ts:300:1 › Media upload contract retains its caption; invalid ignore link blocks review without sending (3.5s)
+  ✓  16 [desktop] › tests/browser/plogme.spec.ts:14:1 › private pairing and personal composer are accessible, responsive and never simulate a number or delivery (5.4s)
+  ✓  17 [mobile] › tests/browser/easy-use.spec.ts:3:1 › landing has no design/playback controls; motion keeps running beyond five seconds, pauses offscreen and respects reduced motion (10.8s)
+  ✓  18 [mobile] › tests/browser/easy-use.spec.ts:65:1 › overview guides a connected owner forward and approved small groups use automatic targeting with no earnings (5.1s)
+(node:46494) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  19 [mobile] › tests/browser/extended.spec.ts:23:1 › worker subpages: accessibility, no horizontal overflow, keyboard dialog dismissal (4.9s)
+  ✓  20 [mobile] › tests/browser/extended.spec.ts:69:1 › admin UI is only reached by server-provisioned role in isolated QA database (5.1s)
+  ✓  21 [mobile] › tests/browser/funding-stage.spec.ts:50:1 › earning pages show exact illustration, empty real inventory, and a real pending referral through the share link (7.1s)
+  ✘  22 [mobile] › tests/browser/funding-stage.spec.ts:105:1 › isolated admin can save a real house draft but cannot allocate imaginary funding (5.4s)
+  ✓  23 [mobile] › tests/browser/international-menu.spec.ts:32:1 › desktop and mobile menu starts closed, traps focus when opened, closes by Escape, outside click and navigation (4.5s)
+  ✓  24 [mobile] › tests/browser/international-menu.spec.ts:103:1 › international Coins-first copy, honest daily example and calculator agree without creating an earning balance (3.8s)
+  ✓  25 [mobile] › tests/browser/journeys.spec.ts:40:1 › landing, navigation, FAQs and honest service status (3.3s)
+  ✓  26 [mobile] › tests/browser/journeys.spec.ts:78:1 › worker registration, persistence, wallet, support, settings, logout and login (9.8s)
+  ✓  27 [mobile] › tests/browser/journeys.spec.ts:171:1 › advertiser creates, estimates, edits and deletes a persisted draft (4.4s)
+  ✓  28 [mobile] › tests/browser/journeys.spec.ts:228:1 › auth validation, password visibility and truthful reset state (1.5s)
+  ✓  29 [mobile] › tests/browser/journeys.spec.ts:262:1 › WCAG automated checks: landing, auth, workspace and campaign dialog (4.2s)
+  ✓  30 [mobile] › tests/browser/personal-composer.spec.ts:57:1 › Text/link -> many ignore links -> immutable review -> confirm -> real-event contract console, with reload but no resend (8.7s)
+  ✓  31 [mobile] › tests/browser/personal-composer.spec.ts:300:1 › Media upload contract retains its caption; invalid ignore link blocks review without sending (3.0s)
+  ✓  32 [mobile] › tests/browser/plogme.spec.ts:14:1 › private pairing and personal composer are accessible, responsive and never simulate a number or delivery (5.0s)
+  ✓  33 [android-motion] › tests/browser/chrome-motion.spec.ts:37:1 › Chrome Android: data saving does not disable visible CSS movement, including beyond the old cutoff (8.5s)
+  ✓  34 [android-motion] › tests/browser/chrome-motion.spec.ts:65:1 › Chrome Android: explicit motion opt-in overrides reduced-motion CSS, survives restart and can return to system or off (5.4s)
+  ✓  35 [android-motion] › tests/browser/chrome-motion.spec.ts:103:1 › Chrome Android: explicit motion still works if browser storage is unavailable (2.2s)
+  ✓  36 [android-motion] › tests/browser/chrome-motion.spec.ts:123:1 › Chrome Android: scene starts without IntersectionObserver and supports legacy media-query listeners (2.3s)
+
+
+  1) [mobile] › tests/browser/funding-stage.spec.ts:105:1 › isolated admin can save a real house draft but cannot allocate imaginary funding 
+
+    Error: page.screenshot: Target crashed 
+    Call log:
+      - taking page screenshot
+      - waiting for fonts to load...
+      - fonts loaded
+
+
+      43 |     })),
+      44 |   ).toEqual([]);
+    > 45 |   await page.screenshot({
+         |              ^
+      46 |     path: `docs/screenshots/funding-${project}-${route}.png`,
+      47 |     fullPage: true,
+      48 |   });
+        at check (/home/user/earning-hub/tests/browser/funding-stage.spec.ts:45:14)
+        at /home/user/earning-hub/tests/browser/funding-stage.spec.ts:142:3
+
+    Error: browserContext._wrapApiCall: Target page, context or browser has been closed
+
+    Error Context: test-results/funding-stage-isolated-adm-da169--allocate-imaginary-funding-mobile/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/funding-stage-isolated-adm-da169--allocate-imaginary-funding-mobile/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/funding-stage-isolated-adm-da169--allocate-imaginary-funding-mobile/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [mobile] › tests/browser/funding-stage.spec.ts:105:1 › isolated admin can save a real house draft but cannot allocate imaginary funding 
+  35 passed (3.2m)

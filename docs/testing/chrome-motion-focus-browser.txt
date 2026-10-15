@@ -1,0 +1,11 @@
+
+Running 6 tests using 1 worker
+
+  ✓  1 [desktop] › tests/browser/easy-use.spec.ts:3:1 › landing has no design/playback controls; motion keeps running beyond five seconds, pauses offscreen and respects reduced motion (9.4s)
+  ✓  2 [mobile] › tests/browser/easy-use.spec.ts:3:1 › landing has no design/playback controls; motion keeps running beyond five seconds, pauses offscreen and respects reduced motion (10.5s)
+  ✓  3 [android-motion] › tests/browser/chrome-motion.spec.ts:37:1 › Chrome Android: data saving does not disable visible CSS movement, including beyond the old cutoff (8.3s)
+  ✓  4 [android-motion] › tests/browser/chrome-motion.spec.ts:65:1 › Chrome Android: explicit motion opt-in overrides reduced-motion CSS, survives restart and can return to system or off (5.3s)
+  ✓  5 [android-motion] › tests/browser/chrome-motion.spec.ts:103:1 › Chrome Android: explicit motion still works if browser storage is unavailable (2.3s)
+  ✓  6 [android-motion] › tests/browser/chrome-motion.spec.ts:123:1 › Chrome Android: scene starts without IntersectionObserver and supports legacy media-query listeners (2.2s)
+
+  6 passed (41.1s)

@@ -1,0 +1,13 @@
+(node:47644) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:47656) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [desktop] › tests/browser/funding-stage.spec.ts:107:1 › isolated admin can save a real house draft but cannot allocate imaginary funding (4.5s)
+(node:47757) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 [mobile] › tests/browser/funding-stage.spec.ts:107:1 › isolated admin can save a real house draft but cannot allocate imaginary funding (4.2s)
+
+  2 passed (10.7s)

@@ -12,10 +12,20 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    { name: "desktop", use: { viewport: { width: 1440, height: 1000 } } },
+    {
+      name: "desktop",
+      testIgnore: /chrome-motion\.spec\.ts/,
+      use: { viewport: { width: 1440, height: 1000 } },
+    },
     {
       name: "mobile",
+      testIgnore: /chrome-motion\.spec\.ts/,
       use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },
+    },
+    {
+      name: "android-motion",
+      testMatch: /chrome-motion\.spec\.ts/,
+      use: { ...devices["Pixel 7"], defaultBrowserType: "chromium" },
     },
   ],
 });

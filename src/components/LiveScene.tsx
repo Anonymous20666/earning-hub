@@ -1,25 +1,48 @@
 import React, { useEffect, useRef, useState } from "react";
 import { MessageCircle, Send, Check, Link2, Users } from "lucide-react";
+type MotionPreference = "system" | "on" | "off";
+const MOTION_PREFERENCE_KEY = "pappy.scene-motion.v1";
+function readMotionPreference(): MotionPreference {
+  const requested = new URLSearchParams(window.location.search).get("motion");
+  if (requested === "on" || requested === "off" || requested === "system") {
+    try {
+      if (requested === "system")
+        localStorage.removeItem(MOTION_PREFERENCE_KEY);
+      else localStorage.setItem(MOTION_PREFERENCE_KEY, requested);
+    } catch {
+      /* The explicit URL still works when browser storage is blocked. */
+    }
+    return requested;
+  }
+  try {
+    const saved = localStorage.getItem(MOTION_PREFERENCE_KEY);
+    if (saved === "on" || saved === "off") return saved;
+  } catch {
+    /* No stored preference: follow the device. */
+  }
+  return "system";
+}
 export function LiveScene() {
   const root = useRef<HTMLDivElement>(null);
-  const [moving, setMoving] = useState(
+  const [preference] = useState(readMotionPreference);
+  const [reducedMotion, setReducedMotion] = useState(
     () =>
-      !matchMedia("(prefers-reduced-motion: reduce)").matches &&
-      !(navigator as any).connection?.saveData,
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
   );
-  // Keep the scene moving while visible; pause for device preferences or hidden content.
+  // CSS motion downloads nothing: network data-saving must not disable this scene.
+  const moving =
+    preference === "on" || (preference === "system" && !reducedMotion);
   const [visible, setVisible] = useState(() => !document.hidden),
     [inView, setInView] = useState(true);
   useEffect(() => {
     const changed = () => setVisible(!document.hidden);
+    changed();
     document.addEventListener("visibilitychange", changed);
-    const reduced = matchMedia("(prefers-reduced-motion: reduce)"),
-      onReduced = () => {
-        setMoving(!reduced.matches && !(navigator as any).connection?.saveData);
-      };
-    reduced.addEventListener("change", onReduced);
-    const connection = (navigator as any).connection;
-    connection?.addEventListener?.("change", onReduced);
+    const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    const onReduced = () => setReducedMotion(reduced?.matches ?? false);
+    if (reduced?.addEventListener)
+      reduced.addEventListener("change", onReduced);
+    else reduced?.addListener(onReduced);
     const observer =
       typeof IntersectionObserver !== "undefined"
         ? new IntersectionObserver(([entry]) => setInView(entry.isIntersecting))
@@ -27,8 +50,9 @@ export function LiveScene() {
     if (root.current) observer?.observe(root.current);
     return () => {
       document.removeEventListener("visibilitychange", changed);
-      reduced.removeEventListener("change", onReduced);
-      connection?.removeEventListener?.("change", onReduced);
+      if (reduced?.removeEventListener)
+        reduced.removeEventListener("change", onReduced);
+      else reduced?.removeListener(onReduced);
       observer?.disconnect();
     };
   }, []);
@@ -36,6 +60,7 @@ export function LiveScene() {
     <div
       className={`live-hero-scene ${moving && visible && inView ? "is-playing" : "is-paused"}`}
       ref={root}
+      data-motion-preference={preference}
       aria-hidden="true"
     >
       <div className="scene-label">

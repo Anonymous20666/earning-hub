@@ -74,3 +74,7 @@ See `INTERNATIONAL-AND-MENU-0.6.0.md` for migration safeguards, verification and
 ## Continuous scene correction — v0.6.1
 
 The founder reported that the 3D scene stopped moving. The v0.6.0 4.5-second cutoff caused this, particularly before the scene entered a small mobile viewport. Removed that cutoff: animation continues while visible and resumes on re-entry, still respecting reduced-motion/data-saving preferences and hidden tabs. No playback buttons restored. See `MOTION-FIX-0.6.1.md`; manual motion-accessibility review remains a stated limitation, not a blanket WCAG claim.
+
+## Chrome Android follow-up — v0.6.2
+
+The founder still reported a static scene and identified Chrome on Android. Reproduced static cases in production Chrome Android emulation when the prior code received data-saving or reduced-motion flags; the founder's actual phone preferences remain unobserved. Removed the network-data-saving block, made movement more noticeable and switched animated individual transforms to combined transform keyframes. Explicit per-browser `/?motion=on` enables and remembers motion even when reduced motion is reported; `system` resets and `off` disables. Normal reduced-motion visitors are not globally overridden. The founder was supplied the opt-in link; physical-device confirmation is pending. See `CHROME-MOTION-0.6.2.md` for precise test outcomes, the bounded QA screenshot correction and unchanged financial/data safeguards.
