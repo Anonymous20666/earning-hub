@@ -1,0 +1,81 @@
+{
+  "version": "0.5.0",
+  "at": "2026-10-15T05:34:57.467545+00:00",
+  "origin": "https://pappy-earnig-hub.duckdns.org",
+  "deployment": "PASS",
+  "image": "sha256:d101d24a6e739c73f42358e9ab0240302bf63f73add7bf0e5103caae85964403",
+  "container": "109f71dd0ae6f7e8df54dec12e1f9f598492a4fb5cc50d34ba6c4e8872f84ac6",
+  "verifiedBackup": "/app/data/backups/pappy-2026-10-15T05-32-28-069Z.sqlite",
+  "rollbackContainer": "pappy-earning-hub-rollback-20261015T053226Z",
+  "validation": {
+    "lint": "PASS",
+    "productionBuild": "PASS",
+    "automatedTests": {
+      "total": 163,
+      "passed": 162,
+      "skipped": 1,
+      "failed": 0,
+      "skipReason": "Dedicated Redis integration is not configured"
+    },
+    "browser": {
+      "passed": 28,
+      "failed": 0,
+      "projects": [
+        "desktop",
+        "mobile"
+      ],
+      "scope": "Isolated QA; composer event/preview/upload display contracts use explicitly synthetic localhost fixtures, not delivery evidence"
+    },
+    "publicProduction": {
+      "passed": 27,
+      "accountsCreated": 0,
+      "messagesSentByAssistant": 0,
+      "groupJoinsByAssistant": 0
+    },
+    "livePublicMetadataProbe": {
+      "url": "https://github.com/",
+      "title": "GitHub \u00b7 Change is constant. GitHub keeps you ahead. \u00b7 GitHub",
+      "hasRealImage": true,
+      "previewType": 5,
+      "width": 1000,
+      "height": 525,
+      "jpegBytes": 49558,
+      "inlineJpegBytes": 7781,
+      "whatsappCalls": 0
+    }
+  },
+  "preservation": {
+    "unchangedWholeTableAndSlotFingerprints": 21,
+    "accountIdentity": {
+      "stableAccountIdentityPreserved": true,
+      "changedColumns": [
+        [
+          "connected_at",
+          "scanner_at"
+        ]
+      ],
+      "onlyExpectedReconnectTimesChanged": true
+    },
+    "connectionTimestampNote": "Initial broad account fingerprint included connected_at and therefore changed on reconnect. Compared every paired-account column against the verified pre-release backup: only connected_at and scanner_at refreshed; stable identity columns match. No data was rewritten to make the check pass.",
+    "persistentKeysUnchanged": true,
+    "keyFilePermissions": "600 root",
+    "encryptedAuthRetained": true,
+    "authEntries": 901,
+    "slotStates": [
+      {
+        "slot": 1,
+        "status": "ONLINE"
+      }
+    ],
+    "groups": {
+      "total": 2,
+      "current": 2,
+      "under100": 2
+    },
+    "foreignKeyErrors": 0,
+    "cashMilli": 0,
+    "paidDispatchEnabled": false,
+    "payoutsEnabled": false
+  },
+  "remainingOwnerValidation": "Real-device WhatsApp preview/status/media rendering and actual delivery have not been tested by sending a message. SDK acceptance is not delivery proof."
+}

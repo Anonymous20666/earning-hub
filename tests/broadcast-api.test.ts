@@ -1,3 +1,7 @@
+import {
+  recordProviderPairing,
+  syncProviderInventory,
+} from "../backend/inventory";
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -323,6 +327,221 @@ test("private MP4 validation and GIF conversion really execute ffprobe/ffmpeg, r
   } finally {
     fs.rmSync(mp4, { force: true });
     fs.rmSync(gif, { force: true });
+  }
+});
+test("automatic composer API enforces roles, CSRF, atomic owned ignores, immutable review, idempotency and private event feeds", async () => {
+  const group = "120363000000000081@g.us",
+    owner = worker.user.id,
+    account = recordProviderPairing(db, {
+      userId: owner,
+      slot: 1,
+      providerJid: "2348000000081@s.whatsapp.net",
+      hashKey: "a".repeat(64),
+    });
+  syncProviderInventory(
+    db,
+    account.id,
+    [
+      {
+        jid: group,
+        subject: "SYNTHETIC API group",
+        memberCount: 42,
+        announce: false,
+        userIsAdmin: true,
+      },
+    ],
+    true,
+  );
+  db.prepare(
+    "INSERT INTO broadcast_permissions VALUES(?,?,1,1,1,?,?,?,NULL)",
+  ).run(
+    account.id,
+    group,
+    "b".repeat(64),
+    "SYNTHETIC admin consent",
+    new Date(Date.now() + 86400000).toISOString(),
+  );
+  const original = manager.resolveIgnoreLink;
+  manager.resolveIgnoreLink = async (user, link) => {
+    assert.equal(user, owner);
+    if (link.includes("invalid")) throw Error("Invalid invite");
+    return {
+      group_jid: group,
+      subject: "SYNTHETIC API group",
+      invite_hash: "f".repeat(64),
+    };
+  };
+  try {
+    assert.equal(
+      (await req("/personal-posts/prepare", "POST", {}, advertiser)).status,
+      403,
+    );
+    assert.equal(
+      (
+        await req("/personal-posts/prepare", "POST", {}, worker, {
+          "X-CSRF-Token": "wrong",
+        })
+      ).status,
+      403,
+    );
+    assert.equal((await req("/personal-posts/unknown/events")).status, 401);
+    const before = db.prepare("SELECT * FROM wallets ORDER BY user_id").all();
+    assert.equal(
+      (
+        await req(
+          "/personal-posts/ignores",
+          "POST",
+          {
+            links: [
+              "https://chat.whatsapp.com/ABCDEFGHIJKLMNOPQRSTUV",
+              "https://chat.whatsapp.com/invalid",
+            ],
+          },
+          worker,
+        )
+      ).status,
+      400,
+    );
+    assert.equal(
+      (
+        db
+          .prepare("SELECT COUNT(*) n FROM personal_ignored_groups")
+          .get() as any
+      ).n,
+      0,
+    );
+    assert.equal(
+      (
+        await req(
+          "/personal-posts/ignores",
+          "POST",
+          { links: ["https://chat.whatsapp.com/ABCDEFGHIJKLMNOPQRSTUV"] },
+          worker,
+        )
+      ).status,
+      200,
+    );
+    await req(
+      "/personal-posts/ignores/remove",
+      "POST",
+      { groupJid: group },
+      other,
+    );
+    assert.equal(
+      (
+        db
+          .prepare(
+            "SELECT COUNT(*) n FROM personal_ignored_groups WHERE user_id=?",
+          )
+          .get(owner) as any
+      ).n,
+      1,
+    );
+    const ignored = await req(
+      "/personal-posts/prepare",
+      "POST",
+      { kind: "TEXT", mode: "ALLSTATUS", payload: "SYNTHETIC plain text" },
+      worker,
+    );
+    assert.equal(ignored.status, 200);
+    assert.equal(ignored.body.plan.targets.length, 0);
+    assert.equal(
+      (
+        await req(
+          "/personal-posts",
+          "POST",
+          { draftId: ignored.body.draftId, confirmed: true },
+          worker,
+        )
+      ).status,
+      400,
+    );
+    await req(
+      "/personal-posts/ignores/remove",
+      "POST",
+      { groupJid: group },
+      worker,
+    );
+    const draft = await req(
+      "/personal-posts/prepare",
+      "POST",
+      { kind: "TEXT", mode: "ALLSTATUS", payload: "SYNTHETIC plain text" },
+      worker,
+    );
+    assert.equal(draft.status, 200);
+    assert.equal(draft.body.plan.targets.length, 1);
+    assert.equal(
+      (
+        await req(
+          "/personal-posts",
+          "POST",
+          { draftId: draft.body.draftId, confirmed: false },
+          worker,
+        )
+      ).status,
+      400,
+    );
+    assert.equal(
+      (
+        await req(
+          "/personal-posts",
+          "POST",
+          { draftId: draft.body.draftId, confirmed: true },
+          other,
+        )
+      ).status,
+      400,
+    );
+    const first = await req(
+        "/personal-posts",
+        "POST",
+        { draftId: draft.body.draftId, confirmed: true },
+        worker,
+      ),
+      repeat = await req(
+        "/personal-posts",
+        "POST",
+        { draftId: draft.body.draftId, confirmed: true },
+        worker,
+      );
+    assert.equal(first.status, 201);
+    assert.equal(first.body.id, repeat.body.id);
+    const feed = await req(
+      `/personal-posts/${first.body.id}/events?after=0`,
+      "GET",
+      undefined,
+      worker,
+    );
+    assert.equal(feed.status, 200);
+    assert.equal(feed.body.events[0].kind, "QUEUED");
+    assert.equal(
+      (
+        await req(
+          `/personal-posts/${first.body.id}/events`,
+          "GET",
+          undefined,
+          other,
+        )
+      ).status,
+      404,
+    );
+    assert.equal(
+      (
+        await req(
+          `/personal-posts/${first.body.id}/events`,
+          "GET",
+          undefined,
+          advertiser,
+        )
+      ).status,
+      403,
+    );
+    assert.deepEqual(
+      db.prepare("SELECT * FROM wallets ORDER BY user_id").all(),
+      before,
+    );
+  } finally {
+    manager.resolveIgnoreLink = original;
   }
 });
 test.after(async () => {

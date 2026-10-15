@@ -1,3 +1,4 @@
+import { appendBroadcastEvent } from "./broadcastEvents";
 import { placementRewardMilli } from "../shared/earningRules";
 import { createHash, randomUUID } from "node:crypto";
 import { type Database, transaction } from "./database";
@@ -63,6 +64,12 @@ function treasury(
 export function broadcastWorkspace(db: Database, userId: string) {
   return {
     limits: PERSONAL_LIMITS,
+    serverNow: now(),
+    ignoredGroups: rows(
+      db,
+      "SELECT group_jid,subject FROM personal_ignored_groups WHERE user_id=? ORDER BY subject",
+      userId,
+    ),
     assets: rows(
       db,
       "SELECT id,mime,bytes,created_at FROM broadcast_assets WHERE user_id=? AND bytes>0 ORDER BY created_at DESC",
@@ -189,6 +196,7 @@ export async function createPersonalRun(
   user: string,
   input: any,
   previewer: typeof safePreview = safePreview,
+  onCreated?: (id: string) => void,
 ) {
   if (get(db, "SELECT role FROM users WHERE id=?", user)?.role !== "EARNER")
     throw Error("Worker account required");
@@ -206,7 +214,11 @@ export async function createPersonalRun(
     typeof input.requirePreview !== "boolean"
   )
     throw Error("Use a caption up to 2,000 characters and a preview policy");
-  const url = destination(input.targetUrl).href;
+  const url = input.targetUrl ? destination(input.targetUrl).href : "";
+  if (!url && !input.caption.trim() && !input.assetId)
+    throw Error("Write some text, paste a link or add media first");
+  if (!url && input.requirePreview)
+    throw Error("A link is needed for a link preview");
   const asset = input.assetId
     ? get(
         db,
@@ -250,7 +262,7 @@ export async function createPersonalRun(
   selected(db, user, input.targets, mode);
   let preview: any = null;
   try {
-    preview = await previewer(url);
+    if (url) preview = await previewer(url);
   } catch (e: any) {
     if (e?.code === "UNSAFE_DESTINATION") throw e;
     if (input.requirePreview)
@@ -315,6 +327,7 @@ export async function createPersonalRun(
       now(),
     );
     insertTargets(db, id, groups, mode, false);
+    onCreated?.(id);
     db.prepare("INSERT INTO broadcast_request_keys VALUES(?,?,?,?)").run(
       user,
       requestId,
@@ -596,15 +609,26 @@ export function cancelPersonalRun(db: Database, user: string, id: string) {
     user,
   );
   if (!run) throw Error("Personal broadcast not found");
-  transaction(db, () => {
-    db.prepare("UPDATE broadcast_runs SET status='CANCELLED' WHERE id=?").run(
-      id,
-    );
+  const stopped = transaction(db, () => {
+    const changed = db
+      .prepare(
+        "UPDATE broadcast_runs SET status='CANCELLED' WHERE id=? AND status IN('QUEUED','RUNNING')",
+      )
+      .run(id);
+    if (!changed.changes) return false;
     db.prepare(
       "UPDATE broadcast_placements SET status='CANCELLED',failure_reason='Owner cancelled before send' WHERE status='RESERVED' AND target_id IN(SELECT id FROM broadcast_targets WHERE run_id=?)",
     ).run(id);
+    appendBroadcastEvent(
+      db,
+      id,
+      "cancelled",
+      "CANCELLED",
+      "Stopped unsent posts. Already-started or uncertain sends are not labelled unsent.",
+    );
+    return true;
   });
-  return { success: true };
+  return { success: true, stopped };
 }
 export function textPlacement(
   surface: string,
@@ -612,9 +636,22 @@ export function textPlacement(
   url: string,
   preview: any,
 ) {
+  const existing = (caption.match(/https?:\/\/[^\s<>]+/gi) || []).some(
+    (raw) => {
+      try {
+        return new URL(raw.replace(/[.,!?;:)\]}]+$/, "")).href === url;
+      } catch {
+        return false;
+      }
+    },
+  );
   return {
-    text: `${caption}\n\n${url}`.trim(),
-    linkPreview: preview ? { ...preview, "matched-text": url } : null,
+    text: [caption.trim(), url && !existing ? url : ""]
+      .filter(Boolean)
+      .join("\n\n"),
+    linkPreview: preview
+      ? { ...preview, "matched-text": preview["matched-text"] || url }
+      : null,
     ...(surface === "GROUP_STATUS"
       ? { groupStatus: true }
       : { mentionAll: true }),

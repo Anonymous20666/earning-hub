@@ -55,13 +55,11 @@ export function Landing({ user }: { user: User | null }) {
     [audience, setAudience] = useState<"worker" | "advertiser">("worker");
   const scroll = (id: string) => {
     setMenu(false);
-    document
-      .getElementById(id)
-      ?.scrollIntoView({
-        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "auto"
-          : "smooth",
-      });
+    document.getElementById(id)?.scrollIntoView({
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
   };
   return (
     <div className="landing landing-v4">
@@ -114,7 +112,7 @@ export function Landing({ user }: { user: User | null }) {
               groups.
             </h1>
             <p className="hero-description">
-              Connect your number. Choose your groups.
+              Connect your number. Post to all permitted groups.
               <br className="desktop-break" /> Share your message—with
               permission.
             </p>
@@ -283,12 +281,12 @@ export function Landing({ user }: { user: User | null }) {
                       "Create an account. Open My WhatsApp and get a connection code. Enter it in your own WhatsApp app.",
                     ],
                     [
-                      "Choose your groups",
+                      "Check group permission",
                       "Tap Find my groups. Small groups are welcome. Ask the group admin for permission before posting.",
                     ],
                     [
                       "Send your post",
-                      "Open Send a post. Write your message, add a link and choose group status, group chat or both. Your own posts are free and do not earn Coins.",
+                      "Open Send a post. Choose Text or Media, then review and confirm. It goes to all permitted groups except your ignore list. Personal posts are free and earn no Coins.",
                     ],
                   ]
                 : [

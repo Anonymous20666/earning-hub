@@ -375,3 +375,167 @@ test("provider kick creates an owner-level block; scanning/rejoining does not cl
     await f.close();
   }
 });
+test("ignore invite lookup is strict, owner-scoped and never joins or imports a foreign group", async () => {
+  const f = fixture();
+  try {
+    const { id, sock } = await f.open();
+    await f.manager.scan("owner", id);
+    let lookups = 0,
+      joins = 0;
+    sock.groupGetInviteInfo = async (code: string) => {
+      lookups++;
+      assert.equal(code, "ABCDEFGHIJKLMNOPQRSTUV");
+      return { id: jid, subject: "SYNTHETIC group" };
+    };
+    sock.groupAcceptInvite = async () => {
+      joins++;
+      throw Error("Must never join");
+    };
+    const found = await f.manager.resolveIgnoreLink(
+      "owner",
+      "https://chat.whatsapp.com/ABCDEFGHIJKLMNOPQRSTUV?mode=ems_copy_t",
+    );
+    assert.equal(found.group_jid, jid);
+    assert.match(found.invite_hash, /^[a-f0-9]{64}$/);
+    for (const link of [
+      "http://chat.whatsapp.com/ABCDEFGHIJKLMNOPQRSTUV",
+      "https://chat.whatsapp.com.evil.example/ABCDEFGHIJKLMNOPQRSTUV",
+      "https://evil@chat.whatsapp.com/ABCDEFGHIJKLMNOPQRSTUV",
+      "https://chat.whatsapp.com:444/ABCDEFGHIJKLMNOPQRSTUV",
+      "https://chat.whatsapp.com/ABCDEFGHIJKLMNOPQRSTUV/extra",
+    ])
+      await assert.rejects(
+        () => f.manager.resolveIgnoreLink("owner", link),
+        /Use a group invite/,
+      );
+    await assert.rejects(
+      () =>
+        f.manager.resolveIgnoreLink(
+          "other",
+          "https://chat.whatsapp.com/ABCDEFGHIJKLMNOPQRSTUV",
+        ),
+      /not found/,
+    );
+    assert.equal(lookups, 1);
+    sock.groupGetInviteInfo = async () => ({ id: "120363000000999999@g.us" });
+    await assert.rejects(
+      () =>
+        f.manager.resolveIgnoreLink(
+          "owner",
+          "https://chat.whatsapp.com/ABCDEFGHIJKLMNOPQRSTUV",
+        ),
+      /not found/,
+    );
+    assert.equal(joins, 0);
+    assert.equal(
+      (
+        f.db
+          .prepare(
+            "SELECT COUNT(*) n FROM group_inventory WHERE group_jid='120363000000999999@g.us'",
+          )
+          .get() as any
+      ).n,
+      0,
+    );
+  } finally {
+    await f.close();
+  }
+});
+test("native link preview uses real JPEG buffers, thumbnail-link upload, per-socket cache and status options; original payload stays intact", async () => {
+  const f = fixture();
+  try {
+    const { sock, accountId } = await f.open();
+    let uploads = 0;
+    const messages: any[] = [];
+    sock.waUploadToServer = async () => {
+      throw Error("Synthetic tests never call a network upload");
+    };
+    f.lib.prepareWAMessageMedia = async (content: any, options: any) => {
+      uploads++;
+      assert.ok(Buffer.isBuffer(content.image));
+      assert.equal(options.mediaTypeOverride, "thumbnail-link");
+      assert.equal(options.upload, sock.waUploadToServer);
+      return {
+        imageMessage: {
+          directPath: "/synthetic",
+          width: 640,
+          height: 320,
+          mediaKey: Buffer.alloc(32),
+        },
+      };
+    };
+    sock.sendMessage = async (j: any, c: any, o: any) => {
+      messages.push({ j, c, o });
+      delete c.groupStatus;
+      return { key: { id: o.messageId } };
+    };
+    const body = {
+      text: "Title\n\nAttached text https://example.com/",
+      groupStatus: true,
+      backgroundColor: "#183C32",
+      font: 0,
+      linkPreview: {
+        "matched-text": "https://example.com/",
+        canonicalUrl: "https://example.com/",
+        title: "Title",
+        thumbnailBase64: Buffer.from("SYNTHETIC JPEG bytes").toString("base64"),
+        inlineThumbnailBase64: Buffer.from("SYNTHETIC small JPEG").toString(
+          "base64",
+        ),
+        thumbnailWidth: 640,
+        thumbnailHeight: 320,
+      },
+    };
+    const original = JSON.stringify(body);
+    await f.manager.send(accountId, jid, body, "SYNTHETIC-1");
+    await f.manager.send(accountId, jid, body, "SYNTHETIC-2");
+    assert.equal(uploads, 1);
+    assert.equal(JSON.stringify(body), original);
+    assert.equal(messages[0].o.backgroundColor, "#183C32");
+    assert.equal(messages[0].o.font, 0);
+    assert.ok(Buffer.isBuffer(messages[0].c.linkPreview.jpegThumbnail));
+    assert.equal(messages[0].c.linkPreview.previewType, 5);
+    assert.equal(
+      messages[0].c.linkPreview.highQualityThumbnail.directPath,
+      "/synthetic",
+    );
+    assert.equal(messages[0].c.linkPreview.thumbnailBase64, undefined);
+    assert.equal(messages[0].c.text, body.text);
+  } finally {
+    await f.close();
+  }
+});
+test("installed Plogme 2.1.0 encodes the adapted image preview and status background fields without any connection", async () => {
+  const { generateWAMessageContent } = (await import("plogme")) as any;
+  const bytes = Buffer.from([255, 216, 255, 217]),
+    content = await generateWAMessageContent(
+      {
+        text: "Caption https://example.com/",
+        linkPreview: {
+          "matched-text": "https://example.com/",
+          title: "Real title",
+          description: "Description",
+          jpegThumbnail: bytes,
+          previewType: 5,
+          highQualityThumbnail: {
+            directPath: "/SYNTHETIC",
+            mediaKey: Buffer.alloc(32),
+            fileSha256: Buffer.alloc(32, 1),
+            fileEncSha256: Buffer.alloc(32, 2),
+            width: 640,
+            height: 320,
+          },
+        },
+      } as any,
+      { backgroundColor: "#183C32", font: 0 } as any,
+    );
+  const ext = content.extendedTextMessage!;
+  assert.equal(ext.matchedText, "https://example.com/");
+  assert.equal(ext.title, "Real title");
+  assert.equal(ext.previewType, 5);
+  assert.equal(ext.thumbnailDirectPath, "/SYNTHETIC");
+  assert.equal(ext.thumbnailWidth, 640);
+  assert.equal(ext.thumbnailHeight, 320);
+  assert.equal(ext.backgroundArgb! >>> 0, 0xff183c32);
+  assert.deepEqual(Buffer.from(ext.jpegThumbnail!), bytes);
+});

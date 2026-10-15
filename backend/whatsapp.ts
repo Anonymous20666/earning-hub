@@ -699,8 +699,135 @@ export class WhatsAppManager {
         .run(stamp(), r.id);
     });
   }
+  private previewUploads = new WeakMap<
+    object,
+    Map<string, { at: number; promise: Promise<any> }>
+  >();
+  private async inviteInfoWithDeadline(sock: any, code: string) {
+    let timer: ReturnType<typeof setTimeout>;
+    return Promise.race([
+      sock.groupGetInviteInfo(code),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(Error("Invite lookup timed out")),
+          5000,
+        );
+      }),
+    ]).finally(() => clearTimeout(timer));
+  }
+  async resolveIgnoreLink(user: string, link: string) {
+    let u: URL;
+    try {
+      u = new URL(link);
+    } catch {
+      throw Error("Paste a full WhatsApp group invite link");
+    }
+    const code = u.pathname.split("/").filter(Boolean)[0];
+    if (
+      u.protocol !== "https:" ||
+      u.hostname !== "chat.whatsapp.com" ||
+      u.username ||
+      u.password ||
+      u.port ||
+      !code ||
+      !/^[A-Za-z0-9_-]{16,64}$/.test(code) ||
+      u.pathname.split("/").filter(Boolean).length !== 1
+    )
+      throw Error(
+        "Use a group invite link beginning https://chat.whatsapp.com/",
+      );
+    const owned = this.db
+      .prepare(
+        "SELECT account_id FROM wa_slots WHERE user_id=? AND status='ONLINE'",
+      )
+      .all(user) as any[];
+    for (const a of owned) {
+      try {
+        const sock = this.socket(a.account_id),
+          metadata = await this.inviteInfoWithDeadline(sock, code);
+        const g = this.db
+          .prepare(
+            "SELECT g.group_jid,g.subject FROM group_inventory g JOIN paired_accounts a ON a.id=g.account_id WHERE a.user_id=? AND g.group_jid=? AND g.is_member=1 LIMIT 1",
+          )
+          .get(user, metadata.id) as any;
+        if (g)
+          return {
+            ...g,
+            invite_hash: createHash("sha256").update(code).digest("hex"),
+          };
+      } catch {
+        /* A lookup never joins a group and never bypasses owner inventory. */
+      }
+    }
+    throw Error(
+      "This invite was not found among your connected groups. Check the link and update your groups",
+    );
+  }
   async send(accountId: string, jid: string, content: any, messageId: string) {
-    return this.socket(accountId).sendMessage(jid, content, { messageId });
+    const sock = this.socket(accountId),
+      payload = { ...content },
+      options: any = { messageId };
+    if (payload.groupStatus && typeof payload.text === "string") {
+      if (payload.backgroundColor)
+        options.backgroundColor = payload.backgroundColor;
+      if (payload.font !== undefined) options.font = payload.font;
+    }
+    if (payload.linkPreview?.thumbnailBase64) {
+      const info = { ...payload.linkPreview },
+        bytes = Buffer.from(info.thumbnailBase64, "base64");
+      delete info.thumbnailBase64;
+      info.jpegThumbnail = info.inlineThumbnailBase64
+        ? Buffer.from(info.inlineThumbnailBase64, "base64")
+        : bytes;
+      delete info.inlineThumbnailBase64;
+      info.matchedText = info["matched-text"];
+      info["canonical-url"] = info.canonicalUrl;
+      info.previewType = 5;
+      const p = await this.lib();
+      if (
+        typeof sock.waUploadToServer === "function" &&
+        typeof p.prepareWAMessageMedia === "function"
+      ) {
+        const key = createHash("sha256").update(bytes).digest("hex");
+        let cache = this.previewUploads.get(sock);
+        if (!cache) {
+          cache = new Map();
+          this.previewUploads.set(sock, cache);
+        }
+        if ((cache.get(key)?.at || 0) < Date.now() - 5 * 60000)
+          cache.delete(key);
+        if (!cache.has(key)) {
+          if (cache.size >= 30) cache.clear();
+          cache.set(key, {
+            at: Date.now(),
+            promise: p
+              .prepareWAMessageMedia(
+                { image: bytes },
+                {
+                  upload: sock.waUploadToServer,
+                  mediaTypeOverride: "thumbnail-link",
+                  mediaUploadTimeoutMs: 15000,
+                },
+              )
+              .then((m: any) => m.imageMessage)
+              .catch(() => undefined),
+          });
+        }
+        const image = await cache.get(key)!.promise;
+        if (image)
+          info.highQualityThumbnail = {
+            ...image,
+            width: info.thumbnailWidth || image.width,
+            height: info.thumbnailHeight || image.height,
+          };
+        else cache.delete(key);
+      }
+
+      delete info.thumbnailWidth;
+      delete info.thumbnailHeight;
+      payload.linkPreview = info;
+    }
+    return sock.sendMessage(jid, payload, options);
   }
   async messageId(accountId: string) {
     const p = await this.lib();
@@ -729,6 +856,7 @@ export class WhatsAppManager {
   }
   async close() {
     this.closing = true;
+    this.previewUploads = new WeakMap();
     for (const [id, r] of this.live) {
       if (r.timer) clearTimeout(r.timer);
       r.socket?.end(new Error("Service stopping"));

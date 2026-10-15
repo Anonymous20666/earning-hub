@@ -289,7 +289,7 @@ export function Workspace({
     overview: [
       `Welcome to Pappy.`,
       worker
-        ? "Connect WhatsApp, choose your groups and send a post."
+        ? "Connect WhatsApp, write a post and share with all permitted groups."
         : "Turn a clear idea into a thoughtfully planned campaign.",
     ],
     wallet: [

@@ -1,3 +1,4 @@
+import { migratePersonalSchema } from "./personalSchema";
 import { migrateBroadcastSchema } from "./broadcastSchema";
 import { migrateEarningSchema } from "./earningSchema";
 import { DatabaseSync } from "node:sqlite";
@@ -50,6 +51,7 @@ export function openDatabase(filename: string) {
   `);
   migrateEarningSchema(db);
   migrateBroadcastSchema(db);
+  migratePersonalSchema(db);
   return db;
 }
 export type Database = ReturnType<typeof openDatabase>;

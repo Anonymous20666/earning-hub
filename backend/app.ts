@@ -1,3 +1,8 @@
+import {
+  preparePersonalDraft,
+  submitPersonalDraft,
+  personalRunFeed,
+} from "./personalComposer";
 import fs from "node:fs";
 import path from "node:path";
 import type { WhatsAppManager } from "./whatsapp";
@@ -234,7 +239,7 @@ export function createApp(
       Promise.resolve(fn(req, res, next)).catch(next);
   app.get("/api/health", (_req, res) => {
     db.prepare("SELECT 1").get();
-    res.json({ status: "ok", version: "0.4.0", mode: "pre-launch" });
+    res.json({ status: "ok", version: "0.5.0", mode: "pre-launch" });
   });
   app.get("/api/status", (_req, res) =>
     res.json({
@@ -680,6 +685,177 @@ export function createApp(
       res.json({ success: true });
     },
   );
+  const composeLimiter = rateLimit({
+    windowMs: 60000,
+    limit: 12,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    keyGenerator: (req: any) => req.account.id,
+    message: { error: "Please wait a minute before trying again" },
+  });
+  const composerBusy = new Set<string>();
+  app.post(
+    "/api/personal-posts/ignores",
+    protectedRoute,
+    role("EARNER"),
+    composeLimiter,
+    asyncRoute(async (req: any, res: express.Response) => {
+      if (!integration(res)) return;
+      try {
+        const links = req.body.links;
+        if (
+          !Array.isArray(links) ||
+          !links.length ||
+          links.length > 50 ||
+          links.some((x) => typeof x !== "string" || x.length > 300)
+        )
+          throw Error("Add between 1 and 50 group invite links");
+        if (composerBusy.has(req.account.id) || composerBusy.size >= 2)
+          throw Error("Your previous request is still running");
+        composerBusy.add(req.account.id);
+        const matches: any[] = [];
+        try {
+          for (const slot of db
+            .prepare(
+              "SELECT id FROM wa_slots WHERE user_id=? AND status='ONLINE'",
+            )
+            .all(req.account.id) as any[])
+            await wa!.scan(req.account.id, slot.id);
+          for (const link of [...new Set<string>(links)])
+            matches.push(
+              await wa!.resolveIgnoreLink(req.account.id, link.trim()),
+            );
+        } finally {
+          composerBusy.delete(req.account.id);
+        }
+        transaction(db, () => {
+          for (const g of matches)
+            db.prepare(
+              "INSERT INTO personal_ignored_groups VALUES(?,?,?,?,?) ON CONFLICT(user_id,group_jid) DO UPDATE SET subject=excluded.subject,invite_hash=excluded.invite_hash",
+            ).run(
+              req.account.id,
+              g.group_jid,
+              g.subject,
+              g.invite_hash,
+              new Date().toISOString(),
+            );
+          if (
+            (
+              db
+                .prepare(
+                  "SELECT COUNT(*) n FROM personal_ignored_groups WHERE user_id=?",
+                )
+                .get(req.account.id) as any
+            ).n > 200
+          )
+            throw Error("Maximum 200 saved ignored groups");
+        });
+        res.json({
+          ignored: matches.map((g) => ({
+            groupJid: g.group_jid,
+            subject: g.subject,
+          })),
+        });
+      } catch (e: any) {
+        res.status(400).json({ error: e.message });
+      }
+    }),
+  );
+  app.post(
+    "/api/personal-posts/ignores/remove",
+    protectedRoute,
+    role("EARNER"),
+    (req: any, res) => {
+      db.prepare(
+        "DELETE FROM personal_ignored_groups WHERE user_id=? AND group_jid=?",
+      ).run(
+        req.account.id,
+        typeof req.body.groupJid === "string" ? req.body.groupJid : "",
+      );
+      res.json({ success: true });
+    },
+  );
+  app.post(
+    "/api/personal-posts/prepare",
+    protectedRoute,
+    role("EARNER"),
+    composeLimiter,
+    asyncRoute(async (req: any, res: express.Response) => {
+      if (!integration(res)) return;
+      if (composerBusy.has(req.account.id) || composerBusy.size >= 2) {
+        res.status(429).json({
+          error: "Another post is being prepared. Please try again shortly",
+        });
+        return;
+      }
+      composerBusy.add(req.account.id);
+      try {
+        for (const slot of db
+          .prepare(
+            "SELECT id,account_id FROM wa_slots WHERE user_id=? AND status='ONLINE'",
+          )
+          .all(req.account.id) as any[]) {
+          await wa!.scan(req.account.id, slot.id);
+        }
+        res.json(
+          await preparePersonalDraft(
+            db,
+            req.account.id,
+            req.body,
+            options.personalPreviewer,
+          ),
+        );
+      } catch (e: any) {
+        res.status(400).json({ error: e.message });
+      } finally {
+        composerBusy.delete(req.account.id);
+      }
+    }),
+  );
+  app.post(
+    "/api/personal-posts",
+    protectedRoute,
+    role("EARNER"),
+    asyncRoute(async (req: any, res: express.Response) => {
+      if (!integration(res)) return;
+      try {
+        if (typeof req.body.draftId !== "string")
+          throw Error("Review your post first");
+        res
+          .status(201)
+          .json(
+            await submitPersonalDraft(
+              db,
+              req.account.id,
+              req.body.draftId,
+              req.body.confirmed,
+            ),
+          );
+      } catch (e: any) {
+        res.status(400).json({ error: e.message });
+      }
+    }),
+  );
+  app.get(
+    "/api/personal-posts/:id/events",
+    protectedRoute,
+    role("EARNER"),
+    (req: any, res) => {
+      res.setHeader("Cache-Control", "no-store");
+      try {
+        res.json(
+          personalRunFeed(
+            db,
+            req.account.id,
+            req.params.id,
+            Number(req.query.after || 0),
+          ),
+        );
+      } catch {
+        res.status(404).json({ error: "Post not found" });
+      }
+    },
+  );
   app.get("/api/broadcasts", protectedRoute, role("EARNER"), (req: any, res) =>
     res.json({ ...broadcastWorkspace(db, req.account.id), configured: !!wa }),
   );
@@ -725,7 +901,8 @@ export function createApp(
     role("EARNER"),
     (req: any, res) => {
       try {
-        res.json(cancelPersonalRun(db, req.account.id, req.params.id));
+        const cancelled = cancelPersonalRun(db, req.account.id, req.params.id);
+        res.json(cancelled);
       } catch {
         res.status(404).json({ error: "Personal broadcast not found" });
       }

@@ -78,9 +78,9 @@ test("private pairing and personal composer are accessible, responsive and never
     }),
   ).toHaveAttribute("aria-pressed", "true");
   await expect(
-    page.getByRole("button", { name: "Send my post to 0 groups" }),
+    page.getByRole("button", { name: "Review & continue" }),
   ).toBeDisabled();
-  await expect(page.getByText("No groups found yet.")).toBeVisible();
+  await expect(page.getByText(/No groups found yet./)).toBeVisible();
   expect(
     (
       await new AxeBuilder({ page })

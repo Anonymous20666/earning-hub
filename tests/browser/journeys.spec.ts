@@ -161,7 +161,9 @@ test("worker registration, persistence, wallet, support, settings, logout and lo
     page.getByRole("heading", { name: "Welcome to Pappy." }),
   ).toBeVisible();
   await page.context().clearCookies();
-  await page.getByRole("button", { name: "Refresh", exact: true }).click();
+  // Background owner-state checks may already navigate to login after cookie removal.
+  // Reload validates the missing session deterministically, without racing a detached button.
+  await page.reload();
   await expect(
     page.getByRole("heading", { name: "A little closer to possibility." }),
   ).toBeVisible();

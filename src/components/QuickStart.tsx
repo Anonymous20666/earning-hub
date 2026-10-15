@@ -47,7 +47,7 @@ export function QuickStart({ revision = 0 }: { revision?: number }) {
       ? "Find my groups"
       : approved
         ? "Send a post"
-        : "Choose my groups";
+        : "Check group permission";
   const link = !online || !unique ? "#/app/connections" : "#/app/broadcasts";
   return (
     <section className="quick-start" aria-labelledby="quick-start-title">
@@ -66,7 +66,7 @@ export function QuickStart({ revision = 0 }: { revision?: number }) {
               ? error || "Checking your connection…"
               : online
                 ? `${unique} ${unique === 1 ? "group found" : "groups found"}. You can send your own posts for free.`
-                : "Link your own number. Then choose the groups you want to post to."}
+                : "Link your own number. Posts go to all permitted groups automatically."}
           </p>
         </div>
         <span className={`quick-status ${online ? "connected" : ""}`}>
@@ -89,7 +89,7 @@ export function QuickStart({ revision = 0 }: { revision?: number }) {
           {
             n: 2,
             icon: Users,
-            title: "Choose your groups",
+            title: "Check group permission",
             text: unique
               ? `${unique} found. Ask the group admin for permission.`
               : "Find your groups and get the admin’s permission.",
@@ -100,7 +100,7 @@ export function QuickStart({ revision = 0 }: { revision?: number }) {
             n: 3,
             icon: Send,
             title: "Send your post",
-            text: "Write a message, add a link and choose where it goes.",
+            text: "Choose Text or Media. Review, confirm and watch it post.",
             href: "#/app/broadcasts",
             done: false,
           },

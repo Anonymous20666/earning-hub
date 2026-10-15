@@ -53,7 +53,7 @@ test("landing motion can be paused, respects reduced motion and does not create 
     fullPage: true,
   });
 });
-test("overview guides a connected owner forward and approved small groups stay selectable with no earnings", async ({
+test("overview guides a connected owner forward and approved small groups use automatic targeting with no earnings", async ({
   page,
   baseURL,
 }, info) => {
@@ -150,16 +150,10 @@ test("overview guides a connected owner forward and approved small groups stay s
   await expect(
     page.getByRole("heading", { name: "Send a post to your groups." }),
   ).toBeVisible();
-  const small = page.getByRole("checkbox", {
-    name: "Select SYNTHETIC small group 42 on number 1",
-  });
-  await expect(small).toBeEnabled();
-  await small.check();
-  await expect(small).toBeChecked();
-  await expect(
-    page.getByRole("button", { name: "Send my post to 1 group", exact: true }),
-  ).toBeEnabled();
-  await expect(page.getByText("Can get posts · no paid reward")).toHaveCount(2);
+  await expect(page.getByRole('checkbox',{name:/Select SYNTHETIC/})).toHaveCount(0);
+  await page.getByLabel('Your text or link').fill('SYNTHETIC personal text only');
+  await expect(page.getByRole('button',{name:'Review & continue'})).toBeEnabled();
+  await expect(page.getByText(/All connected groups with the right admin permission/)).toBeVisible();
   expect(
     (
       await new AxeBuilder({ page })

@@ -1,14 +1,53 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { Database } from "./database";
-import { transaction } from "./database";
+import { transaction, type Database } from "./database";
+import { STATUS_COLORS } from "./personalComposer";
 import { textPlacement, validPermission } from "./broadcasts";
+import { appendBroadcastEvent } from "./personalComposer";
 import type { WhatsAppManager } from "./whatsapp";
 export type PersonalTransport = Pick<
   WhatsAppManager,
   "refreshGroup" | "messageId" | "send"
 >;
 const stamp = () => new Date().toISOString();
+function finish(db: Database, run: string) {
+  const changed = db
+    .prepare(
+      `UPDATE broadcast_runs SET status='FINISHED' WHERE id=? AND status IN('RUNNING','QUEUED') AND NOT EXISTS(SELECT 1 FROM broadcast_targets t JOIN broadcast_placements p ON p.target_id=t.id WHERE t.run_id=? AND p.status IN('RESERVED','SENDING'))`,
+    )
+    .run(run, run);
+  if (changed.changes) {
+    const c = db
+      .prepare(
+        `SELECT SUM(p.status IN('ACCEPTED','CONFIRMED')) accepted,SUM(p.status='FAILED') failed,SUM(p.status='UNKNOWN') uncertain,SUM(p.status='CANCELLED') skipped FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id WHERE t.run_id=?`,
+      )
+      .get(run) as any;
+    appendBroadcastEvent(
+      db,
+      run,
+      "done",
+      "DONE",
+      `Finished: ${c.accepted || 0} sent to WhatsApp; ${c.skipped || 0} posts skipped; ${c.failed || 0} failed; ${c.uncertain || 0} uncertain. Acceptance is not delivery proof.`,
+    );
+  }
+}
+function skipDependentChat(db: Database, p: any) {
+  if (p.surface !== "GROUP_STATUS") return;
+  const chat = db
+    .prepare(
+      "SELECT id FROM broadcast_placements WHERE target_id=? AND surface='GROUP_CHAT' AND status='RESERVED'",
+    )
+    .get(p.target_id) as any;
+  if (!chat) return;
+  const reason = "Status was not safely accepted; chat was not sent";
+  db.prepare(
+    "UPDATE broadcast_placements SET status='CANCELLED',failure_reason=? WHERE id=? AND status='RESERVED'",
+  ).run(reason, chat.id);
+  appendBroadcastEvent(db, p.run_id, `${chat.id}:skipped`, "SKIPPED", reason, {
+    ...p,
+    id: chat.id,
+  });
+}
 export async function dispatchPersonalPlacement(
   db: Database,
   transport: PersonalTransport,
@@ -16,15 +55,20 @@ export async function dispatchPersonalPlacement(
 ) {
   const p = db
     .prepare(
-      `SELECT p.*,t.account_id,t.group_jid,t.run_id,r.user_id,r.mode,r.caption,r.target_url,r.preview_json,r.asset_id FROM broadcast_placements p
- JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id
- WHERE r.purpose='PERSONAL' AND r.status IN('QUEUED','RUNNING') AND p.status='RESERVED'
- AND (p.surface='GROUP_STATUS' OR r.mode<>'DOUBLE' OR EXISTS(SELECT 1 FROM broadcast_placements s WHERE s.target_id=t.id AND s.surface='GROUP_STATUS' AND s.status IN('ACCEPTED','CONFIRMED')))
- ORDER BY r.created_at,t.id,CASE p.surface WHEN 'GROUP_STATUS' THEN 0 ELSE 1 END LIMIT 1`,
+      `SELECT p.*,t.account_id,t.group_jid,t.run_id,r.user_id,r.mode,r.caption,r.target_url,r.preview_json,r.asset_id,g.subject,o.background_color,o.font,(SELECT COUNT(*) FROM broadcast_targets st WHERE st.run_id=t.run_id AND st.id<t.id) status_index FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id LEFT JOIN group_inventory g ON g.account_id=t.account_id AND g.group_jid=t.group_jid LEFT JOIN personal_run_options o ON o.run_id=r.id WHERE r.purpose='PERSONAL' AND r.status IN('QUEUED','RUNNING') AND p.status='RESERVED' AND (p.surface='GROUP_STATUS' OR r.mode<>'DOUBLE' OR EXISTS(SELECT 1 FROM broadcast_placements s WHERE s.target_id=t.id AND s.surface='GROUP_STATUS' AND s.status IN('ACCEPTED','CONFIRMED'))) ORDER BY r.created_at,t.id,CASE p.surface WHEN 'GROUP_STATUS' THEN 0 ELSE 1 END LIMIT 1`,
     )
     .get() as any;
   if (!p) return null;
   let started = false;
+  const surface = p.surface === "GROUP_STATUS" ? "Group status" : "Group chat";
+  appendBroadcastEvent(
+    db,
+    p.run_id,
+    `${p.id}:checking`,
+    "CHECKING",
+    `${surface} · checking current membership and permission`,
+    p,
+  );
   try {
     const group = await transport.refreshGroup(p.account_id, p.group_jid);
     if (
@@ -39,22 +83,32 @@ export async function dispatchPersonalPlacement(
       .get(p.account_id, p.group_jid);
     if (!validPermission(permission, p.surface))
       throw Error("Group-admin permission is missing, expired or revoked");
-    const id = await transport.messageId(p.account_id);
-    const content: any = textPlacement(
-      p.surface,
-      p.caption,
-      p.target_url,
-      JSON.parse(p.preview_json || "null"),
-    );
+    const id = await transport.messageId(p.account_id),
+      content: any = textPlacement(
+        p.surface,
+        p.caption,
+        p.target_url,
+        JSON.parse(p.preview_json || "null"),
+      );
+    if (p.surface === "GROUP_STATUS" && p.background_color) {
+      content.backgroundColor =
+        STATUS_COLORS[
+          (STATUS_COLORS.indexOf(p.background_color) + p.status_index) %
+            STATUS_COLORS.length
+        ];
+      content.font = p.font;
+    }
     if (p.asset_id) {
       const a = db
-        .prepare("SELECT * FROM broadcast_assets WHERE id=?")
-        .get(p.asset_id) as any;
+        .prepare("SELECT * FROM broadcast_assets WHERE id=? AND user_id=?")
+        .get(p.asset_id, p.user_id) as any;
       if (!a) throw Error("Uploaded media is unavailable");
-      const bytes = fs.readFileSync(path.join(assetFolder, a.id));
-      const caption = content.text;
+      const bytes = fs.readFileSync(path.join(assetFolder, a.id)),
+        caption = content.text;
       delete content.text;
       delete content.linkPreview;
+      delete content.backgroundColor;
+      delete content.font;
       if (a.mime === "video/mp4") {
         content.video = bytes;
         content.mimetype = "video/mp4";
@@ -71,6 +125,11 @@ export async function dispatchPersonalPlacement(
       if (!["QUEUED", "RUNNING"].includes(current?.status))
         throw Error("Broadcast was cancelled");
       if (
+        db
+          .prepare(
+            "SELECT 1 FROM personal_ignored_groups WHERE user_id=? AND group_jid=?",
+          )
+          .get(p.user_id, p.group_jid) ||
         db
           .prepare(
             "SELECT 1 FROM broadcast_removals WHERE user_id=? AND group_jid=? AND cleared_at IS NULL",
@@ -100,6 +159,14 @@ export async function dispatchPersonalPlacement(
       db.prepare("UPDATE broadcast_runs SET status='RUNNING' WHERE id=?").run(
         p.run_id,
       );
+      appendBroadcastEvent(
+        db,
+        p.run_id,
+        `${p.id}:sending`,
+        "SENDING",
+        `${surface} · attempting to send`,
+        p,
+      );
     });
     started = true;
     let timeout: ReturnType<typeof setTimeout>;
@@ -114,28 +181,60 @@ export async function dispatchPersonalPlacement(
     ]).finally(() => clearTimeout(timeout));
     if (result?.key?.id !== id)
       throw Error("Provider returned a different message identifier");
-    db.prepare(
-      "UPDATE broadcast_placements SET status='ACCEPTED' WHERE id=? AND status='SENDING'",
-    ).run(p.id);
-  } catch {
-    db.prepare(
-      `UPDATE broadcast_placements SET status=?,failure_reason=? WHERE id=? AND status=?`,
-    ).run(
-      started ? "UNKNOWN" : "FAILED",
-      started
-        ? "Sending began but the outcome is uncertain. Do not resend blindly."
-        : "Pre-send validation failed: check connection, group permissions and media.",
-      p.id,
-      started ? "SENDING" : "RESERVED",
-    );
-    if (!started && p.surface === "GROUP_STATUS")
-      db.prepare(
-        "UPDATE broadcast_placements SET status='CANCELLED',failure_reason='Status did not submit; chat skipped' WHERE target_id=? AND surface='GROUP_CHAT' AND status='RESERVED'",
-      ).run(p.target_id);
+    transaction(db, () => {
+      const changed = db
+        .prepare(
+          "UPDATE broadcast_placements SET status='ACCEPTED' WHERE id=? AND status='SENDING'",
+        )
+        .run(p.id);
+      if (changed.changes)
+        appendBroadcastEvent(
+          db,
+          p.run_id,
+          `${p.id}:accepted`,
+          "ACCEPTED",
+          `${surface} · sent to WhatsApp. Delivery is not confirmed`,
+          p,
+        );
+    });
+  } catch (e: any) {
+    const known = [
+      "Membership or chat permission changed",
+      "Group-admin permission is missing, expired or revoked",
+      "Uploaded media is unavailable",
+      "Broadcast was cancelled",
+      "Connection, membership or approval changed before send",
+    ];
+    const reason = started
+      ? "Sending began but the outcome is uncertain. Check WhatsApp before starting another post."
+      : known.includes(e?.message)
+        ? e.message
+        : "Could not prepare this post. Check your connection, group permission and media.";
+    transaction(db, () => {
+      const changed = db
+        .prepare(
+          "UPDATE broadcast_placements SET status=?,failure_reason=? WHERE id=? AND status=?",
+        )
+        .run(
+          started ? "UNKNOWN" : "FAILED",
+          reason,
+          p.id,
+          started ? "SENDING" : "RESERVED",
+        );
+      if (changed.changes) {
+        appendBroadcastEvent(
+          db,
+          p.run_id,
+          `${p.id}:result`,
+          started ? "UNCERTAIN" : "FAILED",
+          `${surface} · ${reason}`,
+          p,
+        );
+        skipDependentChat(db, p);
+      }
+    });
   }
-  db.prepare(
-    `UPDATE broadcast_runs SET status='FINISHED' WHERE id=? AND status<>'CANCELLED' AND NOT EXISTS(SELECT 1 FROM broadcast_targets t JOIN broadcast_placements bp ON bp.target_id=t.id WHERE t.run_id=? AND bp.status IN('RESERVED','SENDING'))`,
-  ).run(p.run_id, p.run_id);
+  transaction(db, () => finish(db, p.run_id));
   return p.id;
 }
 export function startPersonalDispatcher(
@@ -143,13 +242,42 @@ export function startPersonalDispatcher(
   transport: PersonalTransport,
   assetFolder: string,
 ) {
-  // Restart recovery never resends a message whose transport may have started.
-  db.prepare(
-    `UPDATE broadcast_placements SET status='UNKNOWN',failure_reason='Service restarted during send; reconciliation required' WHERE status='SENDING' AND target_id IN(SELECT t.id FROM broadcast_targets t JOIN broadcast_runs r ON r.id=t.run_id WHERE r.purpose='PERSONAL')`,
-  ).run();
+  transaction(db, () => {
+    const stale = db
+      .prepare(
+        `SELECT p.*,t.run_id,t.group_jid,g.subject FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id LEFT JOIN group_inventory g ON g.account_id=t.account_id AND g.group_jid=t.group_jid WHERE r.purpose='PERSONAL' AND p.status='SENDING'`,
+      )
+      .all() as any[];
+    for (const p of stale) {
+      db.prepare(
+        "UPDATE broadcast_placements SET status='UNKNOWN',failure_reason='Service restarted during send; check WhatsApp before another post' WHERE id=?",
+      ).run(p.id);
+      appendBroadcastEvent(
+        db,
+        p.run_id,
+        `${p.id}:restart`,
+        "UNCERTAIN",
+        "Service restarted during send. It will not be automatically resent",
+        p,
+      );
+      skipDependentChat(db, p);
+    }
+    const blocked = db
+      .prepare(
+        `SELECT p.*,t.run_id,t.group_jid,g.subject FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id LEFT JOIN group_inventory g ON g.account_id=t.account_id AND g.group_jid=t.group_jid WHERE r.purpose='PERSONAL' AND p.surface='GROUP_STATUS' AND p.status IN('UNKNOWN','FAILED')`,
+      )
+      .all() as any[];
+    for (const p of blocked) skipDependentChat(db, p);
+    for (const r of db
+      .prepare(
+        "SELECT id FROM broadcast_runs WHERE purpose='PERSONAL' AND status IN('QUEUED','RUNNING')",
+      )
+      .all() as any[])
+      finish(db, r.id);
+  });
   let busy = false,
-    stopped = false;
-  let running: Promise<any> | null = null;
+    stopped = false,
+    running: Promise<any> | null = null;
   const timer = setInterval(() => {
     if (stopped || busy) return;
     busy = true;

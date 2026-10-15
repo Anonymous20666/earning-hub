@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import https from "node:https";
 import { lookup } from "node:dns/promises";
 import { BlockList, isIP } from "node:net";
@@ -76,122 +77,260 @@ export function destination(value: unknown) {
     throw Error("Internal destinations are not permitted");
   return u;
 }
-export async function fetchPublicHtml(
+export type SafePreview = {
+  "matched-text": string;
+  title: string;
+  description: string;
+  canonicalUrl?: string;
+  previewType?: number;
+  thumbnailBase64?: string;
+  inlineThumbnailBase64?: string;
+  thumbnailWidth?: number;
+  thumbnailHeight?: number;
+};
+export async function fetchPublicResource(
   input: string,
+  kind: "html" | "image",
+  deadline = Date.now() + 12000,
   redirects = 0,
-): Promise<string> {
+): Promise<{ body: Buffer; url: string }> {
+  if (Date.now() >= deadline) throw Error("Preview request timed out");
   const u = destination(input),
     host = u.hostname.replace(/[\[\]]/g, "");
+  let timer: ReturnType<typeof setTimeout> | undefined;
   const addresses = isIP(host)
     ? [{ address: host, family: isIP(host) }]
     : await Promise.race([
         lookup(host, { all: true }),
         new Promise<never>((_, reject) => {
-          const timer = setTimeout(
+          timer = setTimeout(
             () => reject(Error("Preview DNS lookup timed out")),
-            5000,
+            Math.min(4000, deadline - Date.now()),
           );
-          timer.unref();
         }),
-      ]);
+      ]).finally(() => clearTimeout(timer));
   if (!addresses.length || addresses.some((a) => !publicAddress(a.address)))
     throw Object.assign(
       Error("Destination resolves to a private or reserved address"),
       { code: "UNSAFE_DESTINATION" },
     );
-  const pin = addresses[0];
-  const result = await new Promise<{
-    body: string;
-    location?: string;
-    status: number;
-  }>((resolve, reject) => {
-    const request = https.get(
-      u,
-      {
-        lookup: ((_h: any, _o: any, callback: any) => {
-          if (_o?.all) callback(null, [pin]);
-          else callback(null, pin.address, pin.family);
-        }) as any,
-        headers: {
-          Accept: "text/html",
-          "User-Agent": "PappyPay-LinkPreview/0.3",
+  const pin = addresses[0],
+    limit = kind === "html" ? 262144 : 2097152;
+  const result = await new Promise<{ body: Buffer; location?: string }>(
+    (resolve, reject) => {
+      const req = https.get(
+        u,
+        {
+          lookup: ((_h: any, _o: any, cb: any) =>
+            _o?.all
+              ? cb(null, [pin])
+              : cb(null, pin.address, pin.family)) as any,
+          headers: {
+            Accept:
+              kind === "html"
+                ? "text/html,application/xhtml+xml"
+                : "image/jpeg,image/png,image/webp,image/gif",
+            "User-Agent": "PappyPay-LinkPreview/0.5",
+          },
+          timeout: Math.max(1, Math.min(5000, deadline - Date.now())),
         },
-        timeout: 5000,
-      },
-      (response) => {
-        const status = response.statusCode || 0;
-        if (status >= 300 && status < 400) {
-          response.resume();
-          resolve({ status, body: "", location: response.headers.location });
-          return;
-        }
-        if (
-          status !== 200 ||
-          !String(response.headers["content-type"])
-            .toLowerCase()
-            .startsWith("text/html")
-        ) {
-          response.resume();
-          reject(Error("Destination did not return a public HTML page"));
-          return;
-        }
-        let length = 0;
-        const chunks: Buffer[] = [];
-        response.on("data", (chunk: Buffer) => {
-          length += chunk.length;
-          if (length > 262144) {
-            request.destroy(Error("Preview page exceeds 256 KiB"));
+        (res) => {
+          const status = res.statusCode || 0,
+            type = String(res.headers["content-type"] || "")
+              .split(";")[0]
+              .toLowerCase();
+          if (status >= 300 && status < 400) {
+            resolve({ body: Buffer.alloc(0), location: res.headers.location });
+            res.destroy();
             return;
           }
-          chunks.push(chunk);
-        });
-        response.on("end", () =>
-          resolve({ status, body: Buffer.concat(chunks).toString("utf8") }),
-        );
-        response.on("error", reject);
-      },
-    );
-    const deadline = setTimeout(
-      () => request.destroy(Error("Preview request timed out")),
-      6000,
-    );
-    request.on("close", () => clearTimeout(deadline));
-    request.on("timeout", () =>
-      request.destroy(Error("Preview request timed out")),
-    );
-    request.on("error", reject);
-  });
+          if (
+            status !== 200 ||
+            (kind === "html"
+              ? !["text/html", "application/xhtml+xml"].includes(type)
+              : ![
+                  "image/jpeg",
+                  "image/png",
+                  "image/webp",
+                  "image/gif",
+                ].includes(type))
+          ) {
+            res.destroy();
+            reject(
+              Error("Destination did not return supported public " + kind),
+            );
+            return;
+          }
+          const chunks: Buffer[] = [];
+          let length = 0;
+          res.on("data", (chunk: Buffer) => {
+            if (length + chunk.length > limit) {
+              if (kind === "html") {
+                chunks.push(chunk.subarray(0, Math.max(0, limit - length)));
+                resolve({ body: Buffer.concat(chunks) });
+                res.destroy();
+              } else req.destroy(Error("Preview image exceeds 2 MiB"));
+              return;
+            }
+            length += chunk.length;
+            chunks.push(chunk);
+          });
+          res.on("end", () => resolve({ body: Buffer.concat(chunks) }));
+          res.on("error", reject);
+        },
+      );
+      const end = setTimeout(
+        () => req.destroy(Error("Preview request timed out")),
+        Math.max(1, Math.min(6000, deadline - Date.now())),
+      );
+      req.on("close", () => clearTimeout(end));
+      req.on("error", reject);
+      req.on("timeout", () => req.destroy(Error("Preview request timed out")));
+    },
+  );
   if (result.location) {
     if (redirects >= 3) throw Error("Too many redirects");
-    return fetchPublicHtml(new URL(result.location, u).href, redirects + 1);
+    return fetchPublicResource(
+      new URL(result.location, u).href,
+      kind,
+      deadline,
+      redirects + 1,
+    );
   }
-  if (result.status !== 200)
-    throw Error("Destination redirect has no location");
-  return result.body;
+  return { body: result.body, url: u.href };
+}
+export async function fetchPublicHtml(
+  input: string,
+  redirects = 0,
+): Promise<string> {
+  return (
+    await fetchPublicResource(input, "html", Date.now() + 12000, redirects)
+  ).body.toString("utf8");
 }
 const clean = (s: string) =>
   s
     .replace(/<[^>]*>/g, "")
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/&#39;|&apos;/gi, "'")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
+    .replace(/&#(\d+);/g, (_, n) => {
+      const v = Number(n);
+      return v > 0 && v <= 0x10ffff ? String.fromCodePoint(v) : "";
+    })
     .replace(/\s+/g, " ")
     .trim();
-export function previewFromHtml(html: string, url: string) {
-  const title = clean(
-    html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "",
-  ).slice(0, 150);
-  const tag = (html.match(/<meta\b[^>]*>/gi) || []).find((t) =>
-    /\b(?:name|property)\s*=\s*["'](?:og:)?description["']/i.test(t),
-  );
-  const description = clean(
-    tag?.match(/\bcontent\s*=\s*["']([^"']*)["']/i)?.[1] || "",
-  ).slice(0, 250);
+function meta(html: string) {
+  const out: Record<string, string> = {};
+  for (const tag of html.match(/<meta\b[^<>]*>/gi) || []) {
+    const attrs: Record<string, string> = {};
+    for (const m of tag
+      .slice(0, 8192)
+      .matchAll(/(?:^|\s)([\w:-]{1,64})\s*=\s*(["'])([\s\S]*?)\2/g))
+      attrs[m[1].toLowerCase()] = m[3];
+    const key = (attrs.property || attrs.name || "").toLowerCase();
+    if (key && attrs.content && !out[key]) out[key] = clean(attrs.content);
+  }
+  return out;
+}
+export function previewFromHtml(html: string, url: string): SafePreview {
+  const m = meta(html),
+    title = clean(
+      m["og:title"] ||
+        m["twitter:title"] ||
+        html.match(/<title\b[^<>]{0,1024}>([^<]{0,4096})<\/title>/i)?.[1] ||
+        "",
+    ).slice(0, 150),
+    description = clean(
+      m["og:description"] || m["twitter:description"] || m.description || "",
+    ).slice(0, 250);
   if (!title) throw Error("No preview title was found");
   return { "matched-text": url, title, description };
 }
-export async function safePreview(url: string) {
-  return previewFromHtml(await fetchPublicHtml(url), url);
+export async function normalizePreviewImage(bytes: Buffer) {
+  const magic = bytes.subarray(0, 12);
+  if (
+    !(
+      magic.subarray(0, 3).equals(Buffer.from([255, 216, 255])) ||
+      magic
+        .subarray(0, 8)
+        .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) ||
+      ["GIF87a", "GIF89a"].includes(magic.subarray(0, 6).toString()) ||
+      (magic.subarray(0, 4).toString() === "RIFF" &&
+        magic.subarray(8, 12).toString() === "WEBP")
+    )
+  )
+    throw Error("Unsupported thumbnail bytes");
+  const image = sharp(bytes, { limitInputPixels: 16000000 }),
+    info = await image.metadata();
+  if (!["jpeg", "png", "webp", "gif"].includes(info.format || ""))
+    throw Error("Unsupported thumbnail");
+  if ((info.width || 0) < 48 || (info.height || 0) < 48)
+    throw Error("Website image is too small for a useful preview");
+  const upscale = Math.max(info.width || 0, info.height || 0) < 600;
+  let { data, info: output } = await image
+    .rotate()
+    .resize({
+      width: upscale ? 640 : 1000,
+      height: upscale ? 640 : 1000,
+      fit: "inside",
+      withoutEnlargement: !upscale,
+    })
+    .jpeg({ quality: 82 })
+    .toBuffer({ resolveWithObject: true });
+  if (data.length > 350000) {
+    const compact = await sharp(data)
+      .resize({
+        width: 640,
+        height: 640,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: 72 })
+      .toBuffer({ resolveWithObject: true });
+    data = compact.data;
+    output = compact.info;
+  }
+  if (data.length > 350000) throw Error("Thumbnail too large");
+  const inline = await sharp(data)
+    .resize({
+      width: 320,
+      height: 320,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .jpeg({ quality: 65 })
+    .toBuffer();
+  return {
+    inlineThumbnailBase64: inline.toString("base64"),
+    thumbnailBase64: data.toString("base64"),
+    thumbnailWidth: output.width,
+    thumbnailHeight: output.height,
+  };
+}
+export async function safePreview(url: string): Promise<SafePreview> {
+  const deadline = Date.now() + 12000,
+    page = await fetchPublicResource(url, "html", deadline),
+    html = page.body.toString("utf8"),
+    preview = previewFromHtml(html, url),
+    m = meta(html),
+    candidate =
+      m["og:image:secure_url"] ||
+      m["og:image"] ||
+      m["twitter:image"] ||
+      m["twitter:image:src"];
+  preview.canonicalUrl = page.url;
+  preview.previewType = 0;
+  if (candidate) {
+    try {
+      const imageUrl = new URL(candidate, page.url).href,
+        bytes = (await fetchPublicResource(imageUrl, "image", deadline)).body;
+      Object.assign(preview, await normalizePreviewImage(bytes));
+      preview.previewType = 5;
+    } catch {
+      /* Never pretend a missing/blocked/invalid image is a video or a working thumbnail. */
+    }
+  }
+  return preview;
 }
