@@ -559,7 +559,7 @@ export function EarningCalculator({
               value={members}
               onChange={(e) => setMembers(e.target.value)}
               aria-describedby="member-counts-help"
-              placeholder="For example:\n100\n742\n1000"
+              placeholder={"For example:\n100\n742\n1000"}
             />
             <button
               className="button button-outline calculator-small-example"

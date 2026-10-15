@@ -1,3 +1,4 @@
+import { personalDelay, personalPacingFeed } from "./personalPacing";
 import { appendBroadcastEvent } from "./broadcastEvents";
 export { appendBroadcastEvent } from "./broadcastEvents";
 import { createHash, randomUUID } from "node:crypto";
@@ -201,6 +202,7 @@ export async function preparePersonalDraft(
   )
     throw Error("Choose Text or Media and use up to 2,000 characters");
   surfaces(input.mode);
+  const delaySeconds = personalDelay(input.delaySeconds);
   if (
     input.kind === "MEDIA" &&
     !get(
@@ -243,6 +245,7 @@ export async function preparePersonalDraft(
     kind: input.kind,
     mode: input.mode,
     nativePolicyVersion: 1,
+    delaySeconds,
     accountIds: plan.accountIds,
     caption: text,
     targetUrl: url,
@@ -275,6 +278,7 @@ export async function preparePersonalDraft(
   });
   return {
     draftId: id,
+    delaySeconds,
     kind: input.kind,
     mode: input.mode,
     text,
@@ -333,6 +337,7 @@ export async function submitPersonalDraft(
       targetUrl: payload.targetUrl,
       assetId: payload.assetId,
       requirePreview: false,
+      delaySeconds: personalDelay(payload.delaySeconds),
       targets: plan.targets.map((t: any) => ({
         accountId: t.accountId,
         groupJid: t.groupJid,
@@ -416,6 +421,7 @@ export function personalRunFeed(
   return {
     run: { id: r.id, status: r.status, mode: r.mode, createdAt: r.created_at },
     summary: { ...summary, skippedGroups },
+    pacing: personalPacingFeed(db, user, run),
     events,
     hasMore: events.length === 200,
     serverNow: now(),

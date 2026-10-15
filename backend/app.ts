@@ -241,7 +241,7 @@ export function createApp(
       Promise.resolve(fn(req, res, next)).catch(next);
   app.get("/api/health", (_req, res) => {
     db.prepare("SELECT 1").get();
-    res.json({ status: "ok", version: "0.9.0", mode: "pre-launch" });
+    res.json({ status: "ok", version: "0.10.0", mode: "pre-launch" });
   });
   app.get("/api/status", (_req, res) =>
     res.json({

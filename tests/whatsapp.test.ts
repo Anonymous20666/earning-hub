@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { EventEmitter } from "node:events";
 import { openDatabase } from "../backend/database";
 import { WhatsAppManager } from "../backend/whatsapp";
@@ -576,7 +577,12 @@ test("installed native encoder and adapter preserve each durable wire ID for sta
       await import("sharp")
     )
       .default({
-        create: { width: 4, height: 4, channels: 3, background: "#234533" },
+        create: {
+          width: 1280,
+          height: 640,
+          channels: 3,
+          background: "#234533",
+        },
       })
       .jpeg()
       .toBuffer();
@@ -636,6 +642,19 @@ test("installed native encoder and adapter preserve each durable wire ID for sta
       relays[3].m.groupStatusMessageV2.message.imageMessage.caption,
       "SYNTHETIC attached media",
     );
+    const sentImage = relays[3].m.groupStatusMessageV2.message.imageMessage;
+    assert.equal(sentImage.width, 1280);
+    assert.equal(sentImage.height, 640);
+    assert.equal(Number(sentImage.fileLength), image.length);
+    assert.deepEqual(
+      Buffer.from(sentImage.fileSha256),
+      createHash("sha256").update(image).digest(),
+    );
+    const thumb = await (await import("sharp"))
+      .default(Buffer.from(sentImage.jpegThumbnail))
+      .metadata();
+    assert.equal(thumb.width, 320);
+    assert.equal(thumb.height, 160);
   } finally {
     await f.close();
   }

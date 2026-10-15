@@ -1,3 +1,4 @@
+import { migratePersonalPacing } from "./personalPacing";
 import { migrateNativePostingSchema } from "./nativePostingSchema";
 import { migrateReferralSchema } from "./referralSchema";
 import { migratePersonalSchema } from "./personalSchema";
@@ -56,6 +57,7 @@ export function openDatabase(filename: string) {
   migratePersonalSchema(db);
   migrateReferralSchema(db);
   migrateNativePostingSchema(db);
+  migratePersonalPacing(db);
   return db;
 }
 export type Database = ReturnType<typeof openDatabase>;

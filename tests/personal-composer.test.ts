@@ -16,7 +16,7 @@ import {
   personalRunFeed,
 } from "../backend/personalComposer";
 import {
-  dispatchPersonalPlacement,
+  dispatchPersonalPlacement as dispatchDuePlacement,
   startPersonalDispatcher,
 } from "../backend/personalDispatch";
 import {
@@ -25,6 +25,9 @@ import {
   fetchPublicResource,
   previewFromHtml,
 } from "../backend/safePreview";
+let fixtureTick = 0;
+const dispatchPersonalPlacement = (db: any, t: any, folder: string) =>
+  dispatchDuePlacement(db, t, folder, () => Date.now() + ++fixtureTick * 61000);
 const jid = "120363000000000071@g.us",
   jid2 = "120363000000000072@g.us";
 function fixture() {
@@ -881,6 +884,405 @@ test("personal posts have no daily run cap or sixty-second gap, retain confirmat
       ).dispatch_enabled,
       0,
     );
+  } finally {
+    f.close();
+  }
+});
+
+test("review binds a 10–60 second delay, rejects invalid values and prevents later changes", async () => {
+  const f = fixture();
+  try {
+    const a = await preparePersonalDraft(f.db, "owner", input());
+    assert.equal(a.delaySeconds, 10);
+    for (const delaySeconds of [0, 9, 61, 10.5, "10", null, NaN, Infinity])
+      await assert.rejects(
+        () => preparePersonalDraft(f.db, "owner", { ...input(), delaySeconds }),
+        /10 to 60/,
+      );
+    const b = await preparePersonalDraft(f.db, "owner", {
+      ...input(),
+      delaySeconds: 60,
+    });
+    assert.equal(b.delaySeconds, 60);
+    const r = await submitPersonalDraft(f.db, "owner", b.draftId, true);
+    assert.equal(
+      (
+        f.db
+          .prepare(
+            "SELECT delay_seconds FROM personal_run_pacing WHERE run_id=?",
+          )
+          .get(r.id) as any
+      ).delay_seconds,
+      60,
+    );
+    assert.throws(
+      () =>
+        f.db
+          .prepare(
+            "UPDATE personal_run_pacing SET delay_seconds=10 WHERE run_id=?",
+          )
+          .run(r.id),
+      /immutable/,
+    );
+    assert.equal(
+      (await submitPersonalDraft(f.db, "owner", b.draftId, true)).id,
+      r.id,
+    );
+  } finally {
+    f.close();
+  }
+});
+test("default pacing gates the next actual group for ten seconds without sending, rescanning or replaying", async () => {
+  const f = fixture();
+  try {
+    const d = await preparePersonalDraft(f.db, "owner", input()),
+      r = await submitPersonalDraft(f.db, "owner", d.draftId, true);
+    let now = Date.now(),
+      checks = 0;
+    const calls: any[] = [];
+    const t = {
+      ...transport(calls),
+      refreshGroup: async (...args: any[]) => {
+        checks++;
+        return transport([]).refreshGroup();
+      },
+    };
+    assert.ok(await dispatchDuePlacement(f.db, t, "/none", () => now));
+    assert.equal(calls[0].j, jid);
+    let pacing = (await import("../backend/personalPacing")).personalPacingFeed(
+      f.db,
+      "owner",
+      r.id,
+      now,
+    );
+    assert.equal(pacing.remainingSeconds, 10);
+    assert.equal(pacing.nextGroup!.groupJid, jid2);
+    now += 9999;
+    assert.equal(await dispatchDuePlacement(f.db, t, "/none", () => now), null);
+    assert.equal(calls.length, 1);
+    assert.equal(checks, 1);
+    now++;
+    assert.ok(await dispatchDuePlacement(f.db, t, "/none", () => now));
+    assert.equal(calls.length, 2);
+    assert.equal(calls[1].j, jid2);
+    assert.equal(personalRunFeed(f.db, "owner", r.id).run.status, "FINISHED");
+    assert.equal(
+      await dispatchDuePlacement(f.db, t, "/none", () => now + 60000),
+      null,
+    );
+    assert.equal(calls.length, 2);
+    assert.equal(
+      personalRunFeed(f.db, "owner", r.id).events.filter(
+        (e) => e.kind === "WAITING",
+      ).length,
+      1,
+    );
+  } finally {
+    f.close();
+  }
+});
+test("DOUBLE finishes both types in the same group, then applies a full 60-second group pause", async () => {
+  const f = fixture();
+  try {
+    const d = await preparePersonalDraft(f.db, "owner", {
+      ...input("Two types", "DOUBLE"),
+      delaySeconds: 60,
+    });
+    await submitPersonalDraft(f.db, "owner", d.draftId, true);
+    const calls: any[] = [],
+      t = transport(calls);
+    let now = Date.now();
+    assert.ok(await dispatchDuePlacement(f.db, t, "/none", () => now));
+    now += 2000;
+    assert.ok(await dispatchDuePlacement(f.db, t, "/none", () => now));
+    assert.equal(calls[0].j, calls[1].j);
+    assert.equal(calls[0].c.groupStatus, true);
+    assert.equal(calls[1].c.mentionAll, true);
+    now += 59999;
+    assert.equal(await dispatchDuePlacement(f.db, t, "/none", () => now), null);
+    now++;
+    assert.ok(await dispatchDuePlacement(f.db, t, "/none", () => now));
+    assert.notEqual(calls[2].j, calls[1].j);
+    assert.equal(calls.length, 3);
+  } finally {
+    f.close();
+  }
+});
+test("another confirmed run cannot bypass the owner's delay, but other owners are not blocked", async () => {
+  const f = fixture();
+  try {
+    const d = await preparePersonalDraft(f.db, "owner", {
+      ...input(),
+      accountIds: [f.accounts[0]],
+    });
+    f.db
+      .prepare("INSERT INTO personal_ignored_groups VALUES(?,?,?,?,?)")
+      .run("owner", jid2, "skip", "synthetic", new Date().toISOString());
+    // The earlier review changed: prepare a valid one-group review.
+    const first = await preparePersonalDraft(f.db, "owner", input());
+    await submitPersonalDraft(f.db, "owner", first.draftId, true);
+    const second = await preparePersonalDraft(
+      f.db,
+      "owner",
+      input("Another post"),
+    );
+    await submitPersonalDraft(f.db, "owner", second.draftId, true);
+    const otherAccount = recordProviderPairing(f.db, {
+      userId: "other",
+      slot: 1,
+      providerJid: "2348000000007@s.whatsapp.net",
+      hashKey: "a".repeat(64),
+    });
+    syncProviderInventory(
+      f.db,
+      otherAccount.id,
+      [
+        {
+          jid: "120363000000000099@g.us",
+          subject: "SYNTHETIC other owner",
+          memberCount: 10,
+          announce: false,
+          userIsAdmin: true,
+        },
+      ],
+      true,
+    );
+    const other = await preparePersonalDraft(
+      f.db,
+      "other",
+      input("Other owner"),
+    );
+    await submitPersonalDraft(f.db, "other", other.draftId, true);
+    const calls: any[] = [],
+      t = transport(calls);
+    const now = Date.now();
+    await dispatchDuePlacement(f.db, t, "/none", () => now);
+    assert.equal(calls[0].a, f.accounts[0]);
+    await dispatchDuePlacement(f.db, t, "/none", () => now);
+    assert.equal(calls[1].a, otherAccount.id);
+    assert.equal(
+      await dispatchDuePlacement(f.db, t, "/none", () => now + 9999),
+      null,
+    );
+    await dispatchDuePlacement(f.db, t, "/none", () => now + 10000);
+    assert.equal(calls[2].a, f.accounts[0]);
+  } finally {
+    f.close();
+  }
+});
+test("persisted countdown survives opening a fresh database connection and restarting the dispatcher", async () => {
+  const f = fixture();
+  const fs = await import("node:fs"),
+    os = await import("node:os"),
+    path = await import("node:path");
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), "pappy-pacing-"));
+  try {
+    const d = await preparePersonalDraft(f.db, "owner", input()),
+      r = await submitPersonalDraft(f.db, "owner", d.draftId, true);
+    const calls: any[] = [],
+      t = transport(calls);
+    const now = Date.now();
+    await dispatchDuePlacement(f.db, t, "/none", () => now);
+    const file = path.join(folder, "test.sqlite");
+    f.db.prepare("VACUUM INTO ?").run(file);
+    const reopened = openDatabase(file);
+    try {
+      const stop = startPersonalDispatcher(reopened, t, "/none");
+      await stop();
+      assert.equal(
+        (await import("../backend/personalPacing")).personalPacingFeed(
+          reopened,
+          "owner",
+          r.id,
+          now + 3000,
+        ).remainingSeconds,
+        7,
+      );
+      assert.equal(
+        await dispatchDuePlacement(reopened, t, "/none", () => now + 9999),
+        null,
+      );
+      assert.equal(calls.length, 1);
+      assert.ok(
+        await dispatchDuePlacement(reopened, t, "/none", () => now + 10000),
+      );
+      assert.equal(calls.length, 2);
+    } finally {
+      reopened.close();
+    }
+  } finally {
+    f.close();
+    fs.rmSync(folder, { recursive: true, force: true });
+  }
+});
+test("a late status rejection that cancels the unstarted chat still starts the group pause exactly once", async () => {
+  const f = fixture();
+  try {
+    const d = await preparePersonalDraft(
+        f.db,
+        "owner",
+        input("Late failure", "DOUBLE"),
+      ),
+      r = await submitPersonalDraft(f.db, "owner", d.draftId, true),
+      calls: any[] = [],
+      now = Date.now();
+    await dispatchDuePlacement(f.db, transport(calls), "/none", () => now);
+    const { recordPersonalProviderErrors } = await import(
+      "../backend/personalAcknowledgements"
+    );
+    const event = [
+      {
+        key: { id: calls[0].id, remoteJid: calls[0].j, fromMe: true },
+        update: { status: 0, messageStubParameters: ["403"] },
+      },
+    ];
+    assert.equal(recordPersonalProviderErrors(f.db, f.accounts[0], event), 1);
+    const due = (
+      f.db
+        .prepare(
+          "SELECT next_group_at FROM personal_owner_queue WHERE user_id=?",
+        )
+        .get("owner") as any
+    ).next_group_at;
+    assert.equal(recordPersonalProviderErrors(f.db, f.accounts[0], event), 0);
+    assert.equal(
+      (
+        f.db
+          .prepare(
+            "SELECT next_group_at FROM personal_owner_queue WHERE user_id=?",
+          )
+          .get("owner") as any
+      ).next_group_at,
+      due,
+    );
+    assert.equal(
+      await dispatchDuePlacement(
+        f.db,
+        transport(calls),
+        "/none",
+        () => Date.parse(due) - 1,
+      ),
+      null,
+    );
+    assert.equal(personalRunFeed(f.db, "owner", r.id).summary.failed, 1);
+    assert.equal(calls.length, 1);
+  } finally {
+    f.close();
+  }
+});
+
+test("concurrent dispatcher calls cannot send a second group while the first group's send is still in flight", async () => {
+  const f = fixture();
+  try {
+    const d = await preparePersonalDraft(f.db, "owner", input());
+    await submitPersonalDraft(f.db, "owner", d.draftId, true);
+    let release!: () => void;
+    const waiting = new Promise<void>((resolve) => (release = resolve));
+    const calls: any[] = [];
+    const base = transport(calls);
+    let entered!: () => void;
+    const enteredSend = new Promise<void>((resolve) => (entered = resolve));
+    const t = {
+      ...base,
+      send: async (a: string, j: string, c: any, id: string) => {
+        calls.push({ a, j, c, id });
+        entered();
+        await waiting;
+        return { key: { id } };
+      },
+    };
+    const now = Date.now();
+    const first = dispatchDuePlacement(f.db, t, "/none", () => now);
+    await enteredSend;
+    assert.equal(await dispatchDuePlacement(f.db, t, "/none", () => now), null);
+    assert.equal(calls.length, 1);
+    release();
+    await first;
+    assert.equal(
+      await dispatchDuePlacement(f.db, base, "/none", () => now + 9999),
+      null,
+    );
+  } finally {
+    f.close();
+  }
+});
+test("Stop during a group countdown cancels only unsent targets and never starts the next group", async () => {
+  const f = fixture();
+  try {
+    const d = await preparePersonalDraft(f.db, "owner", input()),
+      r = await submitPersonalDraft(f.db, "owner", d.draftId, true);
+    const calls: any[] = [],
+      now = Date.now();
+    await dispatchDuePlacement(f.db, transport(calls), "/none", () => now);
+    const { cancelPersonalRun } = await import("../backend/broadcasts");
+    assert.equal(cancelPersonalRun(f.db, "owner", r.id).stopped, true);
+    assert.equal(
+      await dispatchDuePlacement(
+        f.db,
+        transport(calls),
+        "/none",
+        () => now + 60000,
+      ),
+      null,
+    );
+    const feed = personalRunFeed(f.db, "owner", r.id);
+    assert.equal(feed.run.status, "CANCELLED");
+    assert.equal(feed.summary.accepted, 1);
+    assert.equal(feed.summary.cancelled, 1);
+    assert.equal(feed.pacing.nextGroup, null);
+    assert.equal(calls.length, 1);
+  } finally {
+    f.close();
+  }
+});
+
+test("stopping after DOUBLE's status leg preserves its send pause before a newly queued run", async () => {
+  const f = fixture();
+  try {
+    const d = await preparePersonalDraft(
+        f.db,
+        "owner",
+        input("Cancel between legs", "DOUBLE"),
+      ),
+      r = await submitPersonalDraft(f.db, "owner", d.draftId, true),
+      calls: any[] = [];
+    await dispatchDuePlacement(f.db, transport(calls), "/none");
+    assert.equal(
+      (f.db.prepare("SELECT COUNT(*) n FROM personal_owner_queue").get() as any)
+        .n,
+      0,
+    );
+    const { cancelPersonalRun } = await import("../backend/broadcasts");
+    cancelPersonalRun(f.db, "owner", r.id);
+    const due = Date.parse(
+      (
+        f.db
+          .prepare(
+            "SELECT next_group_at FROM personal_owner_queue WHERE user_id=?",
+          )
+          .get("owner") as any
+      ).next_group_at,
+    );
+    const second = await preparePersonalDraft(
+      f.db,
+      "owner",
+      input("Queued after stop"),
+    );
+    await submitPersonalDraft(f.db, "owner", second.draftId, true);
+    assert.equal(
+      await dispatchDuePlacement(
+        f.db,
+        transport(calls),
+        "/none",
+        () => due - 1,
+      ),
+      null,
+    );
+    assert.equal(calls.length, 1);
+    assert.ok(
+      await dispatchDuePlacement(f.db, transport(calls), "/none", () => due),
+    );
+    assert.equal(calls.length, 2);
   } finally {
     f.close();
   }

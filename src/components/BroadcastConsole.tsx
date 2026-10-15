@@ -35,6 +35,82 @@ function ServerClock({
     </span>
   );
 }
+function NextGroup({
+  pacing,
+  sample,
+  sameGroup,
+}: {
+  pacing: any;
+  sample: { time: string; received: number };
+  sameGroup: boolean;
+}) {
+  const [now, setNow] = useState(Date.parse(sample.time));
+  useEffect(() => {
+    const tick = () =>
+      setNow(Date.parse(sample.time) + performance.now() - sample.received);
+    tick();
+    const timer = setInterval(tick, 250);
+    return () => clearInterval(timer);
+  }, [sample]);
+  const remaining = pacing.readyAt
+    ? Math.max(0, Math.ceil((Date.parse(pacing.readyAt) - now) / 1000))
+    : 0;
+  const waiting = remaining > 0;
+  return (
+    <div className="console-next" data-waiting={waiting}>
+      <div className="console-next-heading">
+        <span>{sameGroup ? "Next post in this group" : "Next group"}</span>
+        <span className="console-delay-chip">
+          {pacing.delaySeconds}s between groups
+        </span>
+      </div>
+      <strong className="console-next-name">{pacing.nextGroup.name}</strong>
+      <span className="console-next-type">
+        {pacing.nextGroup.surface === "GROUP_STATUS"
+          ? "Group status"
+          : "Group chat"}
+      </span>
+      {pacing.waitingForEarlierPost ? (
+        <p>Queued behind your earlier post. It will start automatically.</p>
+      ) : (
+        <>
+          <div className="console-countdown">
+            <span>
+              {waiting
+                ? "Next group in"
+                : pacing.readyAt
+                  ? "Getting ready"
+                  : "Up next"}
+            </span>
+            <strong
+              role="timer"
+              aria-live="off"
+              aria-label={
+                waiting
+                  ? `${remaining} seconds until the next group`
+                  : "Preparing the next post"
+              }
+            >
+              {waiting ? `${remaining}s` : "Preparing…"}
+            </strong>
+          </div>
+          {waiting && (
+            <progress
+              aria-label="Group delay elapsed"
+              max={pacing.delaySeconds}
+              value={Math.max(0, pacing.delaySeconds - remaining)}
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+function activityMessage(e: any) {
+  return e.message
+    .replace(/\. Delivery is not confirmed\.?/g, ".")
+    .replace(/ Acceptance is not delivery proof\./g, "");
+}
 export function BroadcastConsole({
   runId,
   serverNow,
@@ -117,7 +193,9 @@ export function BroadcastConsole({
     if (follow && box.current) box.current.scrollTop = box.current.scrollHeight;
   }, [events, follow]);
   const last = events[events.length - 1],
-    current = [...events].reverse().find((x) => x.group_name),
+    current = [...events]
+      .reverse()
+      .find((x) => x.group_name && x.kind !== "WAITING"),
     attempts = new Set(
       events.filter((e) => e.kind === "SENDING").map((e) => e.placement_id),
     ).size,
@@ -158,11 +236,15 @@ export function BroadcastConsole({
                 : s.uncertain || s.failed
                   ? "Finished — please check results"
                   : "Finished"
-              : last?.kind === "SENDING"
-                ? "Sending to WhatsApp"
-                : last?.kind === "CHECKING"
-                  ? "Checking the next group"
-                  : "Updating your post"}
+              : feed?.pacing?.waitingForEarlierPost
+                ? "Waiting for your earlier post"
+                : feed?.pacing?.remainingSeconds > 0
+                  ? "Pausing before the next group"
+                  : last?.kind === "SENDING"
+                    ? "Sending to WhatsApp"
+                    : last?.kind === "CHECKING"
+                      ? "Checking the next group"
+                      : "Updating your post"}
         </strong>
         {runId && (
           <span>
@@ -175,13 +257,24 @@ export function BroadcastConsole({
           <span>
             {finished
               ? "Last group"
-              : last?.kind === "SENDING" || last?.kind === "CHECKING"
-                ? "Current group"
-                : "Last checked"}
+              : feed?.pacing?.remainingSeconds > 0
+                ? "Last group"
+                : last?.kind === "SENDING" || last?.kind === "CHECKING"
+                  ? "Current group"
+                  : "Last checked"}
           </span>
           <strong>{current.group_name}</strong>
         </div>
       )}
+      {!finished &&
+        feed?.pacing?.nextGroup &&
+        feed.pacing.nextGroup.state !== "SENDING" && (
+          <NextGroup
+            pacing={feed.pacing}
+            sample={sample}
+            sameGroup={current?.group_jid === feed.pacing.nextGroup.groupJid}
+          />
+        )}
       <div
         className="broadcast-console-lines"
         ref={box}
@@ -207,18 +300,22 @@ export function BroadcastConsole({
         )}
         {events.map((e) => (
           <div
-            className={`console-line console-${e.kind.toLowerCase()}`}
+            className={`console-line console-${e.kind === "WAITING" ? "pause" : e.kind.toLowerCase()}`}
             key={e.id}
           >
             <time dateTime={e.created_at} title={e.created_at}>
               {clockFormat.format(new Date(e.created_at))}
             </time>
             <span className="console-kind">
-              {e.kind === "ACCEPTED" ? "SENT TO WA" : e.kind}
+              {e.kind === "ACCEPTED"
+                ? "SENT"
+                : e.kind === "WAITING"
+                  ? "PAUSE"
+                  : e.kind}
             </span>
             <div>
               {e.group_name && <strong>{e.group_name}</strong>}
-              <p>{e.message}</p>
+              <p>{activityMessage(e)}</p>
             </div>
           </div>
         ))}
@@ -233,7 +330,7 @@ export function BroadcastConsole({
         <div className="console-summary" aria-label="Posting totals">
           <div>
             <strong>{s.accepted || 0}</strong>
-            <span>Sent to WhatsApp</span>
+            <span>Sent</span>
           </div>
           <div>
             <strong>{s.skippedGroups || 0}</strong>
@@ -260,8 +357,8 @@ export function BroadcastConsole({
       )}
       <footer className="console-footer">
         <p>
-          Server-recorded events. “Sent to WhatsApp” means accepted, not
-          confirmed delivery or views.
+          Posts are sent in order. Stop only affects posts that have not
+          started.
         </p>
         <div>
           <button

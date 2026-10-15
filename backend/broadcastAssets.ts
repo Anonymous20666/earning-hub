@@ -3,7 +3,7 @@ import path from "node:path";
 import { randomUUID, createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import sharp from "sharp";
+import { normalizePersonalImage } from "./personalMedia";
 import { type Database, transaction } from "./database";
 const exec = promisify(execFile);
 let active = 0;
@@ -14,7 +14,7 @@ export async function saveBroadcastAsset(
   user: string,
   buffer: Buffer,
 ) {
-  if (active >= 2 || owners.has(user))
+  if (active >= 1 || owners.has(user))
     throw Error("Another media upload is being processed. Retry shortly");
   active++;
   owners.add(user);
@@ -148,20 +148,9 @@ async function saveAsset(
     }
   } else {
     try {
-      const image = sharp(buffer, { limitInputPixels: 16000000 });
-      const metadata = await image.metadata();
-      if (!["jpeg", "png", "webp"].includes(metadata.format || ""))
-        throw Error("Unsupported image");
-      bytes = await image
-        .rotate()
-        .resize({
-          width: 2048,
-          height: 2048,
-          fit: "inside",
-          withoutEnlargement: true,
-        })
-        .jpeg({ quality: 85 })
-        .toBuffer();
+      const image = await normalizePersonalImage(buffer);
+      bytes = image.bytes;
+      mime = image.mime;
     } catch {
       throw Error(
         "Upload a valid JPEG, PNG, WebP, GIF or MP4. Other payload types are not enabled",
@@ -226,8 +215,8 @@ async function saveAsset(
     convertedGif: !!gif,
     notice: gif
       ? "GIF converted to MP4 for WhatsApp compatibility"
-      : mime === "image/jpeg"
-        ? "Image resized if needed and metadata removed"
+      : mime.startsWith("image/")
+        ? "High-quality image prepared; private metadata removed"
         : "MP4 validated",
   };
 }

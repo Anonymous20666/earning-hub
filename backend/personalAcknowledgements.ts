@@ -1,3 +1,4 @@
+import { settlePersonalGroup } from "./personalPacing";
 import { transaction, type Database } from "./database";
 import { appendBroadcastEvent } from "./broadcastEvents";
 import { finishPersonalRun, skipDependentChat } from "./personalDispatch";
@@ -43,6 +44,7 @@ export function recordPersonalProviderErrors(
         p,
       );
       skipDependentChat(db, p);
+      settlePersonalGroup(db, p.target_id);
       finishPersonalRun(db, p.run_id);
       return 1;
     });

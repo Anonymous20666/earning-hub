@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
+  Clock3,
   FileText,
   ImagePlus,
   Link2,
@@ -24,6 +25,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
   const [data, setData] = useState<any>(null),
     [kind, setKind] = useState("TEXT"),
     [mode, setMode] = useState("ALLSTATUS"),
+    [delaySeconds, setDelaySeconds] = useState("10"),
     [payload, setPayload] = useState(""),
     [asset, setAsset] = useState<any>(null),
     [links, setLinks] = useState([""]),
@@ -117,6 +119,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
       const result = await send("/personal-posts/prepare", {
         kind,
         mode,
+        delaySeconds: Number(delaySeconds),
         accountIds: chosenIds,
         payload,
         assetId: kind === "MEDIA" ? asset?.id : null,
@@ -333,6 +336,10 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                     accept="image/jpeg,image/png,image/webp,video/mp4"
                     onChange={upload}
                   />
+                  <p className="media-quality-note">
+                    Higher-quality images and clearer previews. WhatsApp may
+                    still compress your post.
+                  </p>
                   {asset && (
                     <div className="uploaded-media">
                       {asset.mime === "video/mp4" ? (
@@ -561,6 +568,30 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                   </p>
                 </div>
               </details>
+              <div className="composer-delay">
+                <label htmlFor="personal-group-delay">
+                  Pause between groups
+                </label>
+                <div className="composer-delay-value">
+                  <input
+                    id="personal-group-delay"
+                    type="number"
+                    min={10}
+                    max={60}
+                    step={1}
+                    required
+                    value={delaySeconds}
+                    aria-describedby="personal-group-delay-help"
+                    inputMode="numeric"
+                    onChange={(e) => setDelaySeconds(e.target.value)}
+                  />
+                  <span>seconds</span>
+                </div>
+                <p id="personal-group-delay-help">
+                  10 seconds by default. Choose 10–60 seconds. Both post types
+                  finish in one group before the pause starts.
+                </p>
+              </div>
               <div className="composer-actions">
                 <p>
                   <ShieldCheck size={17} />
@@ -594,6 +625,16 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                 </h3>
               </div>
               <span className="badge neutral">{modeName(draft.mode)}</span>
+            </div>
+            <div className="review-delay">
+              <Clock3 size={18} />
+              <span>
+                <strong>{draft.delaySeconds ?? 10} seconds</strong> between
+                groups.{" "}
+                {draft.mode === "DOUBLE"
+                  ? "Status and chat post to each group before the countdown."
+                  : "The next group appears in the live countdown."}
+              </span>
             </div>
             <div className="review-post">
               {kind === "MEDIA" &&
@@ -731,7 +772,9 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                 <Send size={18} />
                 {busy
                   ? "Queueing…"
-                  : `Post to all ${draft.plan.targets.length} groups`}
+                  : draft.plan.targets.length === 1
+                    ? "Post to 1 group"
+                    : `Post to all ${draft.plan.targets.length} groups`}
               </button>
             </div>
             <p className="microcopy">
@@ -741,8 +784,9 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
           </div>
         )}
         <p className="composer-limit-note">
-          No daily posting cap or group-count limit. No one-minute wait between
-          posts. Sending is paced safely; WhatsApp’s own limits still apply.
+          No daily posting cap or group-count limit. You choose the pause
+          between groups. Sending is paced safely; WhatsApp’s own limits still
+          apply.
         </p>
         {data && !data.configured && (
           <div className="notice warning">

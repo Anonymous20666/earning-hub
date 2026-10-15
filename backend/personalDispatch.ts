@@ -1,3 +1,4 @@
+import { settlePersonalGroup } from "./personalPacing";
 import fs from "node:fs";
 import path from "node:path";
 import { transaction, type Database } from "./database";
@@ -27,7 +28,7 @@ export function finishPersonalRun(db: Database, run: string) {
       run,
       "done",
       "DONE",
-      `Finished: ${c.accepted || 0} sent to WhatsApp; ${c.skipped || 0} posts skipped; ${c.failed || 0} failed; ${c.uncertain || 0} uncertain. Acceptance is not delivery proof.`,
+      `Finished: ${c.accepted || 0} sent; ${c.skipped || 0} posts skipped; ${c.failed || 0} failed; ${c.uncertain || 0} uncertain.`,
     );
   }
 }
@@ -52,12 +53,13 @@ export async function dispatchPersonalPlacement(
   db: Database,
   transport: PersonalTransport,
   assetFolder: string,
+  clock: () => number = Date.now,
 ) {
   const p = db
     .prepare(
-      `SELECT p.*,t.account_id,t.group_jid,t.run_id,r.user_id,r.mode,r.caption,r.target_url,r.preview_json,r.asset_id,EXISTS(SELECT 1 FROM broadcast_native_policy np WHERE np.run_id=r.id AND np.policy_version=1) native_policy,g.subject,o.background_color,o.font,(SELECT COUNT(*) FROM broadcast_targets st WHERE st.run_id=t.run_id AND st.id<t.id) status_index FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id LEFT JOIN group_inventory g ON g.account_id=t.account_id AND g.group_jid=t.group_jid LEFT JOIN personal_run_options o ON o.run_id=r.id WHERE r.purpose='PERSONAL' AND r.status IN('QUEUED','RUNNING') AND p.status='RESERVED' AND (p.surface='GROUP_STATUS' OR r.mode<>'DOUBLE' OR EXISTS(SELECT 1 FROM broadcast_placements s WHERE s.target_id=t.id AND s.surface='GROUP_STATUS' AND s.status IN('ACCEPTED','CONFIRMED'))) ORDER BY r.created_at,t.id,CASE p.surface WHEN 'GROUP_STATUS' THEN 0 ELSE 1 END LIMIT 1`,
+      `SELECT p.*,t.account_id,t.group_jid,t.run_id,r.user_id,r.mode,r.caption,r.target_url,r.preview_json,r.asset_id,EXISTS(SELECT 1 FROM broadcast_native_policy np WHERE np.run_id=r.id AND np.policy_version=1) native_policy,g.subject,o.background_color,o.font,(SELECT COUNT(*) FROM broadcast_targets st WHERE st.run_id=t.run_id AND st.rowid<t.rowid) status_index FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id LEFT JOIN group_inventory g ON g.account_id=t.account_id AND g.group_jid=t.group_jid LEFT JOIN personal_run_options o ON o.run_id=r.id WHERE r.purpose='PERSONAL' AND r.status IN('QUEUED','RUNNING') AND p.status='RESERVED' AND (p.surface='GROUP_STATUS' OR r.mode<>'DOUBLE' OR EXISTS(SELECT 1 FROM broadcast_placements s WHERE s.target_id=t.id AND s.surface='GROUP_STATUS' AND s.status IN('ACCEPTED','CONFIRMED'))) AND NOT EXISTS(SELECT 1 FROM broadcast_targets prior JOIN broadcast_placements pp ON pp.target_id=prior.id WHERE prior.run_id=t.run_id AND prior.rowid<t.rowid AND pp.status IN('RESERVED','SENDING')) AND NOT EXISTS(SELECT 1 FROM personal_owner_queue q WHERE q.user_id=r.user_id AND q.next_group_at>?) AND NOT EXISTS(SELECT 1 FROM broadcast_runs older WHERE older.user_id=r.user_id AND older.purpose='PERSONAL' AND older.rowid<r.rowid AND older.status IN('QUEUED','RUNNING') AND EXISTS(SELECT 1 FROM broadcast_targets ot JOIN broadcast_placements op ON op.target_id=ot.id WHERE ot.run_id=older.id AND op.status IN('RESERVED','SENDING'))) ORDER BY r.rowid,t.rowid,CASE p.surface WHEN 'GROUP_STATUS' THEN 0 ELSE 1 END LIMIT 1`,
     )
-    .get() as any;
+    .get(new Date(clock()).toISOString()) as any;
   if (!p) return null;
   let started = false;
   const surface = p.surface === "GROUP_STATUS" ? "Group status" : "Group chat";
@@ -198,9 +200,10 @@ export async function dispatchPersonalPlacement(
           p.run_id,
           `${p.id}:accepted`,
           "ACCEPTED",
-          `${surface} · sent to WhatsApp. Delivery is not confirmed`,
+          `${surface} · Sent`,
           p,
         );
+      settlePersonalGroup(db, p.target_id, clock());
     });
   } catch (e: any) {
     const known = [
@@ -246,9 +249,13 @@ export async function dispatchPersonalPlacement(
         );
         skipDependentChat(db, p);
       }
+      settlePersonalGroup(db, p.target_id, clock());
     });
   }
-  transaction(db, () => finishPersonalRun(db, p.run_id));
+  transaction(db, () => {
+    settlePersonalGroup(db, p.target_id, clock());
+    finishPersonalRun(db, p.run_id);
+  });
   return p.id;
 }
 export function startPersonalDispatcher(
@@ -275,6 +282,7 @@ export function startPersonalDispatcher(
         p,
       );
       skipDependentChat(db, p);
+      settlePersonalGroup(db, p.target_id);
     }
     const blocked = db
       .prepare(

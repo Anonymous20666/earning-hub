@@ -1,5 +1,7 @@
 # Plogme personal-broadcast pilot — v0.3.0
 
+**Historical v0.3.0 record. Current behavior is documented in `POSTING-PACING-MEDIA-0.10.0.md`, `MOBILE-POLISH-0.9.0.md` and `WORKER-EXPERIENCE-0.8.0.md`.** In current code, PAPPYPAY is the actual custom pairing code, native personal posting has no extra approval-command prerequisite, posting quotas have been removed, and group pacing is configurable. Historical implementation/limits below must not be reintroduced as current requirements.
+
 ## Implemented
 - Exact Plogme 2.1.0 integration, two owner-bound linked-device slots, real provider identity validation, actual group scans and membership/admin/lock updates. No pairing or broadcast is simulated.
 - PAPPYPAY-branded pairing card with unique private eight-character codes and copy controls. Codes are deliberately not the publicly reusable literal PAPPYPAY. The provider must supply a code, and confirm the matching phone before an account is marked online.

@@ -218,18 +218,16 @@ test("choose number two or both; searchable owned-group skip checkboxes persist 
     }),
   ).toMatchObject({ background: "rgb(22, 62, 45)", border: "solid" });
   expect((await reviewButton.boundingBox())!.height).toBeGreaterThanOrEqual(52);
-  await page
-    .locator(".composer-panel")
-    .screenshot({
-      path: `docs/screenshots/mobile-polish-write-${info.project.name}.png`,
-      scale: "css",
-    });
+  await page.locator(".composer-panel").screenshot({
+    path: `docs/screenshots/mobile-polish-write-${info.project.name}.png`,
+    scale: "css",
+  });
   await reviewButton.click();
   await expect(
     page.getByRole("heading", { name: "Is everything correct?" }),
   ).toBeFocused();
   await expect(
-    page.getByRole("button", { name: "Post to all 1 groups" }),
+    page.getByRole("button", { name: "Post to 1 group" }),
   ).toBeDisabled();
   await page
     .getByText("See the automatic group check", { exact: true })
@@ -237,7 +235,7 @@ test("choose number two or both; searchable owned-group skip checkboxes persist 
   await expect(
     page.getByText("Number 2 · 42 members · Ready · no earnings"),
   ).toBeVisible();
-  const postButton = page.getByRole("button", { name: "Post to all 1 groups" });
+  const postButton = page.getByRole("button", { name: "Post to 1 group" });
   await page.getByRole("checkbox", { name: /I checked this post/ }).check();
   await expect(postButton).toBeEnabled();
   expect(
@@ -250,12 +248,10 @@ test("choose number two or both; searchable owned-group skip checkboxes persist 
   await expect(page.locator(".composer-limit-note")).not.toContainText(
     /3 posts|60 seconds|200 groups/,
   );
-  await page
-    .locator(".composer-panel")
-    .screenshot({
-      path: `docs/screenshots/mobile-polish-review-${info.project.name}.png`,
-      scale: "css",
-    });
+  await page.locator(".composer-panel").screenshot({
+    path: `docs/screenshots/mobile-polish-review-${info.project.name}.png`,
+    scale: "css",
+  });
   expect(prepared).toBe(1);
   expect(posts).toBe(0);
   expect(

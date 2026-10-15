@@ -1,0 +1,20 @@
+{
+  "origin": "https://pappy-earnig-hub.duckdns.org",
+  "at": "2026-10-15T12:15:47.255Z",
+  "checks": [
+    "HTTPS health v0.10.0",
+    "360px: no overlapping fields, full-width 16px inputs, visible touch-friendly buttons, no overflow",
+    "360px: conditional 5,000 example and USD display unchanged",
+    "360px: automated accessibility scan",
+    "393px: no overlapping fields, full-width 16px inputs, visible touch-friendly buttons, no overflow",
+    "393px: conditional 5,000 example and USD display unchanged",
+    "393px: automated accessibility scan",
+    "430px: no overlapping fields, full-width 16px inputs, visible touch-friendly buttons, no overflow",
+    "430px: conditional 5,000 example and USD display unchanged",
+    "430px: automated accessibility scan",
+    "No browser runtime errors"
+  ],
+  "accountsCreated": 0,
+  "whatsappActions": 0,
+  "notes": "Actual public production DOM/CSS and screenshots. Authenticated composer appearance verified in isolated QA, not by sending production messages. Browser emulation is not physical-device proof."
+}

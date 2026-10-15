@@ -18,14 +18,18 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   assert.equal(
     (await (await page.request.get(origin + "/api/health")).json()).version,
-    "0.9.0",
+    "0.10.0",
   );
-  checks.push("HTTPS health v0.9.0");
+  checks.push("HTTPS health v0.10.0");
   await page.emulateMedia({ reducedMotion: "reduce" });
   for (const width of [360, 393, 430]) {
     await page.setViewportSize({ width, height: 851 });
     await page.goto(origin + "/#/calculator");
     await page.locator(".calculator-input-panel").waitFor();
+    assert.equal(
+      await page.locator("#member-counts").getAttribute("placeholder"),
+      "For example:\n100\n742\n1000",
+    );
     const issues = await page
       .locator(".calculator-input-panel")
       .evaluate((panel) => {
@@ -69,12 +73,10 @@ try {
     checks.push(
       `${width}px: no overlapping fields, full-width 16px inputs, visible touch-friendly buttons, no overflow`,
     );
-    await page
-      .locator(".calculator-input-panel")
-      .screenshot({
-        path: `docs/screenshots/mobile-polish-live-calculator-${width}.png`,
-        scale: "css",
-      });
+    await page.locator(".calculator-input-panel").screenshot({
+      path: `docs/screenshots/posting-live-calculator-${width}.png`,
+      scale: "css",
+    });
     await page
       .getByRole("button", { name: "Try the 5,000-Coin daily example" })
       .click();
@@ -103,7 +105,7 @@ try {
   checks.push("No browser runtime errors");
 } finally {
   await fs.writeFile(
-    "docs/testing/mobile-polish-mobile-domain-readonly.json",
+    "docs/testing/posting-mobile-domain-readonly.json",
     JSON.stringify(
       {
         origin,

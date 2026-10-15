@@ -8,6 +8,12 @@ for (const width of [360, 393, 430, 768, 1440]) {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/#/calculator");
     await expect(page.locator(".calculator-input-panel")).toBeVisible();
+    expect(
+      await page.locator("#member-counts").getAttribute("placeholder"),
+    ).toBe("For example:\n100\n742\n1000");
+    expect(
+      await page.locator("#member-counts").getAttribute("placeholder"),
+    ).not.toContain("\\n");
     const issues = await page
       .locator(".calculator-input-panel")
       .evaluate((panel) => {
@@ -64,18 +70,14 @@ for (const width of [360, 393, 430, 768, 1440]) {
       ).violations,
     ).toEqual([]);
     if (info.project.name === "mobile" && [360, 393, 430].includes(width)) {
-      await page
-        .locator(".calculator-input-panel")
-        .screenshot({
-          path: `docs/screenshots/mobile-polish-calculator-${width}.png`,
-          scale: "css",
-        });
-      await page
-        .locator(".earning-result")
-        .screenshot({
-          path: `docs/screenshots/mobile-polish-result-${width}.png`,
-          scale: "css",
-        });
+      await page.locator(".calculator-input-panel").screenshot({
+        path: `docs/screenshots/mobile-polish-calculator-${width}.png`,
+        scale: "css",
+      });
+      await page.locator(".earning-result").screenshot({
+        path: `docs/screenshots/mobile-polish-result-${width}.png`,
+        scale: "css",
+      });
     }
   });
 }

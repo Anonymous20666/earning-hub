@@ -1,3 +1,4 @@
+import { personalImagePreview } from "./personalMedia";
 import { recordPersonalProviderErrors } from "./personalAcknowledgements";
 import { createHmac, createHash, randomBytes, randomUUID } from "node:crypto";
 import { type Database, transaction } from "./database";
@@ -19,6 +20,10 @@ export class WhatsAppManager {
   private live = new Map<string, any>();
   private closing = false;
   private library: any;
+  private imagePreviews = new Map<
+    string,
+    Awaited<ReturnType<typeof personalImagePreview>>
+  >();
   constructor(
     private db: Database,
     private options: WaOptions,
@@ -778,6 +783,17 @@ export class WhatsAppManager {
     const sock = this.socket(accountId),
       payload = { ...content },
       options: any = { messageId };
+    if (Buffer.isBuffer(payload.image)) {
+      const hash = createHash("sha256").update(payload.image).digest("hex");
+      let preview = this.imagePreviews.get(hash);
+      if (!preview) {
+        preview = await personalImagePreview(payload.image);
+        if (this.imagePreviews.size >= 20)
+          this.imagePreviews.delete(this.imagePreviews.keys().next().value!);
+        this.imagePreviews.set(hash, preview);
+      }
+      Object.assign(payload, preview);
+    }
     if (payload.groupStatus && typeof payload.text === "string") {
       if (payload.backgroundColor)
         options.backgroundColor = payload.backgroundColor;

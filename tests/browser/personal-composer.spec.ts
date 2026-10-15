@@ -275,7 +275,7 @@ test("Text/link -> many ignore links -> immutable review -> confirm -> real-even
   await expect(
     console.getByText("Finished — please check results", { exact: true }),
   ).toBeVisible({ timeout: 10000 });
-  await expect(console.getByText("SENT TO WA", { exact: true })).toBeVisible();
+  await expect(console.getByText("SENT", { exact: true })).toBeVisible();
   await expect(console.getByText("UNCERTAIN", { exact: true })).toBeVisible();
   await expect(console.locator(".broadcast-clock")).toContainText(
     "Lagos · UTC+1",

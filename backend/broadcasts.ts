@@ -1,3 +1,4 @@
+import { personalDelay, settlePersonalGroup } from "./personalPacing";
 import { appendBroadcastEvent } from "./broadcastEvents";
 import { placementRewardMilli } from "../shared/earningRules";
 import { createHash, randomUUID } from "node:crypto";
@@ -217,6 +218,7 @@ export async function createPersonalRun(
 ) {
   if (get(db, "SELECT role FROM users WHERE id=?", user)?.role !== "EARNER")
     throw Error("Worker account required");
+  const delaySeconds = personalDelay(input.delaySeconds);
   const mode = input.mode as Mode;
   surfaces(mode);
   if (
@@ -263,6 +265,7 @@ export async function createPersonalRun(
         asset: asset?.id,
         targets: input.targets,
         requirePreview: input.requirePreview,
+        ...(input.delaySeconds !== undefined ? { delaySeconds } : {}),
       }),
     )
     .digest("hex");
@@ -324,6 +327,10 @@ export async function createPersonalRun(
       asset?.id || null,
       JSON.stringify(preview),
       now(),
+    );
+    db.prepare("INSERT INTO personal_run_pacing VALUES(?,?)").run(
+      id,
+      delaySeconds,
     );
     insertTargets(db, id, groups, mode, false, undefined, native);
     onCreated?.(id);
@@ -621,6 +628,12 @@ export function cancelPersonalRun(db: Database, user: string, id: string) {
     db.prepare(
       "UPDATE broadcast_placements SET status='CANCELLED',failure_reason='Owner cancelled before send' WHERE status='RESERVED' AND target_id IN(SELECT id FROM broadcast_targets WHERE run_id=?)",
     ).run(id);
+    for (const target of rows(
+      db,
+      "SELECT id FROM broadcast_targets WHERE run_id=?",
+      id,
+    ))
+      settlePersonalGroup(db, target.id);
     appendBroadcastEvent(
       db,
       id,

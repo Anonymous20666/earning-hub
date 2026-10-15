@@ -171,7 +171,7 @@ test("valid media is normalised, privately stored and owner-only; no financial r
   });
   assert.equal(r.status, 201, JSON.stringify(r.body));
   asset = r.body;
-  assert.equal(asset.mime, "image/jpeg");
+  assert.equal(asset.mime, "image/png");
   const meta = await sharp(
     fs.readFileSync(path.join(folder, asset.id)),
   ).metadata();
@@ -613,6 +613,79 @@ test("automatic composer API enforces roles, CSRF, atomic owned ignores, immutab
   } finally {
     manager.resolveIgnoreLink = original;
   }
+});
+test("HTTP review validates and binds group delay; submission cannot override the reviewed value", async () => {
+  const auth = await register("SYNTHETIC-paced-api"),
+    account = recordProviderPairing(db, {
+      userId: auth.user.id,
+      slot: 1,
+      providerJid: "2348000000089@s.whatsapp.net",
+      hashKey: "a".repeat(64),
+    });
+  syncProviderInventory(
+    db,
+    account.id,
+    [
+      {
+        jid: "120363000000000089@g.us",
+        subject: "SYNTHETIC delay API",
+        memberCount: 42,
+        announce: false,
+        userIsAdmin: true,
+      },
+    ],
+    true,
+  );
+  for (const delaySeconds of [9, 61, 10.5, "60", null]) {
+    const invalid = await req(
+      "/personal-posts/prepare",
+      "POST",
+      {
+        kind: "TEXT",
+        mode: "ALLSTATUS",
+        payload: "SYNTHETIC never transmitted",
+        delaySeconds,
+      },
+      auth,
+    );
+    assert.equal(invalid.status, 400);
+    assert.match(invalid.body.error, /10 to 60/);
+  }
+  const draft = await req(
+    "/personal-posts/prepare",
+    "POST",
+    {
+      kind: "TEXT",
+      mode: "ALLSTATUS",
+      payload: "SYNTHETIC never transmitted",
+      delaySeconds: 60,
+    },
+    auth,
+  );
+  assert.equal(draft.status, 200);
+  assert.equal(draft.body.delaySeconds, 60);
+  const run = await req(
+    "/personal-posts",
+    "POST",
+    { draftId: draft.body.draftId, confirmed: true, delaySeconds: 10 },
+    auth,
+  );
+  assert.equal(run.status, 201);
+  const feed = await req(
+    `/personal-posts/${run.body.id}/events`,
+    "GET",
+    undefined,
+    auth,
+  );
+  assert.equal(feed.status, 200);
+  assert.equal(feed.body.pacing.delaySeconds, 60);
+  const otherFeed = await req(
+    `/personal-posts/${run.body.id}/events`,
+    "GET",
+    undefined,
+    other,
+  );
+  assert.equal(otherFeed.status, 404);
 });
 test.after(async () => {
   await manager.close();
