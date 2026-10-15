@@ -30,7 +30,7 @@ const faqs = [
   ],
   [
     "Can I earn or withdraw money right now?",
-    "Not yet. Messaging and payout integrations are not connected. Your dashboard shows only actual account records. We do not generate simulated earnings or promise a launch date.",
+    "Not yet. Paid campaign delivery and payouts are not enabled. Personal WhatsApp broadcasting may be available as an owner-testing pilot through Connections. Your dashboard shows actual records, never simulated earnings.",
   ],
   [
     "How does the 200 Coin welcome bonus work?",

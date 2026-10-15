@@ -1,0 +1,16 @@
+{
+  "reviewDate": "2026-10-15",
+  "package": "plogme",
+  "version": "2.1.0",
+  "registryTarballIntegrityMatches": true,
+  "reviewType": "static inspection only; no installation, package scripts or live provider tests",
+  "commercialLicence": "CRYSNOVAX SOURCE LICENSE v1.0; personal/non-commercial grant; written commercial permission required before project deployment",
+  "liveProjectChanged": false,
+  "sources": [
+    "https://registry.npmjs.org/plogme/2.1.0",
+    "https://unpkg.com/plogme@2.1.0/LICENSE",
+    "https://unpkg.com/plogme@2.1.0/lib/Socket/socket.js",
+    "https://unpkg.com/plogme@2.1.0/lib/Socket/messages-send.js",
+    "https://unpkg.com/plogme@2.1.0/lib/Utils/messages.js"
+  ]
+}

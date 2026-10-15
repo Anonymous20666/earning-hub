@@ -97,8 +97,8 @@ export function referralSummary(db: Database, userId: string) {
 export function groupsForUser(db: Database, userId: string): GroupSnapshot[] {
   return all(
     db,
-    `SELECT g.*,a.status account_status,p.expires_at,p.revoked_at FROM group_inventory g
- JOIN paired_accounts a ON a.id=g.account_id LEFT JOIN group_permissions p ON p.group_jid=g.group_jid WHERE a.user_id=? ORDER BY a.slot,g.subject,g.group_jid`,
+    `SELECT g.*,a.status account_status,COALESCE(bp.expires_at,p.expires_at) expires_at,CASE WHEN bp.account_id IS NULL THEN p.revoked_at ELSE bp.revoked_at END revoked_at FROM group_inventory g
+ JOIN paired_accounts a ON a.id=g.account_id LEFT JOIN group_permissions p ON p.group_jid=g.group_jid LEFT JOIN broadcast_permissions bp ON bp.account_id=g.account_id AND bp.group_jid=g.group_jid WHERE a.user_id=? ORDER BY a.slot,g.subject,g.group_jid`,
     userId,
   ).map((g) => ({
     accountId: g.account_id,
@@ -316,7 +316,7 @@ export function closeHouseCampaign(
     );
   });
 }
-function ensureBonusBacking(db: Database, userId: string) {
+export function ensureBonusBacking(db: Database, userId: string) {
   const w = one(db, "SELECT * FROM wallets WHERE user_id=?", userId);
   if (!w) throw Error("Worker wallet not found");
   if (w.bonus_claimed) return;
@@ -357,12 +357,13 @@ export function reserveNextDelivery(db: Database, campaignId: string) {
       `SELECT g.*,a.user_id,a.last_broadcast_at FROM group_inventory g JOIN paired_accounts a ON a.id=g.account_id
  JOIN group_permissions p ON p.group_jid=g.group_jid WHERE a.status='ONLINE' AND g.is_member=1 AND g.excluded=0
  AND g.member_count>=100 AND (g.announce=0 OR g.user_is_admin=1) AND g.synced_at>=?
- AND p.revoked_at IS NULL AND p.expires_at>? AND NOT EXISTS(SELECT 1 FROM delivery_jobs j WHERE j.campaign_id=? AND j.group_jid=g.group_jid)
+ AND p.revoked_at IS NULL AND p.expires_at>? AND NOT EXISTS(SELECT 1 FROM broadcast_removals br WHERE br.user_id=a.user_id AND br.group_jid=g.group_jid AND br.cleared_at IS NULL) AND NOT EXISTS(SELECT 1 FROM paid_group_claims pc WHERE pc.campaign_id=? AND pc.group_jid=g.group_jid) AND NOT EXISTS(SELECT 1 FROM delivery_jobs j WHERE j.campaign_id=? AND j.group_jid=g.group_jid)
  AND (EXISTS(SELECT 1 FROM campaign_participation cp WHERE cp.campaign_id=? AND cp.user_id=a.user_id)
  OR (SELECT COUNT(*) FROM campaign_participation cp WHERE cp.user_id=a.user_id AND cp.day_utc=?)<(SELECT daily_limit FROM broadcast_settings WHERE id=1))
  ORDER BY a.last_broadcast_at ASC,a.last_selected_at ASC,a.connected_at ASC,a.id ASC,g.group_jid ASC`,
       fresh,
       date,
+      c.id,
       c.id,
       c.id,
       day,
@@ -561,7 +562,8 @@ export function failUnsentDelivery(
     if (reservedRef) {
       const next = one(
         db,
-        "SELECT id FROM delivery_jobs WHERE user_id=? AND status IN('RESERVED','SENDING','UNKNOWN') ORDER BY reserved_at,id LIMIT 1",
+        `SELECT id FROM (SELECT id,reserved_at created FROM delivery_jobs WHERE user_id=? AND status IN('RESERVED','SENDING','UNKNOWN') UNION ALL SELECT r.id,r.created_at created FROM broadcast_runs r WHERE r.user_id=? AND r.purpose='PAID_CAMPAIGN' AND EXISTS(SELECT 1 FROM broadcast_targets t JOIN broadcast_placements bp ON bp.target_id=t.id WHERE t.run_id=r.id AND bp.status IN('RESERVED','SENDING','ACCEPTED','UNKNOWN'))) ORDER BY created,id LIMIT 1`,
+        j.user_id,
         j.user_id,
       );
       if (next)
@@ -599,6 +601,14 @@ export function settleConfirmedDelivery(db: Database, r: ConfirmedReceipt) {
       r.receiptId.length > 250
     )
       throw Error("Verified provider delivery receipt required");
+    if (
+      one(
+        db,
+        "SELECT 1 FROM broadcast_placements WHERE receipt_id=?",
+        r.receiptId,
+      )
+    )
+      throw Error("Receipt already belongs to another placement");
     const j = one(db, "SELECT * FROM delivery_jobs WHERE id=?", r.jobId);
     if (
       !j ||
@@ -606,7 +616,11 @@ export function settleConfirmedDelivery(db: Database, r: ConfirmedReceipt) {
       j.provider_message_id !== r.messageId
     )
       throw Error("Receipt does not match reserved delivery");
-    if (j.status === "DELIVERED") return { idempotent: true };
+    if (j.status === "DELIVERED") {
+      if (j.provider_receipt_id !== r.receiptId)
+        throw Error("Receipt conflicts with confirmed delivery");
+      return { idempotent: true };
+    }
     if (!["SENDING", "UNKNOWN"].includes(j.status))
       throw Error("Delivery is not awaiting confirmation");
     move(db, 0, -j.reward_milli, j.reward_milli, 0);
@@ -702,18 +716,22 @@ export function reconcileTreasury(db: Database): {
     walletsMatchEarnedLedger: !one(
       db,
       `SELECT w.user_id FROM wallets w WHERE w.earned_milli<>
-      (SELECT COALESCE(SUM(l.amount_milli),0) FROM ledger l WHERE l.user_id=w.user_id AND l.kind IN('VERIFIED_GROUP_DELIVERY','QUALIFIED_REFERRAL')) LIMIT 1`,
+      (SELECT COALESCE(SUM(l.amount_milli),0) FROM ledger l WHERE l.user_id=w.user_id AND l.kind IN('VERIFIED_GROUP_DELIVERY','QUALIFIED_REFERRAL','VERIFIED_STATUS_DELIVERY','VERIFIED_CHAT_DELIVERY')) LIMIT 1`,
     ),
     campaignAllocationsMatchJobs: !one(
       db,
       `SELECT c.id FROM house_campaigns c WHERE c.allocated_milli<>
-      (SELECT COALESCE(SUM(j.reward_milli),0) FROM delivery_jobs j WHERE j.campaign_id=c.id AND j.status IN('RESERVED','SENDING','UNKNOWN'))
-      OR c.paid_milli<>(SELECT COALESCE(SUM(j.reward_milli),0) FROM delivery_jobs j WHERE j.campaign_id=c.id AND j.status='DELIVERED') LIMIT 1`,
+      (SELECT COALESCE(SUM(j.reward_milli),0) FROM delivery_jobs j WHERE j.campaign_id=c.id AND j.status IN('RESERVED','SENDING','UNKNOWN'))+(SELECT COALESCE(SUM(bp.reward_milli),0) FROM broadcast_placements bp JOIN broadcast_targets bt ON bt.id=bp.target_id JOIN broadcast_runs br ON br.id=bt.run_id WHERE br.campaign_id=c.id AND bp.status IN('RESERVED','SENDING','ACCEPTED','UNKNOWN'))
+      OR c.paid_milli<>(SELECT COALESCE(SUM(j.reward_milli),0) FROM delivery_jobs j WHERE j.campaign_id=c.id AND j.status='DELIVERED')+(SELECT COALESCE(SUM(bp.reward_milli),0) FROM broadcast_placements bp JOIN broadcast_targets bt ON bt.id=bp.target_id JOIN broadcast_runs br ON br.id=bt.run_id WHERE br.campaign_id=c.id AND bp.status='CONFIRMED') LIMIT 1`,
     ),
     deliveriesMatchCredits: !one(
       db,
       `SELECT j.id FROM delivery_jobs j WHERE j.status='DELIVERED' AND NOT EXISTS
       (SELECT 1 FROM ledger l WHERE l.idempotency_key='delivery:'||j.id AND l.kind='VERIFIED_GROUP_DELIVERY' AND l.user_id=j.user_id AND l.amount_milli=j.reward_milli) LIMIT 1`,
+    ),
+    placementsMatchCredits: !one(
+      db,
+      `SELECT p.id FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id WHERE p.status='CONFIRMED' AND r.purpose='PAID_CAMPAIGN' AND NOT EXISTS(SELECT 1 FROM ledger l WHERE l.idempotency_key='placement:'||p.id AND l.user_id=r.user_id AND l.amount_milli=p.reward_milli AND l.kind IN('VERIFIED_STATUS_DELIVERY','VERIFIED_CHAT_DELIVERY')) LIMIT 1`,
     ),
     referralsMatchCredits: !one(
       db,

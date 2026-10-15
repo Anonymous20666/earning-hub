@@ -1,3 +1,4 @@
+import { WhatsAppConnections, PersonalBroadcasts } from "./WhatsApp";
 import { EarningHub, TreasuryPanel } from "./EarningHub";
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -169,9 +170,24 @@ const services = [
   ],
 ];
 export function ServiceStatus() {
+  const [state, setState] = useState<any>(null);
+  useEffect(() => {
+    api("/status")
+      .then(setState)
+      .catch(() => {});
+  }, []);
+  const visible = services.map((item) =>
+    item[0] === "WhatsApp pairing & delivery" && state?.whatsapp
+      ? [
+          item[0],
+          "Owner-testing pilot",
+          "Plogme pairing and authorised personal broadcasts are configured. Real-device behaviour needs validation; paid broadcasts remain off.",
+        ]
+      : item,
+  );
   return (
     <div className="status-list">
-      {services.map(([title, status, body]) => (
+      {visible.map(([title, status, body]) => (
         <div key={title}>
           <span
             className={`service-indicator ${status === "Available" ? "available" : ""}`}
@@ -220,6 +236,7 @@ export function Workspace({
       ? [
           ["wallet", "Wallet & rewards", Wallet],
           ["connections", "Connections", Link2],
+          ["broadcasts", "Personal broadcasts", Send],
           ["calculator", "Earning calculator", Coins],
           ["referrals", "Referrals", Link2],
         ]
@@ -281,6 +298,10 @@ export function Workspace({
     connections: [
       "Your community connections.",
       "Real accounts and verified activity will appear here when connected.",
+    ],
+    broadcasts: [
+      "Your message. Your communities.",
+      "Authorised personal broadcasts, without charges or earnings.",
     ],
     calculator: [
       "Know what each group earns.",
@@ -532,8 +553,9 @@ export function Workspace({
                       <div>
                         <strong>A clear start. No simulated results.</strong>
                         <p>
-                          Accounts and planning are live. Messaging, earning and
-                          payouts are not enabled yet.
+                          Accounts and planning are live. Check Connections for
+                          the personal WhatsApp pilot. Paid earning and payouts
+                          remain off.
                         </p>
                       </div>
                       <a href="#/app/status">
@@ -896,7 +918,10 @@ export function Workspace({
                   </>
                 )}
                 {page === "connections" && worker && (
-                  <EarningHub revision={earningRevision} view="connections" />
+                  <WhatsAppConnections revision={earningRevision} />
+                )}
+                {page === "broadcasts" && worker && (
+                  <PersonalBroadcasts revision={earningRevision} />
                 )}
                 {page === "calculator" && worker && (
                   <EarningHub revision={earningRevision} view="calculator" />

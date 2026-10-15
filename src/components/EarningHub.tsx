@@ -17,9 +17,11 @@ import { groupEligibility } from "../../shared/earningRules";
 export function EarningHub({
   view,
   revision = 0,
+  hideNumberSlots = false,
 }: {
   view: "connections" | "referrals" | "calculator";
   revision?: number;
+  hideNumberSlots?: boolean;
 }) {
   const [data, setData] = useState<any>(null),
     [error, setError] = useState(""),
@@ -133,50 +135,55 @@ export function EarningHub({
               note="Current permission on record"
             />
           </div>
-          <section className="panel">
-            <div className="panel-heading">
-              <div>
-                <span className="eyebrow">YOUR WHATSAPP ACCOUNTS</span>
-                <h2>Room for two connections.</h2>
+          {!hideNumberSlots && (
+            <section className="panel">
+              <div className="panel-heading">
+                <div>
+                  <span className="eyebrow">YOUR WHATSAPP ACCOUNTS</span>
+                  <h2>Room for two connections.</h2>
+                </div>
+                <span className="badge neutral">
+                  {
+                    data.accounts.filter((a: any) => a.status === "ONLINE")
+                      .length
+                  }{" "}
+                  / 2 online
+                </span>
               </div>
-              <span className="badge neutral">
-                {data.accounts.filter((a: any) => a.status === "ONLINE").length}{" "}
-                / 2 online
-              </span>
-            </div>
-            <div className="number-slots">
-              {[1, 2].map((slot) => {
-                const a = data.accounts.find((x: any) => x.slot === slot);
-                return (
-                  <div className="number-slot" key={slot}>
-                    <span className="outlined-icon">
-                      <Link2 size={21} />
-                    </span>
-                    <div>
-                      <span className="eyebrow">NUMBER {slot}</span>
-                      <h3>{a ? a.phone_label : "Not connected"}</h3>
-                      <p>
-                        {a
-                          ? `${a.status} · ${a.scanner_at ? "Last scanned " + date(a.scanner_at) : "Not scanned yet"}`
-                          : "A real provider-confirmed connection will appear here."}
-                      </p>
+              <div className="number-slots">
+                {[1, 2].map((slot) => {
+                  const a = data.accounts.find((x: any) => x.slot === slot);
+                  return (
+                    <div className="number-slot" key={slot}>
+                      <span className="outlined-icon">
+                        <Link2 size={21} />
+                      </span>
+                      <div>
+                        <span className="eyebrow">NUMBER {slot}</span>
+                        <h3>{a ? a.phone_label : "Not connected"}</h3>
+                        <p>
+                          {a
+                            ? `${a.status} · ${a.scanner_at ? "Last scanned " + date(a.scanner_at) : "Not scanned yet"}`
+                            : "A real provider-confirmed connection will appear here."}
+                        </p>
+                      </div>
+                      <span className="badge neutral">
+                        {a ? a.status : "Pairing unavailable"}
+                      </span>
                     </div>
-                    <span className="badge neutral">
-                      {a ? a.status : "Pairing unavailable"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="notice warning">
-              <Lock size={18} />
-              <p>
-                Messaging is not configured. No pairing code is generated and no
-                account access is requested.{" "}
-                <a href="#/app/status">See service status.</a>
-              </p>
-            </div>
-          </section>
+                  );
+                })}
+              </div>
+              <div className="notice warning">
+                <Lock size={18} />
+                <p>
+                  Messaging is not configured. No pairing code is generated and
+                  no account access is requested.{" "}
+                  <a href="#/app/status">See service status.</a>
+                </p>
+              </div>
+            </section>
+          )}
           <section className="panel">
             <div className="panel-heading">
               <div>

@@ -1,0 +1,61 @@
+CRYSNOVAX SOURCE LICENSE
+Version 1.0
+License identifier: Crysnovax Source License v1.0
+
+Copyright (c) 2026 Crysnovax — @crysnovax/baileys
+
+Preamble
+--------
+This software is the result of substantial original work by Crysnovax.
+It is distributed under a restricted license that protects the author's
+attribution rights. It is NOT the MIT license and intentionally does
+not grant the same freedoms.
+
+1. Permitted Use
+   You may use, run, and modify this software for your own personal or
+   non-commercial purposes, including private bot projects, prototypes,
+   and internal tooling, provided that all copyright and attribution
+   notices are preserved.
+
+2. Attribution Requirement
+   Any copy, fork, modified version, or derivative of this software must
+   retain, visibly and unmodified, in the source code, documentation,
+   and any user-facing material (bot menus, footers, README files,
+   sticker pack metadata, etc.):
+     - the original package name, or an explicit credit line reading
+       "Based on @crysnovax/baileys by Crysnovax",
+     - this license text,
+     - the copyright notice above.
+
+3. Prohibited Conduct
+   You may NOT, without the prior written permission of Crysnovax:
+     - rename, rebrand, or republish this software or substantial
+       portions of it under a different name or author,
+     - remove, obscure, or alter any attribution, watermark, integrity
+       check, or branding enforcement contained in the software,
+     - sell, license, sublicense, or commercially redistribute this
+       software or substantial portions of it,
+     - use AI tools, automated rewriting, or any other means to strip
+       attribution and claim the work as your own.
+
+4. Enforcement
+   This software contains integrity and attribution checks. Tampering
+   with, deleting, or circumventing them does not grant you any rights
+   under this license. Violations may be pursued to the fullest extent
+   permitted by law, including copyright claims, DMCA takedowns, and
+   platform (npm, GitHub) abuse reports.
+
+5. No Warranty
+   THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+   NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+   BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN
+   ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN
+   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+6. Termination
+   Any violation of this license automatically terminates your rights
+   to use, copy, or modify the software. Upon termination you must
+   delete all copies in your possession.

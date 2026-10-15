@@ -1,3 +1,4 @@
+import { migrateBroadcastSchema } from "./broadcastSchema";
 import { migrateEarningSchema } from "./earningSchema";
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync, chmodSync } from "node:fs";
@@ -48,6 +49,7 @@ export function openDatabase(filename: string) {
     INSERT OR IGNORE INTO schema_migrations VALUES(1, datetime('now'));
   `);
   migrateEarningSchema(db);
+  migrateBroadcastSchema(db);
   return db;
 }
 export type Database = ReturnType<typeof openDatabase>;

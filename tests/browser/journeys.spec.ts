@@ -56,7 +56,7 @@ test("landing, navigation, FAQs and honest service status", async ({
     .click();
   await expect(
     page.getByText(
-      "Not yet. Messaging and payout integrations are not connected.",
+      "Not yet. Paid campaign delivery and payouts are not enabled.",
       { exact: false },
     ),
   ).toBeVisible();

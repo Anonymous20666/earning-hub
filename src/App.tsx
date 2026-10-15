@@ -1,3 +1,4 @@
+import { PlogmeLicense } from "./components/PlogmeLicense";
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { ArrowLeft, ArrowUpRight, LoaderCircle } from "lucide-react";
 import { api, send, setCsrf, User, go } from "./api";
@@ -106,6 +107,8 @@ export default function App() {
         ) : (
           <Auth key="login" path="/login" onSuccess={setUser} />
         )
+      ) : path === "/plogme-license" ? (
+        <PlogmeLicense />
       ) : ["/rules", "/privacy", "/status"].includes(path) ? (
         <InfoPage path={path} />
       ) : (
@@ -278,9 +281,15 @@ function InfoPage({ path }: { path: string }) {
               <p>
                 Records are stored in the application’s server database and its
                 operational backups. Authorised administrators can review
-                support requests and account records. Messaging, payments, email
-                and Google sign-in providers are not connected. Hosting
-                infrastructure may separately keep access or security logs.
+                support requests and account records. Payment, email and Google
+                sign-in providers are not connected. WhatsApp owner-testing may
+                be enabled separately: linked-device credentials and Signal keys
+                are encrypted in the server database using a separately held
+                key. Private pairing codes are not logged. Group metadata and
+                scoped admin approvals support permitted personal broadcasts;
+                message content is processed to recognise approval commands, not
+                saved as a general chat archive. Hosting infrastructure may
+                separately keep access or security logs.
               </p>
             </section>
             <section>

@@ -1,3 +1,14 @@
+import fs from "node:fs";
+import path from "node:path";
+import type { WhatsAppManager } from "./whatsapp";
+import {
+  broadcastWorkspace,
+  createPersonalRun,
+  cancelPersonalRun,
+  placementDetails,
+} from "./broadcasts";
+import { saveBroadcastAsset } from "./broadcastAssets";
+import { safePreview } from "./safePreview";
 import {
   registerReferral,
   earningWorkspace,
@@ -59,6 +70,9 @@ export function createApp(
     origin?: string;
     rateMax?: number;
     development?: boolean;
+    whatsapp?: WhatsAppManager;
+    assetFolder?: string;
+    personalPreviewer?: typeof safePreview;
   } = {},
 ) {
   const app = express();
@@ -92,7 +106,11 @@ export function createApp(
     res.setHeader("Cache-Control", "no-store");
     if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
       if (
-        !req.is("application/json") ||
+        !(
+          req.is("application/json") ||
+          (req.originalUrl.split("?")[0] === "/api/broadcast-assets" &&
+            req.is("application/octet-stream"))
+        ) ||
         req.get("X-Requested-With") !== "PappyWeb"
       ) {
         res.status(403).json({ error: "Request rejected" });
@@ -216,7 +234,7 @@ export function createApp(
       Promise.resolve(fn(req, res, next)).catch(next);
   app.get("/api/health", (_req, res) => {
     db.prepare("SELECT 1").get();
-    res.json({ status: "ok", version: "0.2.0", mode: "pre-launch" });
+    res.json({ status: "ok", version: "0.3.0", mode: "pre-launch" });
   });
   app.get("/api/status", (_req, res) =>
     res.json({
@@ -228,7 +246,9 @@ export function createApp(
       queueWorkerActive: false,
       emailDelivery: false,
       googleAuth: false,
-      whatsapp: false,
+      whatsapp: !!options.whatsapp,
+      personalBroadcasts: !!options.whatsapp,
+      pairedDevicePilot: true,
       telegram: false,
       payments: false,
       payouts: false,
@@ -267,12 +287,10 @@ export function createApp(
             .prepare("SELECT user_id FROM referral_codes WHERE code=?")
             .get(req.body.referralCode))
       ) {
-        res
-          .status(400)
-          .json({
-            error:
-              "Referral code not found. Check the link or remove the referral code.",
-          });
+        res.status(400).json({
+          error:
+            "Referral code not found. Check the link or remove the referral code.",
+        });
         return;
       }
       const cleanEmail = email.trim().toLowerCase();
@@ -499,6 +517,287 @@ export function createApp(
         "UPDATE broadcast_settings SET dispatch_enabled=0 WHERE id=1",
       ).run();
       audit(req.account.id, "DISPATCH_STOPPED");
+      res.json({ success: true });
+    },
+  );
+  const wa = options.whatsapp;
+  const assetFolder = options.assetFolder || path.resolve("data/wa-assets");
+  const integration = (res: express.Response) => {
+    if (!wa) {
+      res
+        .status(503)
+        .json({
+          error:
+            "WhatsApp is not configured on this server. No pairing or send was started.",
+        });
+      return false;
+    }
+    return true;
+  };
+  const pairingLimiter = rateLimit({
+    windowMs: 10 * 60000,
+    limit: 6,
+    keyGenerator: (req: any) => req.account.id,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+  });
+  app.get("/api/whatsapp", protectedRoute, role("EARNER"), (req: any, res) =>
+    res.json({
+      configured: !!wa,
+      brand: "PAPPYPAY",
+      slots: wa?.slots(req.account.id) || [],
+      paidDispatchEnabled: false,
+    }),
+  );
+  app.post(
+    "/api/whatsapp/pair",
+    protectedRoute,
+    role("EARNER"),
+    pairingLimiter,
+    asyncRoute(async (req: any, res: express.Response) => {
+      if (!integration(res)) return;
+      try {
+        if (req.body.authoriseLinkedDevice !== true)
+          throw Error("Explicit linked-device authorisation is required");
+        res
+          .status(201)
+          .json(await wa!.pair(req.account.id, req.body.slot, req.body.phone));
+      } catch (e: any) {
+        res.status(400).json({ error: e.message });
+      }
+    }),
+  );
+  app.post(
+    "/api/whatsapp/:id/scan",
+    protectedRoute,
+    role("EARNER"),
+    asyncRoute(async (req: any, res: express.Response) => {
+      if (!integration(res)) return;
+      try {
+        res.json(await wa!.scan(req.account.id, req.params.id));
+      } catch (e: any) {
+        res.status(400).json({ error: e.message });
+      }
+    }),
+  );
+  app.post(
+    "/api/whatsapp/:id/reconnect",
+    protectedRoute,
+    role("EARNER"),
+    asyncRoute(async (req: any, res: express.Response) => {
+      if (!integration(res)) return;
+      try {
+        res.json(await wa!.reconnect(req.account.id, req.params.id));
+      } catch (e: any) {
+        res.status(400).json({ error: e.message });
+      }
+    }),
+  );
+  app.post(
+    "/api/whatsapp/:id/unlink",
+    protectedRoute,
+    role("EARNER"),
+    asyncRoute(async (req: any, res: express.Response) => {
+      if (!integration(res)) return;
+      try {
+        res.json(await wa!.unlink(req.account.id, req.params.id));
+      } catch (e: any) {
+        res.status(400).json({ error: e.message });
+      }
+    }),
+  );
+  app.post(
+    "/api/whatsapp/:id/paid-opt-in",
+    protectedRoute,
+    role("EARNER"),
+    (req: any, res) => {
+      if (
+        typeof req.body.enabled !== "boolean" ||
+        (req.body.enabled && req.body.authorisePaid !== true)
+      ) {
+        res
+          .status(400)
+          .json({
+            error: "Explicit future paid-campaign authorisation required",
+          });
+        return;
+      }
+      const result = db
+        .prepare(
+          "UPDATE wa_slots SET paid_opt_in=? WHERE id=? AND user_id=? AND status='ONLINE'",
+        )
+        .run(Number(req.body.enabled), req.params.id, req.account.id);
+      if (!result.changes) {
+        res.status(404).json({ error: "Connected number not found" });
+        return;
+      }
+      res.json({ success: true, paidDispatchEnabled: false });
+    },
+  );
+  app.post(
+    "/api/whatsapp/groups/approval",
+    protectedRoute,
+    role("EARNER"),
+    asyncRoute(async (req: any, res: express.Response) => {
+      if (!integration(res)) return;
+      try {
+        const { accountId, groupJid, status, chat, mentions } = req.body;
+        if (
+          typeof accountId !== "string" ||
+          typeof groupJid !== "string" ||
+          [status, chat, mentions].some((v) => typeof v !== "boolean")
+        )
+          throw Error(
+            "Account, group and explicit permission scopes are required",
+          );
+        res.json(
+          await wa!.requestApproval(req.account.id, accountId, groupJid, {
+            status,
+            chat,
+            mentions,
+          }),
+        );
+      } catch (e: any) {
+        res.status(400).json({ error: e.message });
+      }
+    }),
+  );
+  app.post(
+    "/api/whatsapp/groups/revoke",
+    protectedRoute,
+    role("EARNER"),
+    (req: any, res) => {
+      const result = db
+        .prepare(
+          "UPDATE broadcast_permissions SET revoked_at=? WHERE account_id=? AND group_jid=? AND EXISTS(SELECT 1 FROM paired_accounts a WHERE a.id=account_id AND a.user_id=?)",
+        )
+        .run(
+          new Date().toISOString(),
+          req.body.accountId || "",
+          req.body.groupJid || "",
+          req.account.id,
+        );
+      if (!result.changes) {
+        res.status(404).json({ error: "Group permission not found" });
+        return;
+      }
+      res.json({ success: true });
+    },
+  );
+  app.get("/api/broadcasts", protectedRoute, role("EARNER"), (req: any, res) =>
+    res.json({ ...broadcastWorkspace(db, req.account.id), configured: !!wa }),
+  );
+  app.post(
+    "/api/broadcasts",
+    protectedRoute,
+    role("EARNER"),
+    asyncRoute(async (req: any, res: express.Response) => {
+      if (!integration(res)) return;
+      try {
+        res
+          .status(201)
+          .json(
+            await createPersonalRun(
+              db,
+              req.account.id,
+              req.body,
+              options.personalPreviewer,
+            ),
+          );
+      } catch (e: any) {
+        res.status(400).json({ error: e.message });
+      }
+    }),
+  );
+  app.get(
+    "/api/broadcasts/:id",
+    protectedRoute,
+    role("EARNER"),
+    (req: any, res) => {
+      try {
+        res.json({
+          placements: placementDetails(db, req.account.id, req.params.id),
+        });
+      } catch {
+        res.status(404).json({ error: "Broadcast not found" });
+      }
+    },
+  );
+  app.post(
+    "/api/broadcasts/:id/cancel",
+    protectedRoute,
+    role("EARNER"),
+    (req: any, res) => {
+      try {
+        res.json(cancelPersonalRun(db, req.account.id, req.params.id));
+      } catch {
+        res.status(404).json({ error: "Personal broadcast not found" });
+      }
+    },
+  );
+  app.post(
+    "/api/broadcast-assets",
+    protectedRoute,
+    role("EARNER"),
+    express.raw({ type: "application/octet-stream", limit: "8mb" }),
+    asyncRoute(async (req: any, res: express.Response) => {
+      if (!integration(res)) return;
+      try {
+        res
+          .status(201)
+          .json(
+            await saveBroadcastAsset(db, assetFolder, req.account.id, req.body),
+          );
+      } catch (e: any) {
+        res.status(400).json({ error: e.message });
+      }
+    }),
+  );
+  app.get(
+    "/api/broadcast-assets/:id",
+    protectedRoute,
+    role("EARNER"),
+    (req: any, res) => {
+      const a = db
+        .prepare(
+          "SELECT * FROM broadcast_assets WHERE id=? AND user_id=? AND bytes>0",
+        )
+        .get(req.params.id, req.account.id) as any;
+      if (!a || !fs.existsSync(path.join(assetFolder, a.id))) {
+        res.status(404).json({ error: "Media not found" });
+        return;
+      }
+      res.type(a.mime).sendFile(path.join(assetFolder, a.id));
+    },
+  );
+  app.delete(
+    "/api/broadcast-assets/:id",
+    protectedRoute,
+    role("EARNER"),
+    (req: any, res) => {
+      const a = db
+        .prepare("SELECT * FROM broadcast_assets WHERE id=? AND user_id=?")
+        .get(req.params.id, req.account.id) as any;
+      if (!a) {
+        res.status(404).json({ error: "Media not found" });
+        return;
+      }
+      if (
+        db
+          .prepare(
+            "SELECT 1 FROM broadcast_runs WHERE asset_id=? AND status IN('QUEUED','RUNNING')",
+          )
+          .get(a.id)
+      ) {
+        res
+          .status(409)
+          .json({
+            error: "Cancel or finish broadcasts using this media first",
+          });
+        return;
+      }
+      fs.rmSync(path.join(assetFolder, a.id), { force: true });
+      db.prepare("UPDATE broadcast_assets SET bytes=0 WHERE id=?").run(a.id);
       res.json({ success: true });
     },
   );

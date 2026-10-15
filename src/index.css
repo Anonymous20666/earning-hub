@@ -4048,3 +4048,225 @@ th {
     min-width: 200px;
   }
 }
+
+/* Real Plogme owner-testing and personal broadcast controls. */
+.wa-slot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 24px;
+}
+.wa-slot {
+  display: block;
+  padding: 24px;
+  min-width: 0;
+}
+.wa-slot h3 {
+  margin: 12px 0;
+}
+.wa-slot > .badge {
+  margin-bottom: 20px;
+}
+.wa-slot .form-stack {
+  margin-top: 14px;
+}
+.wa-slot .checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+.earning-hub .checkbox-label input[type="checkbox"] {
+  width: 16px;
+  min-width: 16px;
+  margin: 3px 0;
+  padding: 0;
+  accent-color: var(--green);
+}
+.wa-pair-code {
+  background: #f0f6e9;
+  padding: 18px;
+  border-radius: 8px;
+  margin: 8px 0 20px;
+}
+.wa-pair-code input {
+  font:
+    600 25px ui-monospace,
+    monospace;
+  letter-spacing: 3px;
+  margin: 10px 0;
+}
+.wa-pair-code p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #465e3c;
+}
+.wa-slot-actions {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.wa-slot-actions > .text-link {
+  background: none;
+  border: 0;
+  padding: 8px 0;
+}
+.wa-attribution {
+  font-size: 11px;
+  color: #53654a;
+  line-height: 1.8;
+  margin: 24px 0;
+}
+.wa-attribution a {
+  text-decoration: underline;
+}
+.wa-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+.wa-mode {
+  border: 1px solid #cad7be;
+  background: #fff;
+  color: #284b31;
+  text-align: left;
+  padding: 20px 16px;
+  border-radius: 9px;
+}
+.wa-mode.selected {
+  background: #e9f4d7;
+  border-color: #78985c;
+  box-shadow: inset 0 0 0 1px #78985c;
+}
+.wa-mode strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 550;
+}
+.wa-mode span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.7;
+  margin-top: 9px;
+  color: #45603b;
+}
+.personal-broadcasts .form-stack {
+  gap: 22px;
+}
+.personal-broadcasts .form-stack label {
+  line-height: 1.8;
+}
+.personal-broadcasts .form-stack .checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 12px;
+  font-weight: 400;
+}
+.personal-broadcasts input[type="checkbox"] {
+  width: 16px;
+  min-width: 16px;
+  accent-color: var(--green);
+}
+.personal-broadcasts .field-help {
+  display: block;
+  margin-top: 9px;
+}
+.wa-target-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+.wa-target-heading h3 {
+  font-size: 15px;
+  margin: 0;
+}
+.wa-target-heading span {
+  font-size: 11px;
+  color: #516947;
+}
+.wa-uploaded {
+  border: 1px solid var(--line);
+  padding: 15px;
+  border-radius: 8px;
+}
+.wa-uploaded img {
+  max-width: 180px;
+  max-height: 140px;
+  object-fit: contain;
+  border-radius: 5px;
+}
+.wa-uploaded p {
+  font-size: 12px;
+  color: #4c6542;
+}
+.wa-approval {
+  background: #f5f8ef;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.wa-approval textarea {
+  font-size: 12px;
+  margin-top: 10px;
+}
+.wa-approval button {
+  margin-top: 15px;
+}
+.wa-run-details {
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 15px;
+}
+.wa-run-details h3 {
+  font-size: 16px;
+}
+.wa-run-details p {
+  font-size: 12px;
+  padding: 12px;
+  background: #f5f8f0;
+  line-height: 1.8;
+  border-radius: 6px;
+}
+.wa-run-details p span {
+  display: block;
+  color: #5b684f;
+}
+@media (max-width: 900px) {
+  .wa-slot-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .wa-mode-grid {
+    grid-template-columns: 1fr;
+  }
+  .wa-mode {
+    padding: 15px;
+  }
+  .wa-mode span {
+    margin-top: 6px;
+  }
+  .wa-target-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .wa-slot {
+    padding: 20px 16px;
+  }
+  .personal-broadcasts .form-stack > .button {
+    white-space: normal;
+    line-height: 1.6;
+  }
+}
+.personal-broadcasts .form-stack .checkbox-label,
+.wa-slot .checkbox-label {
+  color: #526447;
+}
+.personal-broadcasts .field-help {
+  color: #526447;
+}

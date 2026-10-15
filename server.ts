@@ -1,3 +1,5 @@
+import { WhatsAppManager } from "./backend/whatsapp";
+import { startPersonalDispatcher } from "./backend/personalDispatch";
 import "dotenv/config";
 import path from "node:path";
 import express from "express";
@@ -9,7 +11,28 @@ const production = process.env.NODE_ENV === "production";
 const db = openDatabase(
   process.env.DATABASE_PATH || path.resolve("data/pappy.sqlite"),
 );
+const assetFolder = path.resolve(
+  path.dirname(process.env.DATABASE_PATH || "data/pappy.sqlite"),
+  "wa-assets",
+);
+const whatsapp =
+  process.env.WHATSAPP_ENABLED === "true"
+    ? new WhatsAppManager(db, {
+        encryptionKey: process.env.WA_ENCRYPTION_KEY || "",
+        identityKey: process.env.WA_IDENTITY_KEY || "",
+      })
+    : undefined;
+if (whatsapp) await whatsapp.start();
+const stopPersonal = whatsapp
+  ? startPersonalDispatcher(db, whatsapp, assetFolder)
+  : async () => {};
 const app = createApp(db, {
+  whatsapp,
+  assetFolder,
+  rateMax:
+    !production && process.env.QA_RATE_MAX
+      ? Number(process.env.QA_RATE_MAX)
+      : undefined,
   secureCookies: process.env.COOKIE_SECURE !== "false",
   development: !production,
   origin: process.env.APP_ORIGIN || undefined,
@@ -43,7 +66,9 @@ const server = app.listen(port, host, () =>
 );
 for (const signal of ["SIGINT", "SIGTERM"])
   process.on(signal, () => {
-    server.close(() => {
+    server.close(async () => {
+      await stopPersonal();
+      await whatsapp?.close();
       db.close();
       process.exit(0);
     });

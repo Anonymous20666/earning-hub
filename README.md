@@ -1,6 +1,6 @@
 # Pappy Earning Hub
 
-A **pre-launch** worker / advertiser marketplace with a real, server-backed account and planning foundation. Messaging, earning and payments are deliberately **not enabled**.
+A **pre-launch** worker / advertiser marketplace with a real, server-backed account and planning foundation. A real **personal WhatsApp owner-testing pilot** is available when explicitly configured. Paid earning, paid dispatch and payments remain **off**.
 
 ## What works
 
@@ -12,23 +12,31 @@ A **pre-launch** worker / advertiser marketplace with a real, server-backed acco
 - Responsive public website, registration, login and role-specific workspaces.
 - Database backup command and integrity checking.
 
-## Funding-first earning update (v0.2.0)
+## Personal WhatsApp pilot (v0.3.0)
+
+- Plogme 2.1.0, PAPPYPAY-branded private pairing, two owned numbers and actual group inventory.
+- Admin-approved personal `allstatus`, `allchat` and status-first `2x`, with visible links, bounded private image/video/GIF uploads, immutable zero-reward runs and honest submission states.
+- Scoped consent, owner-level removal blocks across both numbers, no automatic joining or blind retry, encrypted credentials and separately persisted secrets.
+- Additive schema 3 and independent funded status/chat accounting. **No live paid Plogme dispatcher or verified receipt adapter exists yet.** Nothing generates paid earnings merely because a provider accepted a message.
+- Read [the implementation, limits, remaining device-validation work and operator guide](docs/PLOGME-IMPLEMENTATION.md). Upstream attribution and licence are retained. Never treat the pilot as a verified commercial launch or Meta endorsement.
+
+## Funding-first earning update (v0.2.0; historical baseline)
 
 - Exact member-based earning calculator; one group suffices; no 100-group earning cap.
-- Two-number inventory model, unique/duplicate/permission counts and ownership-checked exclusion. **Pairing itself is not configured.**
+- Two-number inventory model, unique/duplicate/permission counts and ownership-checked exclusion. **Pairing was not configured at v0.2.0; v0.3.0 adds the separately gated personal pilot.**
 - Real referral links and ₦5 pending attribution at signup; no credit before a funded verified qualifying delivery.
 - Restricted treasury and house-campaign budgets; verified-cash bookkeeping, separate bonus/referral backing, strict reservations, idempotent internal settlement and reconciliation.
 - Real BullMQ/Redis dispatch framework tested with an isolated Redis and synthetic provider. **No production provider adapter, Redis worker service or real dispatch is enabled.**
 - Additive schema version 2; existing accounts/data preserved. No real cash, paid earnings or public admin is seeded.
 
-Read [the funding-stage implementation and operator guide](docs/FUNDING-STAGE.md) before recording funds or attempting any messaging. The complete paid marketplace is not finished: provider/consent integration, PostgreSQL migration, commercial checkout decisions and actual payments/payouts remain gated.
+Read [the funding-stage implementation and operator guide](docs/FUNDING-STAGE.md) before recording funds or attempting any messaging. The complete paid marketplace is not finished: live paid provider-receipt validation, PostgreSQL migration, commercial checkout decisions and actual payments/payouts remain gated.
 
 ## Requirements and package manager
 
-Node **22.16+**; npm; the committed `package-lock.json`. Use `npm ci`, not an unpinned install. SQLite uses Node's built-in `node:sqlite`, which emits an experimental warning on Node 22. No PostgreSQL or Redis is required for the deployed pre-launch web app. The inactive BullMQ worker requires a separate private Redis and an approved provider adapter; the release does not start either. The old Bun lock and prototype code are retained in `legacy/` and are not runtime inputs.
+Node **22.16+**; npm; the committed `package-lock.json`. Use `npm ci --ignore-scripts`, not an unpinned install. SQLite uses Node's built-in `node:sqlite`, which emits an experimental warning on Node 22. No PostgreSQL or Redis is required for the deployed pre-launch web app. The inactive BullMQ worker requires a separate private Redis and an approved provider adapter; the release does not start either. The old Bun lock and prototype code are retained in `legacy/` and are not runtime inputs.
 
 ```bash
-npm ci
+npm ci --ignore-scripts
 # For local HTTP development only:
 COOKIE_SECURE=false npm run dev
 # Browse http://127.0.0.1:3107
@@ -89,7 +97,7 @@ APP_ORIGIN=https://pappy-earnig-hub.duckdns.org TRUST_PROXY_HOPS=1 bash deploy/r
 
 Actual public HTTPS browser checks passed for registration, sessions, wallet display, saved advertiser drafts, logout/login and desktop/mobile home rendering. Temporary test accounts were removed. No certificate verification bypass was used. The old temporary Arena tunnel is no longer required.
 
-This is a public **design-review/pre-launch** deployment, not permission to enable live messaging or money movement. The founder has authorised the funding-first build, not unfunded paid broadcasting. Live providers and money movement remain disabled.
+This is a public **design-review/pre-launch** deployment, not permission to enable live messaging or money movement. The founder has authorised the funding-first build, not unfunded paid broadcasting. Paid dispatch, the Redis worker and money movement remain disabled. Personal WhatsApp access is a separate owner-authorised pilot; use the new guide and keep the linked-device keys persistent.
 
 ## Administration
 
@@ -97,7 +105,7 @@ There are **no seeded accounts, default passwords or public admin-registration r
 
 ## Important limitations
 
-- No SMTP/email verification/password reset delivery, Google OAuth, messaging sockets, Telegram webhook, payment provider, payout service or AI key is configured.
+- No SMTP/email verification/password reset delivery, Google OAuth, paid messaging adapter, Telegram webhook, payment provider, payout service or AI key is configured.
 - No real pairing, group scan, campaign dispatch, paid earning, deposit collection or withdrawal occurs. Provider-backed operations fail closed. Internal inventory, budgeting, outbox and verified-receipt settlement logic exist and are tested, but are not a production provider connection.
 - Planning estimates preserve the inherited formulas; conversion and profitability assumptions are unverified.
 - The internal earning ledger, delivery idempotency and treasury reconciliation are implemented and tested. Real provider evidence ingestion/reconciliation, payout settlement/debits, fraud/KYC controls and operational bank verification remain launch gates.

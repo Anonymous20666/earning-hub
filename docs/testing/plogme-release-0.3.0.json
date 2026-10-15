@@ -1,0 +1,59 @@
+{
+  "release": "0.3.0",
+  "date": "2026-10-15",
+  "origin": "https://pappy-earnig-hub.duckdns.org",
+  "automated": {
+    "total": 135,
+    "passed": 134,
+    "failed": 0,
+    "skipped": 1,
+    "skipReason": "Dedicated Redis not configured for this run; no real provider tested"
+  },
+  "browser": {
+    "passed": 20,
+    "failed": 0,
+    "desktopMobile": true,
+    "newPairingComposerAxeViolations": 0
+  },
+  "publicReadOnly": {
+    "passed": 21,
+    "accountsCreated": 0
+  },
+  "checks": {
+    "typecheck": true,
+    "productionBuild": true,
+    "productionDependencyAuditVulnerabilities": 0,
+    "dockerHealthy": true,
+    "dockerPlogmeImport": true,
+    "dockerSharpNative": true,
+    "ffmpegIncluded": true,
+    "privateEnvironmentFileMode": "0600 root root",
+    "originalAccountWalletLedgerFingerprintsUnchanged": true,
+    "treasurySettingsUnchanged": true,
+    "schema": 3,
+    "foreignKeyViolations": 0
+  },
+  "productionCounts": {
+    "paired_accounts": 0,
+    "wa_slots": 0,
+    "wa_vault": 0,
+    "broadcast_runs": 0,
+    "broadcast_placements": 0,
+    "broadcast_removals": 0
+  },
+  "productionMoney": {
+    "id": 1,
+    "cash_milli": 0,
+    "available_milli": 0,
+    "reserved_milli": 0,
+    "payable_milli": 0,
+    "bonus_backing_milli": 0
+  },
+  "dispatchEnabled": false,
+  "payoutsEnabled": false,
+  "image": "sha256:60110eee2f5978ed2e398a6464786527530e772154288ef5433e9a65da694262",
+  "container": "0f8beebaaf9039eaae13c834875b466d1d056d58353175b97e1fbc650d58f519",
+  "backup": "pappy-2026-10-15T04-14-51-500Z.sqlite",
+  "rollbackContainer": "pappy-earning-hub-rollback-20261015T041416Z",
+  "limitsAndUnverifiedWork": "See docs/PLOGME-IMPLEMENTATION.md. No real WhatsApp pairing, messages or joining; no real delivery/receipt/preview capability verified. Live paid Plogme dispatcher and receipt adapter not implemented."
+}
