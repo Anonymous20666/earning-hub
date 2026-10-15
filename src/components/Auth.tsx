@@ -69,17 +69,18 @@ export function Auth({
               </>
             ) : (
               <>
-                Your community.
+                Your WhatsApp.
                 <br />
-                Your contribution.
+                Your groups.
                 <br />
-                <em>New possibilities.</em>
+                <em>Your earning potential.</em>
               </>
             )}
           </h1>
           <p>
-            A platform for the people who bring communities together—and the
-            brands who want to reach them responsibly.
+            {role === "EARNER"
+              ? "Connect your WhatsApp and prepare your groups for approved, funded work. Earn Coins per confirmed qualifying paid post—not for simply pairing your number. Paid jobs and cashout are not open yet."
+              : "Prepare thoughtful campaigns for communities that agree to receive them. Save your plans now; paid campaign launch is not open yet."}
           </p>
           <div className="auth-points">
             <span>
@@ -111,13 +112,15 @@ export function Auth({
           <h2>
             {signup
               ? role === "EARNER"
-                ? "Start your worker journey."
+                ? "Get ready to earn with your groups."
                 : "Make room for growth."
               : "A little closer to possibility."}
           </h2>
           <p>
             {signup
-              ? "A clear starting point. No payments required."
+              ? role === "EARNER"
+                ? "Create a free account, then connect your own WhatsApp. Paid jobs and cashout are not open yet."
+                : "A clear starting point. No payments required."
               : "Sign in to your Pappy workspace."}
           </p>
           {signup && (

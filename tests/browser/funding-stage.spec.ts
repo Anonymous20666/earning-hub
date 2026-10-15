@@ -43,6 +43,7 @@ async function check(page: Page, route: string, project: string) {
     })),
   ).toEqual([]);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/funding-${project}-${route}.png`,
     // Treasury drafts accumulate across isolated QA runs; an unbounded high-DPR
     // full-page bitmap can crash Chromium after all functional assertions pass.

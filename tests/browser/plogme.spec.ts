@@ -57,6 +57,7 @@ test("private pairing and personal composer are accessible, responsive and never
     ),
   ).toBe(true);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/plogme-connections-${info.project.name}.png`,
     fullPage: true,
   });
@@ -94,6 +95,7 @@ test("private pairing and personal composer are accessible, responsive and never
     ),
   ).toBe(true);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/plogme-broadcasts-${info.project.name}.png`,
     fullPage: true,
   });

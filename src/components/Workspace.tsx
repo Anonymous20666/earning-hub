@@ -331,7 +331,7 @@ export function Workspace({
     overview: [
       `Welcome to Pappy.`,
       worker
-        ? "Connect WhatsApp, write a post and share with all permitted groups."
+        ? "Connect your WhatsApp, check group eligibility and understand your earning potential."
         : "Turn a clear idea into a thoughtfully planned campaign.",
     ],
     wallet: [
@@ -612,8 +612,10 @@ export function Workspace({
                           Paid jobs and withdrawals are not open yet.
                         </strong>
                         <p>
-                          You can use your own WhatsApp to send free personal
-                          posts. These posts do not earn money.
+                          Prepare your number and eligible groups for funded
+                          work. Pairing alone does not earn Coins. Free personal
+                          broadcasting is available separately and earns no
+                          Coins.
                         </p>
                       </div>
                       <a href="#/app/status">

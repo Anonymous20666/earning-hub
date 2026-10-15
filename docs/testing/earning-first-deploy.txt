@@ -1,0 +1,125 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.07kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:22-bookworm-slim
+#2 DONE 0.2s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 154B done
+#3 DONE 0.0s
+
+#4 [build 1/9] FROM docker.io/library/node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 716.02kB 0.0s done
+#5 DONE 0.0s
+
+#6 [runtime  3/10] RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
+#6 CACHED
+
+#7 [build 2/9] WORKDIR /app
+#7 CACHED
+
+#8 [runtime  4/10] COPY package.json package-lock.json ./
+#8 DONE 0.0s
+
+#9 [build 3/9] COPY package.json package-lock.json ./
+#9 DONE 0.0s
+
+#10 [build 4/9] RUN npm ci --ignore-scripts --no-fund
+#10 5.812 
+#10 5.812 added 216 packages, and audited 217 packages in 5s
+#10 5.813 
+#10 5.813 found 0 vulnerabilities
+#10 5.814 npm notice
+#10 5.814 npm notice New major version of npm available! 10.9.9 -> 12.2.0
+#10 5.814 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#10 5.814 npm notice To update run: npm install -g npm@12.2.0
+#10 5.814 npm notice
+#10 DONE 7.9s
+
+#11 [runtime  5/10] RUN npm ci --omit=dev --ignore-scripts --no-fund && npm cache clean --force
+#11 4.417 
+#11 4.417 added 177 packages, and audited 178 packages in 4s
+#11 4.418 
+#11 4.418 found 0 vulnerabilities
+#11 4.419 npm notice
+#11 4.419 npm notice New major version of npm available! 10.9.9 -> 12.2.0
+#11 4.419 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+#11 4.419 npm notice To update run: npm install -g npm@12.2.0
+#11 4.419 npm notice
+#11 4.573 npm warn using --force Recommended protections disabled.
+#11 DONE 7.9s
+
+#12 [build 5/9] COPY index.html tsconfig.json vite.config.ts ./
+#12 DONE 0.0s
+
+#13 [build 6/9] COPY public ./public
+#13 DONE 0.0s
+
+#14 [build 7/9] COPY src ./src
+#14 DONE 0.0s
+
+#15 [build 8/9] COPY shared ./shared
+#15 DONE 0.0s
+
+#16 [build 9/9] RUN npm run build
+#16 0.308 
+#16 0.308 > pappy-earning-hub@0.7.0 build
+#16 0.308 > vite build
+#16 0.308 
+#16 0.594 vite v8.3.4 building client environment for production...
+#16 0.617 transforming...
+#16 0.749 ✓ 1676 modules transformed.
+#16 0.827 rendering chunks...
+#16 0.902 computing gzip size...
+#16 0.907 dist/index.html                      1.19 kB │ gzip:  0.52 kB
+#16 0.907 dist/assets/index-DxMEG_wI.css      92.58 kB │ gzip: 20.07 kB
+#16 0.907 dist/assets/Auth-CES7HJpo.js         7.00 kB │ gzip:  2.77 kB
+#16 0.907 dist/assets/Workspace-DJ9B7e6P.js   97.21 kB │ gzip: 26.22 kB
+#16 0.907 dist/assets/index-XIRr8_W5.js      264.38 kB │ gzip: 83.31 kB
+#16 0.907 
+#16 0.908 ✓ built in 312ms
+#16 DONE 1.0s
+
+#17 [runtime  6/10] COPY --from=build /app/dist ./dist
+#17 DONE 0.0s
+
+#18 [runtime  7/10] COPY server.ts ./
+#18 DONE 0.0s
+
+#19 [runtime  8/10] COPY backend ./backend
+#19 DONE 0.0s
+
+#20 [runtime  9/10] COPY shared ./shared
+#20 DONE 0.0s
+
+#21 [runtime 10/10] RUN mkdir -p /app/data && chown node:node /app/data
+#21 DONE 0.2s
+
+#22 exporting to image
+#22 exporting layers
+#22 exporting layers 1.0s done
+#22 writing image sha256:e6d3eb6324677c2868bf7185b53520f86de629ea7d1eb378ddb952ea03ae9249 done
+#22 naming to docker.io/library/pappy-earning-hub:mission-01 done
+#22 DONE 1.0s
+
+> pappy-earning-hub@0.6.2 backup
+> tsx backend/backup.ts
+
+Backup verified: /app/data/backups/pappy-2026-10-15T07-14-27-644Z.sqlite
+(node:1106) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm notice
+npm notice New major version of npm available! 10.9.9 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
+pappy-earning-hub
+Previous container preserved: pappy-earning-hub-rollback-20261015T071416Z
+6458f05736809cbe65525ff243cd76d7843cd986786928432f2f6a9254681312
+Application health passed. Paid dispatch and payouts are not enabled by this release script.

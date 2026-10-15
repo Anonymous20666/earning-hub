@@ -69,6 +69,7 @@ test("desktop and mobile menu starts closed, traps focus when opened, closes by 
     ).violations,
   ).toEqual([]);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/international-menu-${info.project.name}.png`,
     fullPage: true,
   });
@@ -141,6 +142,7 @@ test("international Coins-first copy, honest daily example and calculator agree 
     ).violations,
   ).toEqual([]);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/international-calculator-${info.project.name}.png`,
     fullPage: true,
   });

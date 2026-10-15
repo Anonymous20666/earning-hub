@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowRight,
@@ -35,6 +35,12 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
     [approval, setApproval] = useState("");
+  const reviewHeading = useRef<HTMLHeadingElement>(null);
+  // Focus only after React has committed the review. A pre-commit animation
+  // frame can run before this heading exists under concurrent rendering.
+  useEffect(() => {
+    if (draft?.draftId) reviewHeading.current?.focus();
+  }, [draft?.draftId]);
   async function load() {
     try {
       setData(await api("/broadcasts"));
@@ -103,9 +109,6 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
       });
       setDraft(result);
       setConfirmed(false);
-      requestAnimationFrame(() =>
-        document.getElementById("post-review-title")?.focus(),
-      );
     });
   }
   async function post() {
@@ -459,7 +462,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
               <ShieldCheck size={24} />
               <div>
                 <span className="eyebrow">CHECK BEFORE POSTING</span>
-                <h3 id="post-review-title" tabIndex={-1}>
+                <h3 id="post-review-title" ref={reviewHeading} tabIndex={-1}>
                   Is everything correct?
                 </h3>
               </div>

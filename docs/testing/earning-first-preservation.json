@@ -1,0 +1,15 @@
+{
+  "unchangedFingerprints": 23,
+  "foreignKeyErrors": 0,
+  "authEntriesBefore": 903,
+  "authEntriesAfter": 903,
+  "credentialsAndGroupsPreserved": true,
+  "treasuryAndSettingsUnchanged": true,
+  "encryptionConfigurationAndPermissionsUnchanged": true,
+  "slotStates": [
+    {
+      "slot": 1,
+      "status": "ONLINE"
+    }
+  ]
+}

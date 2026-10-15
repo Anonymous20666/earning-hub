@@ -44,10 +44,11 @@ test("landing, navigation, FAQs and honest service status", async ({
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "One post.",
+    "Get ready to earn.",
   );
   await checkOverflow(page);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/${info.project.name}-landing.png`,
     fullPage: true,
   });
@@ -93,6 +94,7 @@ test("worker registration, persistence, wallet, support, settings, logout and lo
   ).toBeVisible();
   await checkOverflow(page);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/${info.project.name}-worker-overview.png`,
     fullPage: true,
   });
@@ -104,6 +106,7 @@ test("worker registration, persistence, wallet, support, settings, logout and lo
     page.getByText("Payouts are not enabled.", { exact: true }),
   ).toBeVisible();
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/${info.project.name}-wallet.png`,
     fullPage: true,
   });
@@ -147,7 +150,7 @@ test("worker registration, persistence, wallet, support, settings, logout and lo
     .click();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "One post.",
+    "Get ready to earn.",
   );
   await page.goto("/#/app");
   await expect(
@@ -191,6 +194,7 @@ test("advertiser creates, estimates, edits and deletes a persisted draft", async
   ).toBeVisible();
   await checkOverflow(page);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/${info.project.name}-campaign-planning.png`,
     fullPage: true,
   });
@@ -203,6 +207,7 @@ test("advertiser creates, estimates, edits and deletes a persisted draft", async
     page.getByRole("heading", { name: "Community launch plan", exact: true }),
   ).toBeVisible();
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/${info.project.name}-campaigns.png`,
     fullPage: true,
   });
@@ -255,6 +260,7 @@ test("auth validation, password visibility and truthful reset state", async ({
   await page.goto("/#/join/advertiser");
   await checkOverflow(page);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/${info.project.name}-registration.png`,
     fullPage: true,
   });

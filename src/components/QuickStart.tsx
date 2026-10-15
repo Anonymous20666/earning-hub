@@ -46,9 +46,14 @@ export function QuickStart({ revision = 0 }: { revision?: number }) {
     : !unique
       ? "Find my groups"
       : approved
-        ? "Send a post"
+        ? "Explore earning rates"
         : "Check group permission";
-  const link = !online || !unique ? "#/app/connections" : "#/app/broadcasts";
+  const link =
+    !online || !unique
+      ? "#/app/connections"
+      : approved
+        ? "#/app/calculator"
+        : "#/app/broadcasts";
   return (
     <section className="quick-start" aria-labelledby="quick-start-title">
       <div className="quick-start-top">
@@ -65,8 +70,8 @@ export function QuickStart({ revision = 0 }: { revision?: number }) {
             {!state
               ? error || "Checking your connection…"
               : online
-                ? `${unique} ${unique === 1 ? "group found" : "groups found"}. You can send your own posts for free.`
-                : "Link your own number. Posts go to all permitted groups automatically."}
+                ? `${unique} ${unique === 1 ? "group found" : "groups found"}. Check which groups qualify for future paid work.`
+                : "Start with your own number. Then check group eligibility for future paid work. Pairing alone does not pay."}
           </p>
         </div>
         <span className={`quick-status ${online ? "connected" : ""}`}>
@@ -99,9 +104,9 @@ export function QuickStart({ revision = 0 }: { revision?: number }) {
           {
             n: 3,
             icon: Send,
-            title: "Send your post",
-            text: "Choose Text or Media. Review, confirm and watch it post.",
-            href: "#/app/broadcasts",
+            title: "Understand your earning potential",
+            text: "See exact reward rates. Paid jobs and cashout are not open yet.",
+            href: "#/app/calculator",
             done: false,
           },
         ].map((step) => (
@@ -129,10 +134,22 @@ export function QuickStart({ revision = 0 }: { revision?: number }) {
         <p>
           <HelpCircle size={18} />
           <span>
-            Small groups can get posts too. Under 100 members = no paid reward.
-            Your own posts never earn Coins.
+            Groups need 100+ members and permission for paid rewards. One
+            eligible group is enough. Pairing and your own posts never earn
+            Coins.
           </span>
         </p>
+      </div>
+      <div className="quick-free-extra">
+        <Send size={18} />
+        <p>
+          <strong>Want to send your own post too?</strong> Personal broadcasts
+          are free and separate from paid work.
+        </p>
+        <a href="#/app/broadcasts">
+          Send a free personal post
+          <ArrowRight size={16} />
+        </a>
       </div>
     </section>
   );

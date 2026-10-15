@@ -120,13 +120,11 @@ test("Text/link -> many ignore links -> immutable review -> confirm -> real-even
           image: `data:image/jpeg;base64,${img}`,
         },
         plan: {
-          targets: groups
-            .slice(0, 2)
-            .map((g) => ({
-              groupJid: g.group_jid,
-              subject: g.subject,
-              members: g.member_count,
-            })),
+          targets: groups.slice(0, 2).map((g) => ({
+            groupJid: g.group_jid,
+            subject: g.subject,
+            members: g.member_count,
+          })),
           skips: [
             {
               groupJid: groups[2].group_jid,
@@ -263,6 +261,7 @@ test("Text/link -> many ignore links -> immutable review -> confirm -> real-even
   expect(submits).toBe(0);
   await axe(page);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/composer-review-${info.project.name}.png`,
     fullPage: true,
   });
@@ -287,6 +286,7 @@ test("Text/link -> many ignore links -> immutable review -> confirm -> real-even
   expect(submits).toBe(1);
   await axe(page);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/composer-console-${info.project.name}.png`,
     fullPage: true,
   });
@@ -355,13 +355,11 @@ test("Media upload contract retains its caption; invalid ignore link blocks revi
   await page.route("**/api/broadcast-assets/SYNTHETIC-private-asset", (r) =>
     r.fulfill({ contentType: "image/png", body: file }),
   );
-  await page
-    .getByLabel("Upload your photo or video")
-    .setInputFiles({
-      name: "SYNTHETIC-qa-only.png",
-      mimeType: "image/png",
-      buffer: file,
-    });
+  await page.getByLabel("Upload your photo or video").setInputFiles({
+    name: "SYNTHETIC-qa-only.png",
+    mimeType: "image/png",
+    buffer: file,
+  });
   await expect(page.getByAltText("Your uploaded post")).toBeVisible();
   await page.getByLabel("Caption (optional)").fill("SYNTHETIC media caption");
   await page.locator(".composer-ignore summary").click();

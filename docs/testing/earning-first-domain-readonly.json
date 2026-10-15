@@ -1,0 +1,147 @@
+{
+  "origin": "https://pappy-earnig-hub.duckdns.org",
+  "at": "2026-10-15T07:15:09.135Z",
+  "checks": [
+    {
+      "name": "TLS health is v0.7.0",
+      "passed": true
+    },
+    {
+      "name": "paidBroadcasts remains OFF",
+      "passed": true
+    },
+    {
+      "name": "queueWorkerActive remains OFF",
+      "passed": true
+    },
+    {
+      "name": "payments remains OFF",
+      "passed": true
+    },
+    {
+      "name": "payouts remains OFF",
+      "passed": true
+    },
+    {
+      "name": "personal pilot configured separately from paid dispatch",
+      "passed": true
+    },
+    {
+      "name": "/whatsapp rejects anonymous access",
+      "passed": true
+    },
+    {
+      "name": "/broadcasts rejects anonymous access",
+      "passed": true
+    },
+    {
+      "name": "/broadcasts/private rejects anonymous access",
+      "passed": true
+    },
+    {
+      "name": "/broadcast-assets/private rejects anonymous access",
+      "passed": true
+    },
+    {
+      "name": "/personal-posts/private/events rejects anonymous access",
+      "passed": true
+    },
+    {
+      "name": "/earnings rejects anonymous access",
+      "passed": true
+    },
+    {
+      "name": "/admin/treasury rejects anonymous access",
+      "passed": true
+    },
+    {
+      "name": "anonymous pairing request cannot start a socket",
+      "passed": true
+    },
+    {
+      "name": "/personal-posts/prepare cannot mutate without authentication",
+      "passed": true
+    },
+    {
+      "name": "/personal-posts/ignores cannot mutate without authentication",
+      "passed": true
+    },
+    {
+      "name": "/personal-posts cannot mutate without authentication",
+      "passed": true
+    },
+    {
+      "name": "no public fabricated receipt endpoint",
+      "passed": true
+    },
+    {
+      "name": "cross-origin mutation remains blocked",
+      "passed": true
+    },
+    {
+      "name": "desktop landing loads without horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "landing keeps decoration automatic with no design labels/playback controls",
+      "passed": true
+    },
+    {
+      "name": "desktop 3D is still actually moving after the old 4.5-second cutoff",
+      "passed": true
+    },
+    {
+      "name": "international landing leads with Coins and a qualified 1,000-Coin example",
+      "passed": true
+    },
+    {
+      "name": "earning leads the hero; free personal broadcasting is secondary and paid availability is truthful",
+      "passed": true
+    },
+    {
+      "name": "public group rates are exact and appear before free broadcasting",
+      "passed": true
+    },
+    {
+      "name": "public licence retains original author and upstream terms",
+      "passed": true
+    },
+    {
+      "name": "public service status identifies an owner-testing pilot, not verified paid delivery",
+      "passed": true
+    },
+    {
+      "name": "390px landing remains inside viewport",
+      "passed": true
+    },
+    {
+      "name": "mobile 3D is still actually moving after the old 4.5-second cutoff",
+      "passed": true
+    },
+    {
+      "name": "protected composer directs unauthenticated visitors to login",
+      "passed": true
+    },
+    {
+      "name": "no uncaught public browser application error",
+      "passed": true
+    },
+    {
+      "name": "Chrome Android emulation: data-saving preference no longer blocks actual CSS motion",
+      "passed": true
+    },
+    {
+      "name": "Chrome Android emulation: reduced-motion stays respected until explicit opt-in",
+      "passed": true
+    },
+    {
+      "name": "Chrome Android emulation: explicit motion-on moves despite both simulated preferences",
+      "passed": true
+    },
+    {
+      "name": "Chrome Android emulation: enabled motion survives a fresh load without the query",
+      "passed": true
+    }
+  ],
+  "notes": "Read-only public verification; no accounts created, no phone entered, no pairing, messages, joining, deposits, earning or payouts."
+}

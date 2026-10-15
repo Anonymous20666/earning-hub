@@ -21,8 +21,9 @@ export function EarningPotential() {
           look like?
         </h2>
         <p>
-          Grow your eligible groups and see how the rewards could add up. Your
-          personal posts stay free.
+          More eligible groups and confirmed funded posts can increase your
+          earning potential. Here is how the same reward rules could add up—not
+          a promised daily income.
         </p>
         <a href="#/rules">
           See how earning works <ArrowUpRight size={17} />

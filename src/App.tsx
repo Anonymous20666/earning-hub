@@ -70,7 +70,7 @@ export default function App() {
   useEffect(() => {
     if (!path.startsWith("/app"))
       document.title =
-        "Pappy Earning Hub — Community. Contribution. Possibility.";
+        "Pappy Earning Hub — Connect WhatsApp. Get ready to earn.";
   }, [path]);
   const logout = async () => {
     await send("/auth/logout", {});

@@ -79,25 +79,25 @@ export function LiveScene() {
               <span className="phone-camera" />
             </div>
             <div className="phone-greeting">
-              Ready when
+              Ready to
               <br />
-              you are.
+              earn?
             </div>
             <div className="phone-message">
               <span className="phone-message-icon">
                 <MessageCircle size={22} />
               </span>
               <div>
-                <strong>Your next post</strong>
-                <span>A message worth sharing.</span>
+                <strong>Paid campaigns</strong>
+                <span>Confirmed posts earn Coins.</span>
               </div>
             </div>
             <div className="phone-groups">
               <Users size={19} />
-              <span>Your groups. One message.</span>
+              <span>Approved groups. 100+ members.</span>
             </div>
             <div className="phone-send">
-              <span>Share with permission</span>
+              <span>Permission comes first</span>
               <Send size={19} />
             </div>
             <div className="phone-home" />
@@ -115,8 +115,8 @@ export function LiveScene() {
             <MessageCircle size={23} />
           </span>
           <div>
-            <strong>Small groups welcome</strong>
-            <small>Posts for every group size</small>
+            <strong>Earn per confirmed post</strong>
+            <small>Paid jobs are not open yet</small>
           </div>
         </div>
         <div className="scene-pebble pebble-one" />

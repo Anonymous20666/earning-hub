@@ -103,6 +103,7 @@ test("admin UI is only reached by server-provisioned role in isolated QA databas
     await expect(page.getByRole("status")).toContainText("Reply saved");
   }
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/${info.project.name}-admin-qa.png`,
     fullPage: false,
   });

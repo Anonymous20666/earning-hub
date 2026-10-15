@@ -6,7 +6,7 @@ test("landing has no design/playback controls; motion keeps running beyond five 
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "One post.",
+    "Get ready to earn.",
   );
   await expect(
     page.getByRole("button", { name: /Play movement|Pause movement|3D/i }),
@@ -58,6 +58,7 @@ test("landing has no design/playback controls; motion keeps running beyond five 
     ).violations,
   ).toEqual([]);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/international-landing-${info.project.name}.png`,
     fullPage: true,
   });
@@ -132,7 +133,7 @@ test("overview guides a connected owner forward and approved small groups use au
   await expect(
     page
       .locator(".quick-start")
-      .getByRole("link", { name: "Send a post", exact: true }),
+      .getByRole("link", { name: "Explore earning rates", exact: true }),
   ).toBeVisible();
   await expect(
     page
@@ -152,6 +153,7 @@ test("overview guides a connected owner forward and approved small groups use au
     ),
   ).toBe(true);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/easy-connected-overview-${info.project.name}.png`,
     fullPage: true,
   });
@@ -183,6 +185,7 @@ test("overview guides a connected owner forward and approved small groups use au
   ).json();
   expect(wallet.wallet.earned_milli).toBe(0);
   await page.screenshot({
+    scale: "css",
     path: `docs/screenshots/easy-small-groups-${info.project.name}.png`,
     fullPage: true,
   });
