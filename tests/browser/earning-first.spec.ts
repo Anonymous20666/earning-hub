@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-test("earning is the primary story; exact rates and qualifying steps come before free broadcasting", async ({
+test("earning leads; details move to the guide and calculator, with free posting separate", async ({
   page,
 }, info) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -21,7 +21,6 @@ test("earning is the primary story; exact rates and qualifying steps come before
   const ordered = await page.evaluate(() => {
     const selectors = [
       ".hero",
-      "#earning-rates",
       "#how-it-works",
       ".earning-potential",
       "#the-rules",
@@ -39,15 +38,14 @@ test("earning is the primary story; exact rates and qualifying steps come before
     );
   });
   expect(ordered).toBe(true);
-  for (const [members, amount] of [
-    [100, "0.100"],
-    [742, "0.742"],
-    [1000, "1.000"],
-  ] as const)
-    await expect(
-      page.locator(`.reward-rate-card[data-members="${members}"]`),
-    ).toContainText(amount);
-  await expect(page.locator(".reward-explainer")).toContainText("1.484 Coins");
+  await expect(page.locator(".reward-rate-card")).toHaveCount(0);
+  await expect(page.locator(".opportunity-scenarios")).toContainText("1,000+");
+  await expect(page.locator(".opportunity-scenarios")).toContainText("5,000");
+  await expect(
+    page
+      .locator(".hero-copy")
+      .getByRole("link", { name: "See what I could earn" }),
+  ).toHaveAttribute("href", "#/calculator");
   await expect(
     page
       .locator("#how-it-works")
@@ -163,9 +161,9 @@ test("earning-first page has no overflow across phone, tablet and desktop widths
   ).toHaveAttribute("href", "#/app");
   await expect(
     page
-      .locator("#earning-rates")
-      .getByRole("link", { name: "Open my workspace", exact: true }),
-  ).toHaveAttribute("href", "#/app");
+      .locator("#the-rules")
+      .getByRole("link", { name: /What could my groups earn/ }),
+  ).toHaveAttribute("href", "#/calculator");
   await expect(
     page
       .locator("#business-tools")

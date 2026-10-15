@@ -57,7 +57,7 @@ test("schema v1 upgrade preserves existing account/password/bonus/ledger and doe
       );
       assert.equal(
         (db.prepare("SELECT COUNT(*) n FROM schema_migrations").get() as any).n,
-        5,
+        6,
       );
       assert.equal(reconcileTreasury(db).ok, true);
       assert.equal(reconcileTreasury(db).treasury.cash_milli, 0);

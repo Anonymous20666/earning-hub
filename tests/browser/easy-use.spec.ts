@@ -133,7 +133,7 @@ test("overview guides a connected owner forward and approved small groups use au
   await expect(
     page
       .locator(".quick-start")
-      .getByRole("link", { name: "Explore earning rates", exact: true }),
+      .getByRole("link", { name: "See my earning potential", exact: true }),
   ).toBeVisible();
   await expect(
     page
@@ -171,7 +171,7 @@ test("overview guides a connected owner forward and approved small groups use au
     page.getByRole("button", { name: "Review & continue" }),
   ).toBeEnabled();
   await expect(
-    page.getByText(/All connected groups with the right admin permission/),
+    page.getByText(/Groups from your selected numbers are included/),
   ).toBeVisible();
   expect(
     (

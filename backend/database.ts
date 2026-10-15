@@ -1,3 +1,4 @@
+import { migrateNativePostingSchema } from "./nativePostingSchema";
 import { migrateReferralSchema } from "./referralSchema";
 import { migratePersonalSchema } from "./personalSchema";
 import { migrateBroadcastSchema } from "./broadcastSchema";
@@ -54,6 +55,7 @@ export function openDatabase(filename: string) {
   migrateBroadcastSchema(db);
   migratePersonalSchema(db);
   migrateReferralSchema(db);
+  migrateNativePostingSchema(db);
   return db;
 }
 export type Database = ReturnType<typeof openDatabase>;

@@ -207,20 +207,55 @@ export async function fetchPublicHtml(
     await fetchPublicResource(input, "html", Date.now() + 12000, redirects)
   ).body.toString("utf8");
 }
-const clean = (s: string) =>
-  s
+// Metadata is plain text, never trusted HTML. Bounded decoding handles WhatsApp's
+// nested amp/hex entities; strip tags AFTER decoding so encoded markup cannot escape.
+export function cleanPreviewText(input: string): string {
+  const named: Record<string, string> = {
+    amp: "&",
+    quot: '"',
+    apos: "'",
+    lt: "<",
+    gt: ">",
+    nbsp: " ",
+    copy: "©",
+    reg: "®",
+    trade: "™",
+    ndash: "–",
+    mdash: "—",
+    hellip: "…",
+    bull: "•",
+  };
+  let text = input.slice(0, 16384);
+  for (let pass = 0; pass < 5; pass++) {
+    const decoded = text.replace(
+      /&(?:#(x[0-9a-f]+|[0-9]+)|([a-z]+));/gi,
+      (original, numeric, name) => {
+        if (!numeric) return named[String(name).toLowerCase()] ?? original;
+        const value = /^x/i.test(numeric)
+          ? parseInt(numeric.slice(1), 16)
+          : Number(numeric);
+        return Number.isSafeInteger(value) &&
+          value > 0 &&
+          value <= 0x10ffff &&
+          !(value >= 0xd800 && value <= 0xdfff)
+          ? String.fromCodePoint(value)
+          : "";
+      },
+    );
+    if (decoded === text) break;
+    text = decoded;
+  }
+  return text
     .replace(/<[^>]*>/g, "")
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&#(\d+);/g, (_, n) => {
-      const v = Number(n);
-      return v > 0 && v <= 0x10ffff ? String.fromCodePoint(v) : "";
-    })
+    .replace(
+      /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g,
+      "",
+    )
+    .replace(/[\ud800-\udfff]/gu, "")
     .replace(/\s+/g, " ")
     .trim();
+}
+const clean = cleanPreviewText;
 function meta(html: string) {
   const out: Record<string, string> = {};
   for (const tag of html.match(/<meta\b[^<>]*>/gi) || []) {

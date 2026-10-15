@@ -68,6 +68,11 @@ function treasury(
 export function broadcastWorkspace(db: Database, userId: string) {
   return {
     limits: PERSONAL_LIMITS,
+    accounts: rows(
+      db,
+      "SELECT id,slot,status,phone_label FROM paired_accounts WHERE user_id=? ORDER BY slot",
+      userId,
+    ),
     serverNow: now(),
     ignoredGroups: rows(
       db,
@@ -102,6 +107,7 @@ function selected(
   targets: any[],
   mode: Mode,
   paid = false,
+  native = false,
 ) {
   if (
     !Array.isArray(targets) ||
@@ -144,7 +150,7 @@ function selected(
         "A selected group is unavailable, excluded or needs a fresh scan",
       );
     if (
-      (mode === "ALLCHAT" || mode === "DOUBLE") &&
+      (mode === "ALLCHAT" || (!native && mode === "DOUBLE")) &&
       g.announce &&
       !g.user_is_admin
     )
@@ -156,7 +162,7 @@ function selected(
       g.group_jid,
     );
     for (const surface of surfaces(mode))
-      if (!validPermission(p, surface))
+      if (!native && !validPermission(p, surface))
         throw Error(
           "Current group-admin approval for every selected surface and mention-all is required",
         );
@@ -171,6 +177,7 @@ function insertTargets(
   mode: Mode,
   paid: boolean,
   campaignId?: string,
+  native = false,
 ) {
   for (const g of groups) {
     const target = randomUUID();
@@ -189,10 +196,21 @@ function insertTargets(
         g.group_jid,
         target,
       );
-    for (const surface of surfaces(mode))
+    for (const surface of surfaces(mode)) {
+      const locked =
+        native && surface === "GROUP_CHAT" && g.announce && !g.user_is_admin;
       db.prepare(
-        "INSERT INTO broadcast_placements(id,target_id,surface,status,reward_milli,created_at) VALUES(?,?,?,'RESERVED',?,?)",
-      ).run(randomUUID(), target, surface, reward, now());
+        "INSERT INTO broadcast_placements(id,target_id,surface,status,reward_milli,failure_reason,created_at) VALUES(?,?,?,?,?,?,?)",
+      ).run(
+        randomUUID(),
+        target,
+        surface,
+        locked ? "CANCELLED" : "RESERVED",
+        locked ? 0 : reward,
+        locked ? "Skipped locked chat: only admins can post here" : null,
+        now(),
+      );
+    }
   }
 }
 export async function createPersonalRun(
@@ -201,6 +219,7 @@ export async function createPersonalRun(
   input: any,
   previewer: typeof safePreview = safePreview,
   onCreated?: (id: string) => void,
+  native = false,
 ) {
   if (get(db, "SELECT role FROM users WHERE id=?", user)?.role !== "EARNER")
     throw Error("Worker account required");
@@ -244,6 +263,7 @@ export async function createPersonalRun(
     .update(
       JSON.stringify({
         mode,
+        ...(native ? { nativePostingPolicy: 1 } : {}),
         caption: input.caption.trim(),
         url,
         asset: asset?.id,
@@ -263,7 +283,7 @@ export async function createPersonalRun(
       throw Error("Request ID already used for different content");
     return { id: prior.run_id, idempotent: true };
   }
-  selected(db, user, input.targets, mode);
+  selected(db, user, input.targets, mode, false, native);
   let preview: any = null;
   try {
     if (url) preview = await previewer(url);
@@ -316,7 +336,7 @@ export async function createPersonalRun(
       throw Error(
         "Uploaded media was removed before this broadcast could be queued",
       );
-    const groups = selected(db, user, input.targets, mode),
+    const groups = selected(db, user, input.targets, mode, false, native),
       id = randomUUID();
     db.prepare(
       "INSERT INTO broadcast_runs(id,user_id,purpose,mode,caption,target_url,asset_id,preview_json,status,created_at) VALUES(?,?,'PERSONAL',?,?,?,?,?,'QUEUED',?)",
@@ -330,7 +350,7 @@ export async function createPersonalRun(
       JSON.stringify(preview),
       now(),
     );
-    insertTargets(db, id, groups, mode, false);
+    insertTargets(db, id, groups, mode, false, undefined, native);
     onCreated?.(id);
     db.prepare("INSERT INTO broadcast_request_keys VALUES(?,?,?,?)").run(
       user,
@@ -371,7 +391,7 @@ export function reservePaidRun(
       campaignId,
     );
     if (!c) throw Error("Funded active campaign required");
-    const groups = selected(db, user, targets, mode, true);
+    const groups = selected(db, user, targets, mode, true, true);
     for (const g of groups) {
       if (
         !get(
@@ -415,7 +435,12 @@ export function reservePaidRun(
       throw Error("Daily paid campaign capacity reached");
     const total = groups.reduce(
       (sum, g) =>
-        sum + placementRewardMilli(g.member_count) * surfaces(mode).length,
+        sum +
+        placementRewardMilli(g.member_count) *
+          surfaces(mode).filter(
+            (surface) =>
+              !(surface === "GROUP_CHAT" && g.announce && !g.user_is_admin),
+          ).length,
       0,
     );
     if (total > c.remaining_milli)
@@ -430,7 +455,11 @@ export function reservePaidRun(
     db.prepare(
       "INSERT INTO broadcast_runs(id,user_id,purpose,mode,campaign_id,caption,target_url,status,created_at) VALUES(?,?,'PAID_CAMPAIGN',?,?,?,?,'QUEUED',?)",
     ).run(id, user, mode, c.id, c.message, c.target_url, now());
-    insertTargets(db, id, groups, mode, true, c.id);
+    insertTargets(db, id, groups, mode, true, c.id, true);
+    db.prepare("INSERT INTO broadcast_native_policy VALUES(?,1,?)").run(
+      id,
+      JSON.stringify([...new Set(groups.map((g) => g.account_id))]),
+    );
     if (ref)
       db.prepare(
         "UPDATE referrals SET status='RESERVED',reserved_job_id=? WHERE id=?",
@@ -679,7 +708,7 @@ export function beginPaidPlacement(
   return transaction(db, () => {
     const p = get(
       db,
-      `SELECT p.*,t.account_id,t.group_jid,t.member_snapshot,r.purpose,r.user_id,r.status run_status,r.mode,r.campaign_id FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id WHERE p.id=?`,
+      `SELECT p.*,t.run_id,t.account_id,t.group_jid,t.member_snapshot,r.purpose,r.user_id,r.status run_status,r.mode,r.campaign_id FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id WHERE p.id=?`,
       id,
     );
     if (!p || p.purpose !== "PAID_CAMPAIGN" || p.status !== "RESERVED")
@@ -742,6 +771,11 @@ export function beginPaidPlacement(
     )
       throw Error("Group eligibility changed before send");
     if (
+      !get(
+        db,
+        "SELECT 1 FROM broadcast_native_policy WHERE run_id=? AND policy_version=1",
+        p.run_id,
+      ) &&
       !validPermission(
         get(
           db,

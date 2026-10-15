@@ -94,10 +94,10 @@ export function LiveScene() {
             </div>
             <div className="phone-groups">
               <Users size={19} />
-              <span>Approved groups. 100+ members.</span>
+              <span>Your groups. Your opportunity.</span>
             </div>
             <div className="phone-send">
-              <span>Permission comes first</span>
+              <span>Your number. Your choice.</span>
               <Send size={19} />
             </div>
             <div className="phone-home" />
@@ -118,6 +118,14 @@ export function LiveScene() {
             <strong>Earn per confirmed post</strong>
             <small>Paid jobs are not open yet</small>
           </div>
+        </div>
+        <div className="scene-coin-stack">
+          <i />
+          <i />
+          <i />
+          <span>
+            P<span>✦</span>
+          </span>
         </div>
         <div className="scene-pebble pebble-one" />
         <div className="scene-pebble pebble-two" />

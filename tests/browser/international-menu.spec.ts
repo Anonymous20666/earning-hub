@@ -108,11 +108,11 @@ test("international Coins-first copy, honest daily example and calculator agree 
   test.skip(!baseURL?.includes("127.0.0.1:3108"), "Only isolated QA");
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: /1,000-Coin day/ }),
+    page.getByRole("heading", { name: /A small start/ }),
   ).toBeVisible();
-  await expect(page.locator(".potential-example")).toContainText("50");
-  await expect(page.locator(".potential-example")).toContainText(
-    "Paid jobs and cashout are not open yet",
+  await expect(page.locator(".opportunity-scenarios")).toContainText("5,000");
+  await expect(page.locator(".opportunity-scenarios")).toContainText(
+    "Paid work is not open yet",
   );
   await expect(page.locator("main")).not.toContainText(
     /₦|\bNGN\b|naira|3D-style/i,
@@ -131,7 +131,7 @@ test("international Coins-first copy, honest daily example and calculator agree 
   await expect(page.locator(".earning-result-rows")).toContainText(
     "1,000.000 Coins",
   );
-  await expect(page.locator("main")).not.toContainText(/₦|\bNGN\b|naira/i);
+  await expect(page.locator(".coin-value-primary")).toContainText("USD");
   const state = await (await page.request.get("/api/workspace")).json();
   expect(state.wallet.earned_milli).toBe(0);
   expect(

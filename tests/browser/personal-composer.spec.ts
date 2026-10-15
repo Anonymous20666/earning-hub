@@ -255,7 +255,7 @@ test("Text/link -> many ignore links -> immutable review -> confirm -> real-even
     .getByText("See the automatic group check", { exact: true })
     .click();
   await expect(
-    page.getByText("Ready · 42 members · personal post, no earnings"),
+    page.getByText("Number — · 42 members · Ready · no earnings"),
   ).toBeVisible();
   await expect(page.getByText("Skipped — On your ignore list")).toBeVisible();
   expect(submits).toBe(0);

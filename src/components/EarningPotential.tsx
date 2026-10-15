@@ -1,79 +1,48 @@
 import React from "react";
-import { ArrowUpRight, Users, Coins } from "lucide-react";
-import {
-  DAILY_EARNING_EXAMPLE,
-  EARNING_RULES,
-} from "../../shared/earningRules";
+import { ArrowUpRight, Coins } from "lucide-react";
 export function EarningPotential() {
   return (
     <section
-      className="earning-potential"
+      className="earning-potential opportunity-teaser"
       aria-labelledby="earning-potential-title"
     >
       <div className="potential-copy">
-        <span className="eyebrow">BIGGER COMMUNITIES. MORE POSSIBILITIES.</span>
+        <span className="eyebrow">THINK BIGGER WITH YOUR COMMUNITIES</span>
         <h2 id="earning-potential-title">
-          What could a{" "}
-          <em>
-            {(DAILY_EARNING_EXAMPLE.dailyMilli / 1000).toLocaleString("en")}
-            -Coin day
-          </em>{" "}
-          look like?
+          A small start.
+          <br />
+          <em>A bigger possibility.</em>
         </h2>
         <p>
-          More eligible groups and confirmed funded posts can increase your
-          earning potential. Here is how the same reward rules could add up—not
-          a promised daily income.
+          Your groups could do more than carry conversations. Explore what
+          consistent, confirmed paid work could look like—then check the numbers
+          for your own groups.
         </p>
-        <a href="#/rules">
-          See how earning works <ArrowUpRight size={17} />
+        <a href="#/earnings">
+          See the earning guide <ArrowUpRight size={18} />
         </a>
       </div>
-      <div className="potential-example">
+      <div className="opportunity-scenarios">
         <span className="potential-label">
-          ILLUSTRATION · NOT A GUARANTEED INCOME
+          CONDITIONAL DAILY EXAMPLES · NOT GUARANTEED
         </span>
-        <div className="potential-equation">
-          <span>
-            <strong>{DAILY_EARNING_EXAMPLE.groups}</strong>eligible groups
-          </span>
-          <b>×</b>
-          <span>
-            <strong>{DAILY_EARNING_EXAMPLE.campaigns}</strong>funded campaigns
-          </span>
-          <b>×</b>
-          <span>
-            <strong>{DAILY_EARNING_EXAMPLE.surfaces}</strong>confirmed post
-            types
-          </span>
-        </div>
-        <div className="potential-total">
-          <Coins size={25} />
-          <strong>
-            {(DAILY_EARNING_EXAMPLE.dailyMilli / 1000).toLocaleString("en")}{" "}
-            Coins
-          </strong>
-          <span>in this daily example</span>
-        </div>
+        {["1,000+", "5,000"].map((n) => (
+          <a href="#/calculator" className="opportunity-card" key={n}>
+            <Coins size={22} />
+            <span>
+              <strong>
+                {n}
+                <small> Coins / day</small>
+              </strong>
+              <small>Explore what this would require</small>
+            </span>
+            <ArrowUpRight size={21} />
+          </a>
+        ))}
         <p>
-          Each group has 1,000+ members. Both status and chat must have
-          permission and verified delivery. Smaller groups, fewer jobs or failed
-          posts reduce the result. Ten campaigns is a daily capacity limit, not
-          promised work.
-        </p>
-        <div className="potential-referral">
-          <Users size={18} />
-          <span>
-            <strong>
-              {EARNING_RULES.referralMilli / 1000} Coins per qualifying friend.
-            </strong>{" "}
-            Paid once after their first eligible funded delivery—not just
-            signup.
-          </span>
-        </div>
-        <p className="potential-availability">
-          Paid jobs and cashout are not open yet. These are conditional
-          opportunities, not money already earned.
+          These larger examples need many eligible groups and enough funded,
+          confirmed work. They are not typical earnings or promised jobs. Paid
+          work is not open yet.
         </p>
       </div>
     </section>

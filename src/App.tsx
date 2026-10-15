@@ -4,6 +4,11 @@ import { ArrowLeft, ArrowUpRight, LoaderCircle } from "lucide-react";
 import { api, send, setCsrf, User, go } from "./api";
 import { Landing } from "./components/Landing";
 import { Brand } from "./components/Brand";
+const EarningGuide = lazy(() =>
+  import("./components/EarningGuide").then((m) => ({
+    default: m.EarningGuide,
+  })),
+);
 const Auth = lazy(() =>
   import("./components/Auth").then((m) => ({ default: m.Auth })),
 );
@@ -107,6 +112,8 @@ export default function App() {
         ) : (
           <Auth key="login" path="/login" onSuccess={setUser} />
         )
+      ) : ["/earnings", "/coin-value", "/calculator"].includes(path) ? (
+        <EarningGuide key={path} path={path} user={user} />
       ) : path === "/plogme-license" ? (
         <PlogmeLicense />
       ) : ["/rules", "/privacy", "/status"].includes(path) ? (

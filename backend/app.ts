@@ -1,4 +1,6 @@
 import {
+  personalAccountIds,
+  setPersonalIgnore,
   preparePersonalDraft,
   submitPersonalDraft,
   personalRunFeed,
@@ -239,7 +241,7 @@ export function createApp(
       Promise.resolve(fn(req, res, next)).catch(next);
   app.get("/api/health", (_req, res) => {
     db.prepare("SELECT 1").get();
-    res.json({ status: "ok", version: "0.7.0", mode: "pre-launch" });
+    res.json({ status: "ok", version: "0.8.0", mode: "pre-launch" });
   });
   app.get("/api/status", (_req, res) =>
     res.json({
@@ -762,6 +764,26 @@ export function createApp(
     }),
   );
   app.post(
+    "/api/personal-posts/ignores/select",
+    protectedRoute,
+    role("EARNER"),
+    composeLimiter,
+    (req: any, res) => {
+      try {
+        res.json(
+          setPersonalIgnore(
+            db,
+            req.account.id,
+            req.body.groupJid,
+            req.body.ignored,
+          ),
+        );
+      } catch (e: any) {
+        res.status(400).json({ error: e.message });
+      }
+    },
+  );
+  app.post(
     "/api/personal-posts/ignores/remove",
     protectedRoute,
     role("EARNER"),
@@ -790,12 +812,18 @@ export function createApp(
       }
       composerBusy.add(req.account.id);
       try {
+        const selectedAccounts = personalAccountIds(
+          db,
+          req.account.id,
+          req.body.accountIds,
+        );
         for (const slot of db
           .prepare(
             "SELECT id,account_id FROM wa_slots WHERE user_id=? AND status='ONLINE'",
           )
           .all(req.account.id) as any[]) {
-          await wa!.scan(req.account.id, slot.id);
+          if (selectedAccounts.includes(slot.account_id))
+            await wa!.scan(req.account.id, slot.id);
         }
         res.json(
           await preparePersonalDraft(

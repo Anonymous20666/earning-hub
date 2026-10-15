@@ -999,3 +999,101 @@ test("cancelling the last qualifying placement releases referral cash even if ze
     f.db.close();
   }
 });
+
+test("legacy queued personal run keeps scoped admin consent while native reviewed runs are versioned", async () => {
+  const f = fixture();
+  try {
+    const r = await createPersonalRun(
+      f.db,
+      "worker",
+      input(f.a, "ALLSTATUS"),
+      preview,
+    );
+    assert.equal(
+      f.db
+        .prepare("SELECT 1 FROM broadcast_native_policy WHERE run_id=?")
+        .get(r.id),
+      undefined,
+    );
+    f.db.prepare("DELETE FROM broadcast_permissions").run();
+    let sends = 0;
+    while (
+      await dispatchPersonalPlacement(
+        f.db,
+        {
+          refreshGroup: async () =>
+            ({
+              isMember: true,
+              announce: false,
+              userIsAdmin: true,
+              participants: [],
+            }) as any,
+          messageId: async () => "synthetic",
+          send: async () => {
+            sends++;
+            return {} as any;
+          },
+        },
+        "/none",
+      )
+    ) {}
+    assert.equal(sends, 0);
+    assert.equal(
+      (
+        f.db
+          .prepare(
+            "SELECT COUNT(*) n FROM broadcast_placements WHERE status='FAILED'",
+          )
+          .get() as any
+      ).n,
+      1,
+    );
+  } finally {
+    f.db.close();
+  }
+});
+test("new native funded DOUBLE reserves only a sendable status leg in locked non-admin groups", () => {
+  const f = fixture(1000);
+  try {
+    const campaign = funded(f.db);
+    f.db.prepare("DELETE FROM broadcast_permissions").run();
+    f.db.prepare("UPDATE group_inventory SET announce=1,user_is_admin=0").run();
+    const r = reservePaidRun(f.db, "admin", campaign, "worker", "DOUBLE", [
+      { accountId: f.a, groupJid: jid },
+    ]);
+    assert.equal(r.totalMilli, 1000);
+    assert.equal(reconcileTreasury(f.db).ok, true);
+    const ps = f.db
+      .prepare(
+        "SELECT p.* FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id WHERE t.run_id=? ORDER BY p.surface",
+      )
+      .all(r.id) as any[];
+    assert.equal(
+      ps.find((p) => p.surface === "GROUP_CHAT").status,
+      "CANCELLED",
+    );
+    const status = ps.find((p) => p.surface === "GROUP_STATUS");
+    beginPaidPlacement(f.db, status.id, "SYNTHETIC-native-status", {
+      statusReceiptsVerified: true,
+      chatReceiptsVerified: true,
+    });
+    confirmPlacement(f.db, {
+      placementId: status.id,
+      messageId: "SYNTHETIC-native-status",
+      groupJid: jid,
+      receiptId: "SYNTHETIC-native-proof",
+      kind: "DELIVERY_CONFIRMED",
+    });
+    assert.equal(reconcileTreasury(f.db).ok, true);
+    assert.equal(
+      (
+        f.db
+          .prepare("SELECT earned_milli FROM wallets WHERE user_id='worker'")
+          .get() as any
+      ).earned_milli,
+      1000,
+    );
+  } finally {
+    f.db.close();
+  }
+});

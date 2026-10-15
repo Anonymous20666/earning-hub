@@ -75,7 +75,7 @@ test("admin UI is only reached by server-provisioned role in isolated QA databas
     "Never provision admin in a remote or review database",
   );
   const email = await signup(page, "advertiser");
-  const db = new DatabaseSync("data/qa.sqlite");
+  const db = new DatabaseSync(process.env.QA_DATABASE_PATH || "data/qa.sqlite");
   db.prepare("UPDATE users SET role='ADMIN' WHERE email=?").run(email);
   db.close();
   await page.goto("/#/app/admin");

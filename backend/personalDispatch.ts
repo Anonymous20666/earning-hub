@@ -55,7 +55,7 @@ export async function dispatchPersonalPlacement(
 ) {
   const p = db
     .prepare(
-      `SELECT p.*,t.account_id,t.group_jid,t.run_id,r.user_id,r.mode,r.caption,r.target_url,r.preview_json,r.asset_id,g.subject,o.background_color,o.font,(SELECT COUNT(*) FROM broadcast_targets st WHERE st.run_id=t.run_id AND st.id<t.id) status_index FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id LEFT JOIN group_inventory g ON g.account_id=t.account_id AND g.group_jid=t.group_jid LEFT JOIN personal_run_options o ON o.run_id=r.id WHERE r.purpose='PERSONAL' AND r.status IN('QUEUED','RUNNING') AND p.status='RESERVED' AND (p.surface='GROUP_STATUS' OR r.mode<>'DOUBLE' OR EXISTS(SELECT 1 FROM broadcast_placements s WHERE s.target_id=t.id AND s.surface='GROUP_STATUS' AND s.status IN('ACCEPTED','CONFIRMED'))) ORDER BY r.created_at,t.id,CASE p.surface WHEN 'GROUP_STATUS' THEN 0 ELSE 1 END LIMIT 1`,
+      `SELECT p.*,t.account_id,t.group_jid,t.run_id,r.user_id,r.mode,r.caption,r.target_url,r.preview_json,r.asset_id,EXISTS(SELECT 1 FROM broadcast_native_policy np WHERE np.run_id=r.id AND np.policy_version=1) native_policy,g.subject,o.background_color,o.font,(SELECT COUNT(*) FROM broadcast_targets st WHERE st.run_id=t.run_id AND st.id<t.id) status_index FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id LEFT JOIN group_inventory g ON g.account_id=t.account_id AND g.group_jid=t.group_jid LEFT JOIN personal_run_options o ON o.run_id=r.id WHERE r.purpose='PERSONAL' AND r.status IN('QUEUED','RUNNING') AND p.status='RESERVED' AND (p.surface='GROUP_STATUS' OR r.mode<>'DOUBLE' OR EXISTS(SELECT 1 FROM broadcast_placements s WHERE s.target_id=t.id AND s.surface='GROUP_STATUS' AND s.status IN('ACCEPTED','CONFIRMED'))) ORDER BY r.created_at,t.id,CASE p.surface WHEN 'GROUP_STATUS' THEN 0 ELSE 1 END LIMIT 1`,
     )
     .get() as any;
   if (!p) return null;
@@ -71,17 +71,21 @@ export async function dispatchPersonalPlacement(
   );
   try {
     const group = await transport.refreshGroup(p.account_id, p.group_jid);
-    if (
-      !group?.isMember ||
-      (p.surface === "GROUP_CHAT" && group.announce && !group.userIsAdmin)
-    )
-      throw Error("Membership or chat permission changed");
+    if (!group?.isMember)
+      throw Error(
+        "Banned / removed: your number is no longer a member of this group",
+      );
+    if (p.surface === "GROUP_CHAT" && group.announce && !group.userIsAdmin)
+      throw Object.assign(
+        Error("Skipped locked chat: only admins can post here"),
+        { personalOutcome: "SKIPPED" },
+      );
     const permission = db
       .prepare(
         "SELECT * FROM broadcast_permissions WHERE account_id=? AND group_jid=?",
       )
       .get(p.account_id, p.group_jid);
-    if (!validPermission(permission, p.surface))
+    if (!p.native_policy && !validPermission(permission, p.surface))
       throw Error("Group-admin permission is missing, expired or revoked");
     const id = await transport.messageId(p.account_id),
       content: any = textPlacement(
@@ -135,19 +139,20 @@ export async function dispatchPersonalPlacement(
             "SELECT 1 FROM broadcast_removals WHERE user_id=? AND group_jid=? AND cleared_at IS NULL",
           )
           .get(p.user_id, p.group_jid) ||
-        !validPermission(
-          db
-            .prepare(
-              "SELECT * FROM broadcast_permissions WHERE account_id=? AND group_jid=?",
-            )
-            .get(p.account_id, p.group_jid),
-          p.surface,
-        ) ||
+        (!p.native_policy &&
+          !validPermission(
+            db
+              .prepare(
+                "SELECT * FROM broadcast_permissions WHERE account_id=? AND group_jid=?",
+              )
+              .get(p.account_id, p.group_jid),
+            p.surface,
+          )) ||
         !db
           .prepare(
-            "SELECT 1 FROM group_inventory g JOIN paired_accounts a ON a.id=g.account_id WHERE g.account_id=? AND g.group_jid=? AND g.is_member=1 AND g.excluded=0 AND a.status='ONLINE'",
+            "SELECT 1 FROM group_inventory g JOIN paired_accounts a ON a.id=g.account_id WHERE g.account_id=? AND g.group_jid=? AND g.is_member=1 AND g.excluded=0 AND a.status='ONLINE' AND (g.announce=0 OR g.user_is_admin=1 OR ?='GROUP_STATUS')",
           )
-          .get(p.account_id, p.group_jid)
+          .get(p.account_id, p.group_jid, p.surface)
       )
         throw Error("Connection, membership or approval changed before send");
       const result = db
@@ -205,28 +210,37 @@ export async function dispatchPersonalPlacement(
       "Broadcast was cancelled",
       "Connection, membership or approval changed before send",
     ];
-    const reason = started
+    // Plogme assertNodeErrorFree produces Boom(data=numeric WhatsApp error).
+    // A network timeout, a generic Error or an unknown code never proves rejection.
+    const rejection =
+      e?.isBoom === true && [401, 403, 404, 405, 406, 410].includes(e?.data)
+        ? e.data
+        : null;
+    const skipped = !started && e?.personalOutcome === "SKIPPED";
+    const uncertain = started && !rejection;
+    const reason = uncertain
       ? "Sending began but the outcome is uncertain. Check WhatsApp before starting another post."
-      : known.includes(e?.message)
-        ? e.message
-        : "Could not prepare this post. Check your connection, group permission and media.";
+      : rejection
+        ? `Failed: WhatsApp rejected the post (${rejection}). ${rejection === 403 ? "Posting is not allowed in this group." : rejection === 404 || rejection === 410 ? "The group is no longer available." : "Check the selected number and its posting rights."}`
+        : skipped ||
+            known.includes(e?.message) ||
+            e?.message ===
+              "Banned / removed: your number is no longer a member of this group"
+          ? e.message
+          : "Could not prepare this post: the group is unavailable or connection / posting rights could not be verified.";
+    const outcome = uncertain ? "UNKNOWN" : skipped ? "CANCELLED" : "FAILED";
     transaction(db, () => {
       const changed = db
         .prepare(
           "UPDATE broadcast_placements SET status=?,failure_reason=? WHERE id=? AND status=?",
         )
-        .run(
-          started ? "UNKNOWN" : "FAILED",
-          reason,
-          p.id,
-          started ? "SENDING" : "RESERVED",
-        );
+        .run(outcome, reason, p.id, started ? "SENDING" : "RESERVED");
       if (changed.changes) {
         appendBroadcastEvent(
           db,
           p.run_id,
           `${p.id}:result`,
-          started ? "UNCERTAIN" : "FAILED",
+          uncertain ? "UNCERTAIN" : skipped ? "SKIPPED" : "FAILED",
           `${surface} · ${reason}`,
           p,
         );

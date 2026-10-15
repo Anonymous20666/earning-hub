@@ -14,7 +14,7 @@ const plainError = (text: string) => {
   if (/fresh scan|needs a fresh|fresh metadata/.test(text))
     return "Your group list needs an update. Open My WhatsApp and tap Find my groups.";
   if (/group-admin approval|Surface permission/.test(text))
-    return "Please get the group admin’s permission first. Use the permission button beside the group.";
+    return "This older queued post needs its original approval. Start a fresh personal review for native posting rules; removed groups remain blocked.";
   if (/Wait at least one minute/.test(text))
     return "Please wait 1 minute before sending another post.";
   if (/safe preview/.test(text))
@@ -93,7 +93,7 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
         phone: form.get("phone"),
         authoriseLinkedDevice: form.get("authorise") === "on",
       });
-      setNotice("Getting your connection code. Please wait here.");
+      setNotice("Requesting PAPPYPAY from WhatsApp. Please wait here.");
       await load();
     } catch (e: any) {
       setError(plainError(e.message));
@@ -130,7 +130,8 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
             <span className="eyebrow">PAPPYPAY · CONNECT YOUR WHATSAPP</span>
             <h2>My WhatsApp numbers.</h2>
             <p>
-              Use a number you own. We give you a new private code each time.
+              Use a number you own. We request PAPPYPAY as your WhatsApp linking
+              code. Start your own request below before entering it in WhatsApp.
             </p>
           </div>
           <Link2 />
@@ -260,8 +261,8 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
                           />
                           <span>
                             This is my number. I allow Pappy to connect it. I
-                            still need permission from each group before
-                            posting.
+                            will respect each group’s rules and WhatsApp’s
+                            native posting restrictions.
                           </span>
                         </label>
                         <button

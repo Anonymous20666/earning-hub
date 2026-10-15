@@ -100,7 +100,7 @@ test("Plogme exact installed module imports without opening a socket", async () 
   assert.equal(typeof p.default, "function");
   assert.equal(typeof p.generateMessageIDV2, "function");
 });
-test("private eight-character pairing code exists only after provider readiness; account not credited until matching open", async () => {
+test("actual PAPPYPAY pairing code exists only after provider readiness; account not credited until matching open", async () => {
   const f = fixture();
   try {
     const r = await f.manager.pair("owner", 1, phone);
@@ -112,7 +112,8 @@ test("private eight-character pairing code exists only after provider readiness;
     const sock = f.sockets[0];
     sock.ev.emit("connection.update", { qr: "SYNTHETIC readiness event" });
     await tick();
-    assert.match(f.manager.slots("owner")[0].code, /^[0-9A-HJKMNP-TV-Z]{8}$/);
+    assert.equal(f.manager.slots("owner")[0].code, "PAPPYPAY");
+    assert.equal(f.calls[0].code, "PAPPYPAY");
     assert.equal(f.calls[0].p, phone);
     assert.equal(f.calls[0].code, f.manager.slots("owner")[0].code);
     assert.equal(f.manager.slots("other").length, 0);

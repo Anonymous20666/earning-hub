@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
-  Copy,
   FileText,
   ImagePlus,
   Link2,
@@ -34,7 +33,13 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
-    [approval, setApproval] = useState("");
+    [accountIds, setAccountIds] = useState<string[] | null>(null),
+    [groupSearch, setGroupSearch] = useState(""),
+    [ignoreOverrides, setIgnoreOverrides] = useState<Record<string, boolean>>(
+      {},
+    );
+  const loadSequence = useRef(0),
+    savingIgnores = useRef(new Set<string>());
   const reviewHeading = useRef<HTMLHeadingElement>(null);
   // Focus only after React has committed the review. A pre-commit animation
   // frame can run before this heading exists under concurrent rendering.
@@ -43,7 +48,15 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
   }, [draft?.draftId]);
   async function load() {
     try {
-      setData(await api("/broadcasts"));
+      const sequence = ++loadSequence.current;
+      const next = await api("/broadcasts");
+      if (sequence !== loadSequence.current) return;
+      setData(next);
+      setIgnoreOverrides((old) =>
+        Object.fromEntries(
+          Object.entries(old).filter(([jid]) => savingIgnores.current.has(jid)),
+        ),
+      );
     } catch (e: any) {
       setError(e.message);
     }
@@ -104,6 +117,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
       const result = await send("/personal-posts/prepare", {
         kind,
         mode,
+        accountIds: chosenIds,
         payload,
         assetId: kind === "MEDIA" ? asset?.id : null,
       });
@@ -140,54 +154,43 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
       await load();
     });
   }
-  async function approve(g: any) {
-    await work(async () => {
-      const result = await send("/whatsapp/groups/approval", {
-        accountId: g.account_id,
-        groupJid: g.group_jid,
-        status: mode !== "ALLCHAT",
-        chat: mode !== "ALLSTATUS",
-        mentions: mode !== "ALLSTATUS",
-      });
-      if (result.approved) {
-        setNotice(
-          "Admin permission confirmed for 30 days, unless it is removed sooner. Review your post again to update the group list.",
-        );
-        await load();
-        setDraft(null);
-      } else {
-        setApproval(result.instructions);
-        setNotice(
-          "Ask a group admin to send this permission command inside that group.",
-        );
-      }
-    });
+  const accounts: any[] = data?.accounts || [
+    ...new Map<string, any>(
+      (data?.groups || []).map((g: any) => [
+        g.account_id,
+        { id: g.account_id, slot: g.slot, status: g.status },
+      ]),
+    ).values(),
+  ];
+  const chosenIds =
+    accountIds === null ? accounts.map((a) => a.id) : accountIds;
+  const ignoredIds = new Set(
+    (data?.ignoredGroups || []).map((g: any) => g.group_jid),
+  );
+  for (const [jid, ignored] of Object.entries(ignoreOverrides)) {
+    if (ignored) ignoredIds.add(jid);
+    else ignoredIds.delete(jid);
   }
-  function permitted(g: any) {
-    return (
-      !g.revoked_at &&
-      g.expires_at > new Date().toISOString() &&
-      (mode === "ALLSTATUS"
-        ? g.status_allowed
-        : mode === "ALLCHAT"
-          ? g.chat_allowed && g.mentions_allowed
-          : g.status_allowed && g.chat_allowed && g.mentions_allowed)
-    );
-  }
-  const permissionGroups = (data?.groups || []).filter(
-    (g: any, i: number, all: any[]) =>
-      all.findIndex((x) => x.group_jid === g.group_jid) === i &&
-      !all.some((x) => x.group_jid === g.group_jid && permitted(x)),
+  const ownedGroups: any[] = [
+    ...new Map<string, any>(
+      (data?.groups || []).map((g: any) => [g.group_jid, g]),
+    ).values(),
+  ];
+  const visibleGroups = ownedGroups.filter((g) =>
+    g.subject
+      .normalize("NFKC")
+      .toLocaleLowerCase()
+      .includes(groupSearch.normalize("NFKC").toLocaleLowerCase()),
   );
   return (
     <div className="earning-hub personal-broadcasts">
       <div className="workspace-banner">
         <Send size={23} />
         <div>
-          <strong>One post. All your permitted groups.</strong>
+          <strong>Your own posts. Your own WhatsApp numbers.</strong>
           <p>
-            No picking groups. We use your connected numbers, skip your ignore
-            list, and avoid shared-group duplicates.
+            Choose a number, write your post, and tick any groups to skip. This
+            free tool is separate from paid work and never earns Coins.
           </p>
         </div>
         <span className="badge neutral">Free · no earnings</span>
@@ -232,6 +235,59 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
               <legend className="plain-step-title">
                 What would you like to post?
               </legend>
+              <fieldset className="composer-account-picker">
+                <legend>1. Which WhatsApp number should post?</legend>
+                <p>
+                  Both numbers use the same Pappy wallet. Shared groups get one
+                  copy per post type.
+                </p>
+                <div className="composer-account-options">
+                  {accounts.map((a) => (
+                    <label
+                      key={a.id}
+                      className={chosenIds.includes(a.id) ? "is-selected" : ""}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={chosenIds.includes(a.id)}
+                        onChange={(e) =>
+                          setAccountIds(
+                            e.target.checked
+                              ? [...chosenIds, a.id]
+                              : chosenIds.filter((id) => id !== a.id),
+                          )
+                        }
+                      />
+                      <span>
+                        <strong>Number {a.slot}</strong>
+                        <small>
+                          {a.phone_label || "Your WhatsApp"} ·{" "}
+                          {a.status === "ONLINE"
+                            ? "Connected"
+                            : "Offline — skipped until reconnected"}
+                        </small>
+                      </span>
+                    </label>
+                  ))}
+                  {accounts.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      onClick={() => setAccountIds(accounts.map((a) => a.id))}
+                    >
+                      Use both numbers
+                    </button>
+                  )}
+                </div>
+                {!accounts.length && (
+                  <a className="btn btn-primary" href="#/app/connections">
+                    Connect my WhatsApp first <ArrowRight size={17} />
+                  </a>
+                )}
+                {!!accounts.length && !chosenIds.length && (
+                  <p role="status">Choose at least one number to continue.</p>
+                )}
+              </fieldset>
               <div className="composer-kind">
                 <button
                   type="button"
@@ -346,9 +402,9 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                 ))}
               </div>
               <p className="plain-help">
-                All connected groups with the right admin permission are
-                included automatically, even small groups. Your own posts never
-                earn Coins.
+                Groups from your selected numbers are included unless you skip
+                them or WhatsApp restricts posting. Small groups are welcome.
+                Personal posts never earn Coins.
               </p>
               <details className="composer-ignore">
                 <summary>
@@ -363,10 +419,80 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                 </summary>
                 <div>
                   <p>
-                    Paste invite links for groups that must not get your post.
-                    Add more below. We only check groups you already belong to —
-                    we never join a group.
+                    Tick a group to keep it out of your personal posts. Your
+                    choices are saved. You can also paste invite links below. We
+                    never join groups for you.
                   </p>
+                  <label htmlFor="ignore-group-search">
+                    Search your groups
+                  </label>
+                  <input
+                    id="ignore-group-search"
+                    type="search"
+                    placeholder="Type a group name…"
+                    value={groupSearch}
+                    onChange={(e) => setGroupSearch(e.target.value)}
+                  />
+                  <div
+                    className="ignore-group-checklist"
+                    aria-label="Choose groups to skip"
+                  >
+                    {visibleGroups.map((g) => (
+                      <label key={g.group_jid}>
+                        <input
+                          type="checkbox"
+                          aria-label={`Skip ${g.subject}`}
+                          checked={ignoredIds.has(g.group_jid)}
+                          onChange={(e) => {
+                            const ignored = e.target.checked;
+                            savingIgnores.current.add(g.group_jid);
+                            setIgnoreOverrides((old) => ({
+                              ...old,
+                              [g.group_jid]: ignored,
+                            }));
+                            work(async () => {
+                              try {
+                                await send("/personal-posts/ignores/select", {
+                                  groupJid: g.group_jid,
+                                  ignored,
+                                });
+                              } finally {
+                                savingIgnores.current.delete(g.group_jid);
+                                await load();
+                              }
+                            });
+                          }}
+                        />
+                        <span>
+                          <strong>{g.subject}</strong>
+                          <small>
+                            {g.member_count} members ·{" "}
+                            {[
+                              ...new Set(
+                                (data.groups || [])
+                                  .filter(
+                                    (x: any) => x.group_jid === g.group_jid,
+                                  )
+                                  .map((x: any) => `Number ${x.slot}`),
+                              ),
+                            ].join(" + ")}
+                          </small>
+                        </span>
+                      </label>
+                    ))}
+                    {!visibleGroups.length && (
+                      <p>
+                        {ownedGroups.length
+                          ? "No matching groups. Try another name."
+                          : "Connect WhatsApp and find your groups to see them here."}
+                      </p>
+                    )}
+                  </div>
+                  <p className="microcopy">
+                    {ignoredIds.size} saved groups will be skipped. Tick = skip;
+                    untick = include when WhatsApp allows it.
+                  </p>
+                  <strong>Or add a group invite link</strong>
                   {(data?.ignoredGroups || []).map((g: any) => (
                     <div className="ignored-group" key={g.group_jid}>
                       <span>
@@ -446,6 +572,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                   disabled={
                     busy ||
                     !data?.configured ||
+                    !chosenIds.length ||
                     (!payload.trim() && kind === "TEXT") ||
                     (kind === "MEDIA" && !asset)
                   }
@@ -530,7 +657,8 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
               {draft.mode === "DOUBLE"
                 ? "Status first, then chat for each group. If status is not safely accepted, that group’s chat is skipped."
                 : "One post per unique group."}{" "}
-              Groups and permissions are checked again before sending.
+              WhatsApp membership and native posting rights are checked again
+              before sending. No extra admin command is required.
             </p>
             <details className="review-group-details">
               <summary>See the automatic group check</summary>
@@ -541,12 +669,17 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                     <span>
                       <strong>{g.subject}</strong>
                       <small>
-                        Ready · {g.members} members · personal post, no earnings
+                        Number {g.slot || "—"} · {g.members} members ·{" "}
+                        {g.chatLocked ? "Status only; chat locked" : "Ready"} ·
+                        no earnings
                       </small>
                     </span>
                   </li>
                 ))}
-                {draft.plan.skips.map((g: any) => (
+                {[
+                  ...draft.plan.skips,
+                  ...(draft.plan.skippedSurfaces || []),
+                ].map((g: any) => (
                   <li key={g.groupJid}>
                     <AlertCircle size={17} />
                     <span>
@@ -572,8 +705,8 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
             {!draft.plan.targets.length && (
               <div className="notice warning">
                 <p>
-                  No groups are ready. Check your connection and group-admin
-                  permissions below, then review again.
+                  No groups are ready. Check your selected number, connection,
+                  group locks and ignore list, then review again.
                 </p>
               </div>
             )}
@@ -645,66 +778,17 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
         }
         busy={busy}
       />
-      {!!permissionGroups.length && (
-        <details className="panel composer-permissions">
-          <summary>
-            <ShieldCheck size={20} />
-            <strong>Group permission help</strong>
-            <span>{permissionGroups.length} need checking</span>
-          </summary>
-          <p>
-            We cannot post to a group without the right admin permission. If you
-            are an admin, you can approve it here. Otherwise, ask an admin to
-            send the permission command.
-          </p>
-          <div className="permission-list">
-            {permissionGroups.map((g: any) => (
-              <div key={g.group_jid}>
-                <span>
-                  <strong>{g.subject}</strong>
-                  <small>{g.member_count} members</small>
-                </span>
-                <button
-                  type="button"
-                  className="btn btn-outline"
-                  disabled={busy}
-                  onClick={() => approve(g)}
-                >
-                  {g.user_is_admin
-                    ? "Allow posts here"
-                    : "Ask admin permission"}
-                </button>
-              </div>
-            ))}
-          </div>
-          {approval && (
-            <div className="permission-command">
-              <label htmlFor="permission-command">
-                Ask an admin to send this inside the group
-              </label>
-              <textarea
-                id="permission-command"
-                readOnly
-                value={approval}
-                rows={3}
-              />
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() =>
-                  work(async () => {
-                    await navigator.clipboard.writeText(approval);
-                    setNotice("Permission command copied.");
-                  })
-                }
-              >
-                <Copy size={16} />
-                Copy command
-              </button>
-            </div>
-          )}
-        </details>
-      )}
+      <div className="notice">
+        <ShieldCheck size={21} />
+        <p>
+          <strong>WhatsApp’s rules apply.</strong> No separate admin-approval
+          command is needed for personal posting. Locked chats are skipped
+          unless your number is an admin. WhatsApp may reject an unavailable or
+          restricted group status. Removed or banned groups stay blocked. The
+          console shows what actually happened; uncertain sends are never
+          automatically retried.
+        </p>
+      </div>
       <section className="panel">
         <div className="panel-heading">
           <div>

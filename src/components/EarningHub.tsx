@@ -1,3 +1,4 @@
+import { CoinValue } from "./CoinValue";
 import {
   EARNING_RULES,
   DAILY_EARNING_EXAMPLE,
@@ -17,7 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { api, send, coins, date } from "../api";
-import { groupEligibility } from "../../shared/earningRules";
+import { placementRewardMilli } from "../../shared/earningRules";
 export function EarningHub({
   view,
   revision = 0,
@@ -96,7 +97,9 @@ export function EarningHub({
         </div>
       )}
       {!data && !error && <p role="status">Loading your earning records…</p>}
-      {view === "calculator" && <EarningCalculator />}
+      {view === "calculator" && (
+        <EarningCalculator ownedGroups={data?.groups || []} />
+      )}
       {data && view === "connections" && (
         <>
           <div className="workspace-banner">
@@ -153,15 +156,20 @@ export function EarningHub({
               note="We only send to them once"
             />
             <Stat
-              label="Groups with permission"
+              label="Open group chats"
               value={
                 new Set(
                   data.groups
-                    .filter((g: any) => g.isMember && g.approved && !g.excluded)
+                    .filter(
+                      (g: any) =>
+                        g.isMember &&
+                        (!g.announce || g.userIsAdmin) &&
+                        !g.excluded,
+                    )
                     .map((g: any) => g.groupJid),
                 ).size
               }
-              note="The admin has allowed posting"
+              note="Status is checked separately by WhatsApp"
             />
           </div>
           {!hideNumberSlots && (
@@ -230,7 +238,8 @@ export function EarningHub({
                 <h3>No groups found yet.</h3>
                 <p>
                   Connect your number above, then tap Find my groups. You will
-                  need the group admin’s permission before posting.
+                  must follow WhatsApp’s native posting rules. No extra admin
+                  command is required.
                 </p>
               </div>
             ) : (
@@ -242,7 +251,7 @@ export function EarningHub({
                       <th>Group</th>
                       <th>Members</th>
                       <th>Paid reward</th>
-                      <th>Permission</th>
+                      <th>WhatsApp posting rules</th>
                       <th>Control</th>
                     </tr>
                   </thead>
@@ -250,7 +259,11 @@ export function EarningHub({
                     {data.groups
                       .filter((g: any) => g.isMember)
                       .map((g: any) => {
-                        const q = groupEligibility(g);
+                        const q = {
+                          qualified: g.isMember && g.memberCount >= 100,
+                          rewardMilli: placementRewardMilli(g.memberCount),
+                          reason: "Not available",
+                        };
                         return (
                           <tr key={g.accountId + g.groupJid}>
                             <td>
@@ -274,7 +287,14 @@ export function EarningHub({
                                     ? "Can get posts · 0 Coins (under 100 members)"
                                     : q.reason}
                             </td>
-                            <td>{g.approved ? "Approved" : "Not approved"}</td>
+                            <td>
+                              Group status: checked by WhatsApp at send
+                              <br />
+                              Chat:{" "}
+                              {g.announce && !g.userIsAdmin
+                                ? "Admins only — skipped"
+                                : "Open to your number"}
+                            </td>
                             <td>
                               <button
                                 className="text-link"
@@ -463,7 +483,11 @@ function Stat({
     </div>
   );
 }
-function EarningCalculator() {
+export function EarningCalculator({
+  ownedGroups = [],
+}: {
+  ownedGroups?: any[];
+}) {
   const [members, setMembers] = useState(""),
     [broadcasts, setBroadcasts] = useState(1),
     [mode, setMode] = useState("ALLSTATUS");
@@ -503,6 +527,30 @@ function EarningCalculator() {
             Enter one count per line or separate with commas. Assume posting is
             allowed and remove shared groups first.
           </p>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={!ownedGroups.some((g) => g.isMember && !g.excluded)}
+            onClick={() => {
+              const unique = [
+                ...new Map<string, any>(
+                  ownedGroups
+                    .filter((g) => g.isMember && !g.excluded)
+                    .map((g) => [g.groupJid, g]),
+                ).values(),
+              ];
+              setMembers(unique.map((g) => String(g.memberCount)).join("\n"));
+            }}
+          >
+            Use my connected groups
+          </button>
+          {!ownedGroups.length && (
+            <p className="field-help">
+              Enter your groups manually, or{" "}
+              <a href="#/app/connections">connect WhatsApp</a> to import real
+              group counts. Shared groups are imported once.
+            </p>
+          )}
           <textarea
             id="member-counts"
             rows={7}
@@ -547,6 +595,17 @@ function EarningCalculator() {
           >
             Try the 1,000-Coin daily example
           </button>
+          <button
+            type="button"
+            className="button button-outline potential-preset"
+            onClick={() => {
+              setMembers(Array(250).fill("1000").join("\n"));
+              setBroadcasts(10);
+              setMode("DOUBLE");
+            }}
+          >
+            Try the 5,000-Coin daily example
+          </button>
           <label htmlFor="daily-broadcasts">
             Hypothetical broadcasts in one day
           </label>
@@ -569,7 +628,7 @@ function EarningCalculator() {
         <section className="panel earning-result">
           <span className="eyebrow">ILLUSTRATION ONLY</span>
           <div className="earning-result-amount">
-            <strong>{coins(total)}</strong>
+            <strong>{coins(valid ? total : 0)}</strong>
             <span>Coins per successful broadcast</span>
           </div>
           <div className="earning-result-rows">
@@ -585,13 +644,21 @@ function EarningCalculator() {
               <span>
                 {broadcasts} hypothetical broadcast{broadcasts === 1 ? "" : "s"}
               </span>
-              <strong>{coins(total * broadcasts)} Coins</strong>
+              <strong>{coins(valid ? total * broadcasts : 0)} Coins</strong>
             </p>
           </div>
           <p className="earning-formula">
             Reward = min(members, 1,000) ÷ 1,000 Coins per confirmed post type.
             Both mode needs both status and chat to succeed for the full result.
+            The 1,000/day example needs 50 unique 1,000+ member groups × 10
+            funded campaigns × 2 confirmed post types. The 5,000/day example
+            needs 250 such groups × 10 × 2. These are theoretical workloads, not
+            typical earnings. Imported counts are an upper-bound illustration:
+            offline numbers, locked chats, restricted status, removed groups and
+            missing funded work reduce actual earnings. Paid work and cashout
+            are not open yet.
           </p>
+          <CoinValue amount={valid ? (total * broadcasts) / 1000 : 0} />
           <div className="notice">
             <ShieldCheck size={18} />
             <p>

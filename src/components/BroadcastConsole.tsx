@@ -240,6 +240,10 @@ export function BroadcastConsole({
             <span>Groups skipped</span>
           </div>
           <div>
+            <strong>{s.cancelled || 0}</strong>
+            <span>Post types skipped</span>
+          </div>
+          <div>
             <strong>{s.failed || 0}</strong>
             <span>Posts failed</span>
           </div>

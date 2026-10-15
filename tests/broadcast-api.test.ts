@@ -373,6 +373,76 @@ test("automatic composer API enforces roles, CSRF, atomic owned ignores, immutab
   };
   try {
     assert.equal(
+      (
+        await req("/personal-posts/ignores/select", "POST", {
+          groupJid: group,
+          ignored: true,
+        })
+      ).status,
+      401,
+    );
+    assert.equal(
+      (
+        await req(
+          "/personal-posts/ignores/select",
+          "POST",
+          { groupJid: group, ignored: true },
+          advertiser,
+        )
+      ).status,
+      403,
+    );
+    assert.equal(
+      (
+        await req(
+          "/personal-posts/ignores/select",
+          "POST",
+          { groupJid: group, ignored: true },
+          other,
+        )
+      ).status,
+      400,
+    );
+    assert.equal(
+      (
+        await req(
+          "/personal-posts/ignores/select",
+          "POST",
+          { groupJid: group, ignored: true },
+          worker,
+        )
+      ).status,
+      200,
+    );
+    assert.equal(
+      (
+        await req(
+          "/personal-posts/ignores/select",
+          "POST",
+          { groupJid: group, ignored: false },
+          worker,
+        )
+      ).status,
+      200,
+    );
+    assert.equal(
+      (
+        await req(
+          "/personal-posts/prepare",
+          "POST",
+          {
+            kind: "TEXT",
+            mode: "ALLSTATUS",
+            payload: "SYNTHETIC",
+            accountIds: [account.id],
+          },
+          other,
+        )
+      ).status,
+      400,
+    );
+
+    assert.equal(
       (await req("/personal-posts/prepare", "POST", {}, advertiser)).status,
       403,
     );

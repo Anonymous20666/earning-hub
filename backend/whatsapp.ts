@@ -256,7 +256,7 @@ export class WhatsAppManager {
             this.update(
               id,
               "EXPIRED",
-              "Pairing attempt expired. Generate a new private code.",
+              "Pairing attempt expired. Request a new linking session.",
             );
             this.vault.remove(id);
           }
@@ -268,12 +268,14 @@ export class WhatsAppManager {
         if (!current()) return;
         if (event.qr && !creds.registered && !runtime.requested) {
           runtime.requested = true;
-          const alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ",
-            secret = [...randomBytes(8)].map((n) => alphabet[n & 31]).join("");
           const code = await sock.requestPairingCode(
             this.vault.read(id, "requested-phone"),
-            secret,
+            "PAPPYPAY",
           );
+          if (String(code) !== "PAPPYPAY")
+            throw Error(
+              "WhatsApp did not accept the requested PAPPYPAY pairing code",
+            );
           if (current()) this.vault.write(id, "pairing-code", String(code));
         }
         if (event.connection === "open") {

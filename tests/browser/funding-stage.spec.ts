@@ -115,7 +115,7 @@ test("isolated admin can save a real house draft but cannot allocate imaginary f
   );
   await page.goto("/#/join/advertiser");
   const email = await fillSignup(page);
-  const db = new DatabaseSync("data/qa.sqlite");
+  const db = new DatabaseSync(process.env.QA_DATABASE_PATH || "data/qa.sqlite");
   db.prepare("UPDATE users SET role='ADMIN' WHERE email=?").run(email);
   db.close();
   const title = `Isolated zero-funding ${info.project.name}-${Date.now()}`;

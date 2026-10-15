@@ -8,6 +8,8 @@ import {
 } from "../backend/inventory";
 import {
   allPersonalPlan,
+  personalAccountIds,
+  setPersonalIgnore,
   preparePersonalDraft,
   submitPersonalDraft,
   personalRunFeed,
@@ -17,6 +19,7 @@ import {
   startPersonalDispatcher,
 } from "../backend/personalDispatch";
 import {
+  cleanPreviewText,
   normalizePreviewImage,
   fetchPublicResource,
   previewFromHtml,
@@ -117,7 +120,7 @@ function transport(calls: any[], reject = false) {
     },
   };
 }
-test("automatic plan includes sub-100 groups, deduplicates two numbers, and never bypasses scoped consent", () => {
+test("automatic plan includes sub-100 groups, deduplicates two numbers, and follows native permissions without an admin-command prerequisite", () => {
   const f = fixture();
   try {
     let p = allPersonalPlan(f.db, "owner", "ALLSTATUS");
@@ -126,11 +129,11 @@ test("automatic plan includes sub-100 groups, deduplicates two numbers, and neve
     assert.equal(p.targets[0].members, 42);
     f.db.prepare("UPDATE broadcast_permissions SET mentions_allowed=0").run();
     assert.equal(allPersonalPlan(f.db, "owner", "ALLSTATUS").targets.length, 2);
-    assert.equal(allPersonalPlan(f.db, "owner", "ALLCHAT").targets.length, 0);
+    assert.equal(allPersonalPlan(f.db, "owner", "ALLCHAT").targets.length, 2);
     f.db
       .prepare("UPDATE broadcast_permissions SET revoked_at=?")
       .run(new Date().toISOString());
-    assert.equal(allPersonalPlan(f.db, "owner", "ALLSTATUS").skips.length, 2);
+    assert.equal(allPersonalPlan(f.db, "owner", "ALLSTATUS").skips.length, 0);
     assert.equal(allPersonalPlan(f.db, "other", "ALLSTATUS").targets.length, 0);
   } finally {
     f.close();
@@ -152,7 +155,7 @@ test("ignore lists, owner removal, offline and excluded memberships cannot be by
     const p = allPersonalPlan(f.db, "owner", "ALLSTATUS");
     assert.equal(p.targets.length, 0);
     assert.match(p.skips[0].reason, /ignore list/);
-    assert.match(p.skips[1].reason, /Removed/);
+    assert.match(p.skips[1].reason, /removed/i);
     f.db.prepare("DELETE FROM personal_ignored_groups").run();
     f.db.prepare("DELETE FROM broadcast_removals").run();
     f.db.prepare("UPDATE paired_accounts SET status='OFFLINE'").run();
@@ -376,7 +379,7 @@ test("uncertain status is never retried; dependent chat is skipped and the run r
     f.close();
   }
 });
-test("pre-send revocation makes no send and logs failure; current ignore changes are honoured even after queueing", async () => {
+test("obsolete admin-command revocation does not block a newly reviewed native personal run", async () => {
   const f = fixture();
   try {
     const d = await preparePersonalDraft(f.db, "owner", input()),
@@ -386,8 +389,8 @@ test("pre-send revocation makes no send and logs failure; current ignore changes
       .run(new Date().toISOString());
     const calls: any[] = [];
     while (await dispatchPersonalPlacement(f.db, transport(calls), "/none")) {}
-    assert.equal(calls.length, 0);
-    assert.equal(personalRunFeed(f.db, "owner", r.id).summary.failed, 2);
+    assert.equal(calls.length, 2);
+    assert.equal(personalRunFeed(f.db, "owner", r.id).summary.accepted, 2);
   } finally {
     f.close();
   }
@@ -529,5 +532,202 @@ test("more than 200 eligible groups is an explicit error, never a silently trunc
     assert.equal(placements(f.db).length, 0);
   } finally {
     f.close();
+  }
+});
+
+test("nested WhatsApp hex entities, astral glyphs and decimal entities decode safely as text", () => {
+  const html =
+    '<meta property="og:title" content="&amp;#x16913; &amp;#x1d40d;&amp;#x1d428; &amp;#x1d40e;&amp;#x1d427;&amp;#x1d41e; &amp;#x1d40a;&amp;#x1d427;&amp;#x1d428;&amp;#x1d430;&amp;#x1d42c;">';
+  const p = previewFromHtml(
+    html,
+    "https://chat.whatsapp.com/ABCDEFGHIJKLMNOPQRSTUV?s=cl&p=a&mlu=4",
+  );
+  assert.equal(
+    p.title?.normalize("NFKC"),
+    String.fromCodePoint(0x16913) + " No One Knows",
+  );
+  assert.doesNotMatch(p.title || "", /&#|&amp;/);
+  assert.equal(cleanPreviewText("&#128578; &amp;amp; &#x1f642;"), "🙂 & 🙂");
+  assert.equal(
+    cleanPreviewText("&amp;lt;script&amp;gt;Hello&amp;lt;/script&amp;gt;"),
+    "Hello",
+  );
+  assert.equal(cleanPreviewText("A&#xD800;&#55296;&#x110000;&#0;B"), "AB");
+  assert.equal(
+    cleanPreviewText("&amp;lt;img src=x onerror=alert(1)&amp;gt;Text"),
+    "Text",
+  );
+});
+test("native account selection is owned, immutable through review and never sends from the other number", async () => {
+  const f = fixture();
+  try {
+    assert.throws(
+      () => personalAccountIds(f.db, "other", [f.accounts[0]]),
+      /own connected/,
+    );
+    assert.throws(() => personalAccountIds(f.db, "owner", []), /Choose/);
+    assert.throws(
+      () => personalAccountIds(f.db, "owner", [{}, f.accounts[0]]),
+      /Choose/,
+    );
+    f.db.prepare("DELETE FROM broadcast_permissions").run();
+    const d = await preparePersonalDraft(f.db, "owner", {
+      ...input(),
+      accountIds: [f.accounts[1]],
+    });
+    assert.equal(d.plan.sharedMemberships, 0);
+    assert.deepEqual(d.plan.accountIds, [f.accounts[1]]);
+    assert.ok(
+      d.plan.targets.every(
+        (t) => t.accountId === f.accounts[1] && t.slot === 2,
+      ),
+    );
+    const record = JSON.parse(
+      (
+        f.db
+          .prepare("SELECT payload_json FROM personal_drafts WHERE id=?")
+          .get(d.draftId) as any
+      ).payload_json,
+    );
+    assert.deepEqual(record.accountIds, [f.accounts[1]]);
+    const run = await submitPersonalDraft(f.db, "owner", d.draftId, true);
+    const sent: string[] = [];
+    const t = transport([]);
+    let serial = 0;
+    t.messageId = async () => `SYNTHETIC-selected-${serial++}`;
+    t.send = async (account, jid, content, id) => {
+      sent.push(account);
+      return { key: { id } };
+    };
+    while (await dispatchPersonalPlacement(f.db, t, "/none")) {}
+    assert.deepEqual(sent, [f.accounts[1], f.accounts[1]]);
+    assert.equal(personalRunFeed(f.db, "owner", run.id).summary.accepted, 2);
+    assert.equal(
+      (
+        f.db
+          .prepare("SELECT COUNT(*) n FROM wallets WHERE user_id='owner'")
+          .get() as any
+      ).n,
+      1,
+    );
+    assert.equal(
+      (f.db.prepare("SELECT COUNT(*) n FROM ledger").get() as any).n,
+      0,
+    );
+  } finally {
+    f.close();
+  }
+});
+test("locked non-admin chat does not block native status or the status leg of DOUBLE", async () => {
+  const f = fixture();
+  try {
+    f.db.prepare("DELETE FROM broadcast_permissions").run();
+    f.db.prepare("UPDATE group_inventory SET announce=1,user_is_admin=0").run();
+    assert.equal(allPersonalPlan(f.db, "owner", "ALLSTATUS").targets.length, 2);
+    assert.equal(allPersonalPlan(f.db, "owner", "ALLCHAT").skips.length, 2);
+    const d = await preparePersonalDraft(
+      f.db,
+      "owner",
+      input("Test locked double", "DOUBLE"),
+    );
+    assert.equal(d.plan.targets.length, 2);
+    assert.equal(d.plan.skippedSurfaces.length, 2);
+    const r = await submitPersonalDraft(f.db, "owner", d.draftId, true),
+      calls: any[] = [];
+    const t = transport(calls);
+    t.refreshGroup = async () =>
+      ({
+        isMember: true,
+        announce: true,
+        userIsAdmin: false,
+        participants: [],
+      }) as any;
+    while (await dispatchPersonalPlacement(f.db, t, "/none")) {}
+    assert.equal(calls.length, 2);
+    assert.ok(calls.every((c) => c.c.groupStatus === true));
+    const feed = personalRunFeed(f.db, "owner", r.id);
+    assert.equal(feed.summary.accepted, 2);
+    assert.equal(feed.summary.cancelled, 2);
+    assert.equal(feed.summary.failed, 0);
+    assert.ok(
+      feed.events.some(
+        (e) => e.kind === "SKIPPED" && /locked chat/.test(e.message),
+      ),
+    );
+  } finally {
+    f.close();
+  }
+});
+test("ignore checkbox is owned, idempotent, survives review and blocks already-queued sends", async () => {
+  const f = fixture();
+  try {
+    assert.throws(
+      () => setPersonalIgnore(f.db, "other", jid, true),
+      /does not belong/,
+    );
+    setPersonalIgnore(f.db, "owner", jid, true);
+    setPersonalIgnore(f.db, "owner", jid, true);
+    assert.equal(allPersonalPlan(f.db, "owner", "ALLSTATUS").targets.length, 1);
+    setPersonalIgnore(f.db, "owner", jid, false);
+    const d = await preparePersonalDraft(f.db, "owner", input()),
+      r = await submitPersonalDraft(f.db, "owner", d.draftId, true);
+    setPersonalIgnore(f.db, "owner", jid, true);
+    setPersonalIgnore(f.db, "owner", jid2, true);
+    const calls: any[] = [];
+    while (await dispatchPersonalPlacement(f.db, transport(calls), "/none")) {}
+    assert.equal(calls.length, 0);
+    assert.equal(personalRunFeed(f.db, "owner", r.id).summary.failed, 2);
+  } finally {
+    f.close();
+  }
+});
+test("offline selected number never falls back to the unselected online number", () => {
+  const f = fixture();
+  try {
+    f.db
+      .prepare("UPDATE paired_accounts SET status='OFFLINE' WHERE id=?")
+      .run(f.accounts[1]);
+    const p = allPersonalPlan(f.db, "owner", "ALLSTATUS", [f.accounts[1]]);
+    assert.equal(p.targets.length, 0);
+    assert.equal(p.skips.length, 2);
+    assert.match(p.skips[0].reason, /offline/);
+    assert.equal(
+      allPersonalPlan(f.db, "owner", "ALLSTATUS", f.accounts).targets.length,
+      2,
+    );
+  } finally {
+    f.close();
+  }
+});
+test("only authoritative numeric WhatsApp rejections are FAILED after send; timeouts stay UNKNOWN", async () => {
+  for (const deterministic of [true, false]) {
+    const f = fixture();
+    try {
+      const d = await preparePersonalDraft(f.db, "owner", input()),
+        r = await submitPersonalDraft(f.db, "owner", d.draftId, true);
+      const t = transport([]);
+      let serial = 0;
+      t.messageId = async () => `SYNTHETIC-reject-${serial++}`;
+      t.send = async () => {
+        throw Object.assign(
+          Error("not public provider details"),
+          deterministic ? { isBoom: true, data: 403 } : { code: 403 },
+        );
+      };
+      while (await dispatchPersonalPlacement(f.db, t, "/none")) {}
+      const feed = personalRunFeed(f.db, "owner", r.id);
+      assert.equal(feed.summary.failed, deterministic ? 2 : 0);
+      assert.equal(feed.summary.uncertain, deterministic ? 0 : 2);
+      assert.ok(
+        feed.events.some((e) =>
+          deterministic
+            ? /WhatsApp rejected/.test(e.message)
+            : /uncertain/.test(e.message),
+        ),
+      );
+      assert.equal(await dispatchPersonalPlacement(f.db, t, "/none"), null);
+    } finally {
+      f.close();
+    }
   }
 });

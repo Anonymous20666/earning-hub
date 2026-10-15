@@ -1,4 +1,3 @@
-import { EarningRates } from "./EarningRates";
 import { EarningPotential } from "./EarningPotential";
 import { LiveScene } from "./LiveScene";
 import React, { useState } from "react";
@@ -34,11 +33,11 @@ const faqs = [
   ],
   [
     "How does the 200 Coin welcome bonus work?",
-    "You start with 200 locked Coins. You cannot withdraw them now. For your first withdrawal, you need 300 earned Coins plus the 200 bonus, making at least 500 Coins. For later withdrawals, you need at least 500 earned Coins. Withdrawals are not open yet.",
+    "Your 200-Coin welcome bonus starts locked, not spendable. Future cashout needs qualifying earned Coins and the published minimums. Read the earning guide for the full conditions. Withdrawals are not open yet.",
   ],
   [
     "How are group rewards calculated?",
-    "Small groups can receive posts, but groups below 100 members earn no paid reward. For paid work, 100 members earn 0.100 Coins, 742 earn 0.742 Coins and 1,000 or more earn 1 Coin per confirmed post. A status post and a chat post are checked separately. Shared groups count once per post type. Your own posts never earn Coins. Paid jobs are not open yet.",
+    "Rewards depend on your group sizes and confirmed funded posts, not clicks or joins. Open the Earning guide for exact rates and use the calculator for your own groups. Personal posts never earn Coins.",
   ],
   [
     "What does a campaign estimate include?",
@@ -46,7 +45,7 @@ const faqs = [
   ],
   [
     "Will you send messages without permission?",
-    "No post is queued without your choice. Your groups must allow it, and you need the admin’s permission. Never share your WhatsApp login code or PIN. Only enter the connection code from this website inside your own WhatsApp app.",
+    "No personal post is queued without your review and confirmation. WhatsApp’s posting rules, locked chats and group removals still apply. No extra admin command is required. Never share your WhatsApp login code or PIN. Only enter the connection code from this website inside your own WhatsApp app.",
   ],
 ];
 export function Landing({ user }: { user: User | null }) {
@@ -74,7 +73,7 @@ export function Landing({ user }: { user: User | null }) {
     });
   };
   return (
-    <div className="landing landing-v4 landing-v5">
+    <div className="landing landing-v4 landing-v5 landing-v6">
       <div className="announcement">
         <span className="status-dot" /> YOUR WHATSAPP. YOUR GROUPS. YOUR EARNING
         POTENTIAL. <span className="announcement-tag">Pre-launch</span>
@@ -85,7 +84,9 @@ export function Landing({ user }: { user: User | null }) {
           aria-label="Main navigation"
           className={menu ? "public-nav open" : "public-nav"}
         >
-          <button onClick={() => scroll("earning-rates")}>Reward rates</button>
+          <a href="#/earnings" onClick={() => setMenu(false)}>
+            Earning guide
+          </a>
           <button onClick={() => scroll("how-it-works")}>How to earn</button>
           <button onClick={() => scroll("free-broadcasts")}>
             Free broadcasting
@@ -128,19 +129,16 @@ export function Landing({ user }: { user: User | null }) {
               <span className="serif-word">Get ready to earn.</span>
             </h1>
             <p className="hero-description">
-              Earn Coins from approved, funded posts in your WhatsApp groups.
-              Start by pairing your own number and checking which groups
-              qualify.
+              Earn Coins by sharing funded campaigns in groups your WhatsApp
+              number can post to. Your communities. Your number. A new way to
+              put them to work.
             </p>
             <div className="hero-actions">
               <ArrowLink href={connectHref}>{connectLabel}</ArrowLink>
-              <button
-                className="button button-outline"
-                onClick={() => scroll("earning-rates")}
-              >
+              <a className="button button-outline" href="#/calculator">
                 See what I could earn
                 <ArrowRight size={18} />
-              </button>
+              </a>
             </div>
             <p className="hero-availability">
               Paid jobs and withdrawals are not open yet. Pairing your number
@@ -176,11 +174,6 @@ export function Landing({ user }: { user: User | null }) {
             </span>
           </div>
         </div>
-        <EarningRates
-          calculatorHref={
-            !user ? "#/join/worker" : worker ? "#/app/calculator" : "#/app"
-          }
-        />
         <section className="how-section" id="how-it-works">
           <div className="wrap section">
             <div className="section-heading">
@@ -217,8 +210,8 @@ export function Landing({ user }: { user: User | null }) {
                       "Create an account. Open My WhatsApp and get a connection code. Enter it in your own WhatsApp app.",
                     ],
                     [
-                      "Check group permission",
-                      "Tap Find my groups and get the admin’s permission. Groups need at least 100 members to earn from paid work. Pairing and permission alone do not create earnings.",
+                      "Find your open groups",
+                      "Tap Find my groups. WhatsApp decides which posts your number can send. Check open chats and group status separately. Pairing alone does not pay.",
                     ],
                     [
                       "Earn from confirmed paid posts",
@@ -252,71 +245,44 @@ export function Landing({ user }: { user: User | null }) {
         <div className="wrap">
           <EarningPotential />
         </div>
-        <section className="section wrap" id="the-rules">
-          <div className="rules-layout">
-            <div>
-              <div className="eyebrow">
-                YOUR REFERRALS, BONUS & FUTURE CASHOUT
-              </div>
-              <h2>
-                Understand the value.
-                <br />
-                <span className="serif-word">Know the conditions.</span>
-              </h2>
-              <p className="section-description">
-                Earn 100 Coins for each qualifying referral, after their first
-                eligible funded delivery—not just signup. Your 200-Coin welcome
-                bonus starts locked. Cashout is not open yet.
-              </p>
-              <a href="#/rules" className="inline-link">
-                Read the full platform rules
-                <ArrowRight size={17} />
-              </a>
-            </div>
-            <div className="rules-panel">
-              <div className="rule-row">
-                <span>
-                  Referral reward
-                  <small>
-                    After a friend’s first qualifying funded delivery
-                  </small>
-                </span>
-                <strong>100 Coins</strong>
-              </div>
-              <div className="rule-row">
-                <span>
-                  Worker welcome bonus
-                  <small>Locked, not immediately withdrawable</small>
-                </span>
-                <strong>
-                  200<small>Coins</small>
-                </strong>
-              </div>
-              <div className="rule-row">
-                <span>
-                  Future first cashout threshold
-                  <small>300 earned + 200 locked bonus</small>
-                </span>
-                <strong>
-                  500<small>Coins minimum</small>
-                </strong>
-              </div>
-              <div className="rule-row">
-                <span>
-                  Later cashout threshold<small>From earned balance only</small>
-                </span>
-                <strong>
-                  500<small>Coins minimum</small>
-                </strong>
-              </div>
-              <div className="rule-note">
-                <Lock size={16} />
-                <p>
-                  Earning, payments and payouts are not live. These are platform
-                  rules, not a guarantee of income.
-                </p>
-              </div>
-            </div>
+        <section className="section wrap guide-paths" id="the-rules">
+          <div>
+            <span className="eyebrow">YOU DON’T HAVE TO GUESS</span>
+            <h2>
+              Start simple.
+              <br />
+              <span className="serif-word">Learn as you go.</span>
+            </h2>
+            <p>
+              Pair your WhatsApp first. When you want the details, they are
+              right here.
+            </p>
+          </div>
+          <div className="guide-path-links">
+            <a href="#/coin-value">
+              <Coins size={23} />
+              <span>
+                <strong>What is a Coin worth?</strong>
+                <small>US dollars first, then your currency.</small>
+              </span>
+              <ArrowRight size={20} />
+            </a>
+            <a href="#/earnings">
+              <Users size={23} />
+              <span>
+                <strong>How do group rewards work?</strong>
+                <small>The rates, real conditions and examples.</small>
+              </span>
+              <ArrowRight size={20} />
+            </a>
+            <a href="#/calculator">
+              <ArrowUpRight size={23} />
+              <span>
+                <strong>What could my groups earn?</strong>
+                <small>Try the group-based calculator.</small>
+              </span>
+              <ArrowRight size={20} />
+            </a>
           </div>
         </section>
         <section className="section wrap" id="two-sides">
@@ -348,7 +314,8 @@ export function Landing({ user }: { user: User | null }) {
               </h3>
               <p>
                 Connect your WhatsApp and send your own posts for free. Small
-                groups are welcome too. You need the group admin’s permission.
+                groups are welcome too. Choose your number, skip any groups you
+                want, and let WhatsApp’s native posting rules apply.
               </p>
               <ul>
                 <li>
@@ -365,7 +332,10 @@ export function Landing({ user }: { user: User | null }) {
                   reward
                 </li>
               </ul>
-              <a href={personalHref} className="card-link">
+              <a
+                href={personalHref}
+                className="card-link prominent-card-action"
+              >
                 {user && !worker
                   ? "Open my workspace"
                   : "Start a free personal post"}

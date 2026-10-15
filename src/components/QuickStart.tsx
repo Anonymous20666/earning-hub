@@ -32,12 +32,7 @@ export function QuickStart({ revision = 0 }: { revision?: number }) {
     groups = state?.posts.groups || [],
     unique = new Set(groups.map((g: any) => g.group_jid)).size;
   const approved = groups.some(
-    (g: any) =>
-      g.status === "ONLINE" &&
-      !g.excluded &&
-      !g.revoked_at &&
-      g.expires_at > new Date().toISOString() &&
-      (g.status_allowed || (g.chat_allowed && g.mentions_allowed)),
+    (g: any) => g.status === "ONLINE" && !g.excluded && g.member_count >= 100,
   );
   const action = !online
     ? saved
@@ -45,15 +40,8 @@ export function QuickStart({ revision = 0 }: { revision?: number }) {
       : "Connect my WhatsApp"
     : !unique
       ? "Find my groups"
-      : approved
-        ? "Explore earning rates"
-        : "Check group permission";
-  const link =
-    !online || !unique
-      ? "#/app/connections"
-      : approved
-        ? "#/app/calculator"
-        : "#/app/broadcasts";
+      : "See my earning potential";
+  const link = !online || !unique ? "#/app/connections" : "#/app/calculator";
   return (
     <section className="quick-start" aria-labelledby="quick-start-title">
       <div className="quick-start-top">
@@ -87,18 +75,18 @@ export function QuickStart({ revision = 0 }: { revision?: number }) {
             title: "Connect WhatsApp",
             text: online
               ? "Your number is ready."
-              : "Get a code here. Enter it in WhatsApp.",
+              : "Request PAPPYPAY here. Enter it in WhatsApp.",
             href: "#/app/connections",
             done: online,
           },
           {
             n: 2,
             icon: Users,
-            title: "Check group permission",
+            title: "Find your open groups",
             text: unique
-              ? `${unique} found. Ask the group admin for permission.`
-              : "Find your groups and get the admin’s permission.",
-            href: unique ? "#/app/broadcasts" : "#/app/connections",
+              ? `${unique} found. Status and chat rights are checked separately.`
+              : "Find groups your WhatsApp number can post to.",
+            href: "#/app/connections",
             done: approved,
           },
           {
@@ -134,9 +122,9 @@ export function QuickStart({ revision = 0 }: { revision?: number }) {
         <p>
           <HelpCircle size={18} />
           <span>
-            Groups need 100+ members and permission for paid rewards. One
-            eligible group is enough. Pairing and your own posts never earn
-            Coins.
+            Groups need 100+ members and allowed, confirmed funded posts for
+            paid rewards. One eligible group is enough. Pairing and your own
+            posts never earn Coins.
           </span>
         </p>
       </div>

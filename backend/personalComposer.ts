@@ -6,7 +6,6 @@ import {
   createPersonalRun,
   PERSONAL_LIMITS,
   surfaces,
-  validPermission,
   type Mode,
 } from "./broadcasts";
 import { safePreview, destination, type SafePreview } from "./safePreview";
@@ -25,23 +24,49 @@ export const STATUS_COLORS = [
   "#7C2D12",
   "#374151",
 ];
-export function allPersonalPlan(db: Database, user: string, mode: Mode) {
+export function personalAccountIds(
+  db: Database,
+  user: string,
+  input: unknown,
+): string[] {
+  const owned = rows(
+    db,
+    "SELECT id FROM paired_accounts WHERE user_id=? ORDER BY slot",
+    user,
+  ).map((a) => a.id);
+  if (input === undefined) return owned;
+  if (
+    !Array.isArray(input) ||
+    !input.length ||
+    input.length > 2 ||
+    input.some((id) => typeof id !== "string" || !owned.includes(id))
+  )
+    throw Error("Choose one or both of your own connected WhatsApp numbers");
+  return [...new Set(input as string[])].sort(
+    (a, b) => owned.indexOf(a) - owned.indexOf(b),
+  );
+}
+export function allPersonalPlan(
+  db: Database,
+  user: string,
+  mode: Mode,
+  selection?: unknown,
+) {
   surfaces(mode);
+  const accountIds = personalAccountIds(db, user, selection);
   const memberships = rows(
-      db,
-      `SELECT g.*,a.slot,a.status,p.status_allowed,p.chat_allowed,p.mentions_allowed,p.expires_at,p.revoked_at FROM group_inventory g JOIN paired_accounts a ON a.id=g.account_id LEFT JOIN broadcast_permissions p ON p.account_id=g.account_id AND p.group_jid=g.group_jid WHERE a.user_id=? AND g.is_member=1 ORDER BY g.group_jid,a.slot`,
-      user,
-    ),
-    byGroup = new Map<string, any[]>();
-  for (const g of memberships) {
-    const list = byGroup.get(g.group_jid) || [];
-    list.push(g);
-    byGroup.set(g.group_jid, list);
-  }
+    db,
+    `SELECT g.*,a.slot,a.status FROM group_inventory g JOIN paired_accounts a ON a.id=g.account_id WHERE a.user_id=? ORDER BY g.group_jid,a.slot`,
+    user,
+  ).filter((g) => accountIds.includes(g.account_id));
+  const byGroup = new Map<string, any[]>();
+  for (const g of memberships)
+    byGroup.set(g.group_jid, [...(byGroup.get(g.group_jid) || []), g]);
   const targets: any[] = [],
-    skips: any[] = [];
+    skips: any[] = [],
+    skippedSurfaces: any[] = [];
+  const fresh = new Date(Date.now() - 15 * 60000).toISOString();
   for (const [jid, list] of byGroup) {
-    const first = list[0];
     let reason = "";
     if (
       get(
@@ -60,36 +85,55 @@ export function allPersonalPlan(db: Database, user: string, mode: Mode) {
         jid,
       )
     )
-      reason = "Removed from this group — fresh admin permission is required";
-    const ready = list.find(
+      reason =
+        "Banned / removed: posting is blocked; changing numbers will not bypass it";
+    const available = list.filter(
       (g) =>
+        g.is_member &&
         g.status === "ONLINE" &&
         !g.excluded &&
-        g.synced_at >= new Date(Date.now() - 15 * 60000).toISOString() &&
-        !(mode !== "ALLSTATUS" && g.announce && !g.user_is_admin) &&
-        surfaces(mode).every((s) => validPermission(g, s)),
+        g.synced_at >= fresh,
     );
+    // Prefer a number that can do both legs; otherwise DOUBLE still posts status
+    // and explicitly skips the locked chat. Status rights are decided by WhatsApp.
+    const ready =
+      mode === "ALLCHAT"
+        ? available.find((g) => !g.announce || g.user_is_admin)
+        : mode === "DOUBLE"
+          ? available.find((g) => !g.announce || g.user_is_admin) ||
+            available[0]
+          : available[0];
     if (!reason && !ready)
-      reason = list.every((g) => g.excluded)
-        ? "Hidden in My WhatsApp"
-        : list.every((g) => g.status !== "ONLINE")
-          ? "WhatsApp number is offline"
-          : list.every(
-                (g) =>
-                  g.synced_at < new Date(Date.now() - 15 * 60000).toISOString(),
-              )
-            ? "Group list needs a fresh scan"
-            : mode !== "ALLSTATUS" &&
-                list.every((g) => g.announce && !g.user_is_admin)
-              ? "Only admins can post in this group chat"
-              : "Group-admin permission is missing or expired";
-    if (reason) skips.push({ groupJid: jid, subject: first.subject, reason });
-    else
-      targets.push({
-        accountId: ready.account_id,
+      reason = list.every((g) => !g.is_member)
+        ? "No longer available: your selected numbers are not members"
+        : list.every((g) => g.excluded)
+          ? "Hidden in My WhatsApp"
+          : list.every((g) => g.status !== "ONLINE")
+            ? "WhatsApp number is offline"
+            : !available.length
+              ? "Group list needs a fresh scan or this group is hidden"
+              : "Skipped locked chat: only admins can post here";
+    if (reason) {
+      skips.push({ groupJid: jid, subject: list[0].subject, reason });
+      continue;
+    }
+    const chatLocked =
+      mode === "DOUBLE" && Boolean(ready.announce && !ready.user_is_admin);
+    targets.push({
+      accountId: ready.account_id,
+      slot: ready.slot,
+      groupJid: jid,
+      subject: ready.subject,
+      members: ready.member_count,
+      chatLocked,
+    });
+    if (chatLocked)
+      skippedSurfaces.push({
         groupJid: jid,
         subject: ready.subject,
-        members: ready.member_count,
+        surface: "GROUP_CHAT",
+        reason:
+          "Skipped locked chat: only admins can post here; group status will still be attempted",
       });
   }
   if (targets.length > PERSONAL_LIMITS.maxGroups)
@@ -97,16 +141,59 @@ export function allPersonalPlan(db: Database, user: string, mode: Mode) {
       `All-mode supports ${PERSONAL_LIMITS.maxGroups} groups in this beta. Add more groups to your ignore list before posting; no group was silently left out`,
     );
   return {
+    accountIds,
     targets,
     skips,
+    skippedSurfaces,
     totalGroups: byGroup.size,
     sharedMemberships: memberships.length - byGroup.size,
   };
 }
+// Immediate checkbox updates are owned-group-only, transactional and idempotent.
+export function setPersonalIgnore(
+  db: Database,
+  user: string,
+  groupJid: unknown,
+  ignored: unknown,
+) {
+  if (typeof groupJid !== "string" || typeof ignored !== "boolean")
+    throw Error("Choose a group and whether to skip it");
+  return transaction(db, () => {
+    const g = get(
+      db,
+      "SELECT g.subject FROM group_inventory g JOIN paired_accounts a ON a.id=g.account_id WHERE a.user_id=? AND g.group_jid=?",
+      user,
+      groupJid,
+    );
+    if (!g) throw Error("This group does not belong to your WhatsApp numbers");
+    if (ignored) {
+      db.prepare(
+        "INSERT INTO personal_ignored_groups VALUES(?,?,?,'',?) ON CONFLICT(user_id,group_jid) DO UPDATE SET subject=excluded.subject",
+      ).run(user, groupJid, g.subject, now());
+      if (
+        get(
+          db,
+          "SELECT COUNT(*) n FROM personal_ignored_groups WHERE user_id=?",
+          user,
+        ).n > 200
+      )
+        throw Error("Maximum 200 saved ignored groups");
+    } else
+      db.prepare(
+        "DELETE FROM personal_ignored_groups WHERE user_id=? AND group_jid=?",
+      ).run(user, groupJid);
+    return { success: true };
+  });
+}
 const hash = (x: any) =>
   createHash("sha256").update(JSON.stringify(x)).digest("hex");
 function planHash(plan: ReturnType<typeof allPersonalPlan>) {
-  return hash({ targets: plan.targets, skips: plan.skips });
+  return hash({
+    accountIds: plan.accountIds,
+    targets: plan.targets,
+    skips: plan.skips,
+    skippedSurfaces: plan.skippedSurfaces,
+  });
 }
 export async function preparePersonalDraft(
   db: Database,
@@ -150,7 +237,7 @@ export async function preparePersonalDraft(
     } catch (e: any) {
       if (e?.code === "UNSAFE_DESTINATION") throw e;
     }
-  const plan = allPersonalPlan(db, user, input.mode),
+  const plan = allPersonalPlan(db, user, input.mode, input.accountIds),
     text =
       preview?.title &&
       !payload.toLowerCase().includes(preview.title.toLowerCase())
@@ -164,6 +251,8 @@ export async function preparePersonalDraft(
   const record = {
     kind: input.kind,
     mode: input.mode,
+    nativePolicyVersion: 1,
+    accountIds: plan.accountIds,
     caption: text,
     targetUrl: url,
     originalPayload: payload,
@@ -230,8 +319,10 @@ export async function submitPersonalDraft(
   if (d.consumed_run) return { id: d.consumed_run, idempotent: true };
   if (d.expires_at < now())
     throw Error("This review has expired. Review the post again");
-  const payload = JSON.parse(d.payload_json),
-    plan = allPersonalPlan(db, user, payload.mode),
+  const payload = JSON.parse(d.payload_json);
+  if (payload.nativePolicyVersion !== 1)
+    throw Error("Posting rules changed. Review this post again before posting");
+  const plan = allPersonalPlan(db, user, payload.mode, payload.accountIds),
     oldPlan = JSON.parse(d.plan_json);
   if (planHash(plan) !== planHash(oldPlan))
     throw Error(
@@ -259,7 +350,12 @@ export async function submitPersonalDraft(
     },
     async () => payload.preview,
     (run) => {
-      const current = allPersonalPlan(db, user, payload.mode);
+      const current = allPersonalPlan(
+        db,
+        user,
+        payload.mode,
+        payload.accountIds,
+      );
       if (planHash(current) !== planHash(oldPlan))
         throw Error("Your groups changed. Review again");
       const previous =
@@ -269,6 +365,10 @@ export async function submitPersonalDraft(
             user,
           ).n - 1,
         color = STATUS_COLORS[previous % STATUS_COLORS.length];
+      db.prepare("INSERT INTO broadcast_native_policy VALUES(?,1,?)").run(
+        run,
+        JSON.stringify(payload.accountIds),
+      );
       db.prepare("INSERT INTO personal_run_options VALUES(?,?,0,?)").run(
         run,
         color,
@@ -284,16 +384,17 @@ export async function submitPersonalDraft(
         "QUEUED",
         `${current.targets.length} groups queued. Personal post — no earnings.`,
       );
-      for (const s of current.skips)
+      for (const s of [...current.skips, ...current.skippedSurfaces])
         appendBroadcastEvent(
           db,
           run,
-          `skip:${s.groupJid}`,
+          `skip:${s.groupJid}:${s.surface || "GROUP"}`,
           "SKIPPED",
           s.reason,
           { group_jid: s.groupJid, subject: s.subject },
         );
     },
+    true,
   );
 }
 export function personalRunFeed(
