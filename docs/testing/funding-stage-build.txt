@@ -1,0 +1,20 @@
+
+> pappy-earning-hub@0.2.0 lint
+> tsc --noEmit
+
+
+> pappy-earning-hub@0.2.0 build
+> vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 1668 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                      1.14 kB │ gzip:  0.52 kB
+dist/assets/index-DAev3NYT.css      52.79 kB │ gzip: 12.01 kB
+dist/assets/Auth-C06osUNj.js         6.48 kB │ gzip:  2.57 kB
+dist/assets/Workspace-Rn_bdRd2.js   61.25 kB │ gzip: 16.11 kB
+dist/assets/index-FMKCg1_x.js      252.76 kB │ gzip: 79.45 kB
+
+✓ built in 409ms

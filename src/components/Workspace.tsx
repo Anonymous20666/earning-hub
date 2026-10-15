@@ -1,3 +1,4 @@
+import { EarningHub, TreasuryPanel } from "./EarningHub";
 import React, { useState, useEffect, useRef } from "react";
 import {
   LayoutDashboard,
@@ -132,6 +133,11 @@ const services = [
     "Save, edit and estimate campaign drafts. No charges.",
   ],
   [
+    "Earning plans & referrals",
+    "Available",
+    "Exact group-reward calculator, real referral links and pending-reward records. Paid delivery is off.",
+  ],
+  [
     "Support tickets",
     "Available",
     "Save requests and read staff replies in your workspace.",
@@ -205,6 +211,7 @@ export function Workspace({
     [editing, setEditing] = useState<any>(null),
     [deleting, setDeleting] = useState<string | null>(null),
     [logoutBusy, setLogoutBusy] = useState(false);
+  const [earningRevision, setEarningRevision] = useState(0);
   const worker = user.role === "EARNER",
     admin = user.role === "ADMIN";
   const nav: Array<[string, string, LucideIcon]> = [
@@ -213,11 +220,18 @@ export function Workspace({
       ? [
           ["wallet", "Wallet & rewards", Wallet],
           ["connections", "Connections", Link2],
+          ["calculator", "Earning calculator", Coins],
+          ["referrals", "Referrals", Link2],
         ]
       : [["campaigns", "Campaigns", Send]]),
     ["support", "Support", LifeBuoy],
     ["settings", "Account settings", Settings],
-    ...(admin ? [["admin", "Administration", ShieldCheck]] : []),
+    ...(admin
+      ? [
+          ["treasury", "Funding & campaigns", Wallet],
+          ["admin", "Administration", ShieldCheck],
+        ]
+      : []),
   ] as Array<[string, string, LucideIcon]>;
   const currentNav = nav.find((x) => x[0] === page);
   const refresh = async () => {
@@ -225,6 +239,7 @@ export function Workspace({
     setError("");
     try {
       setData(await api("/workspace"));
+      setEarningRevision((n) => n + 1);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -266,6 +281,18 @@ export function Workspace({
     connections: [
       "Your community connections.",
       "Real accounts and verified activity will appear here when connected.",
+    ],
+    calculator: [
+      "Know what each group earns.",
+      "An exact planning tool. Never a simulated wallet balance.",
+    ],
+    referrals: [
+      "Good people bring good people.",
+      "Your invitations, conditional rewards and earned credits.",
+    ],
+    treasury: [
+      "Funding before promises.",
+      "Verified cash, reserved budgets and earned obligations.",
     ],
     campaigns: [
       "Good growth starts with a plan.",
@@ -562,6 +589,21 @@ export function Workspace({
                         />
                       </div>
                     )}
+                    {worker && (
+                      <a className="earning-link" href="#/app/calculator">
+                        <Coins size={20} />
+                        <div>
+                          <strong>
+                            See exactly how your groups would earn
+                          </strong>
+                          <span>
+                            Member-based rewards, two-number deduplication and
+                            ₦5 referrals.
+                          </span>
+                        </div>
+                        <ArrowRight size={18} />
+                      </a>
+                    )}
                     <div className="overview-grid">
                       <section className="panel next-steps">
                         <div className="panel-heading">
@@ -791,13 +833,15 @@ export function Workspace({
                           min(group members, 1,000) ÷ 1,000
                         </div>
                         <p className="muted">
-                          Standard mode uses this Coin formula. VIP mode pays
-                          twice the amount for the two delivery steps.
+                          Each unique qualifying successful group uses this Coin
+                          formula. There is no 100-group earning ceiling. 1 Coin
+                          = ₦1 worldwide.
                         </p>
                         <ul className="plain-list">
                           <li>
                             <Check />
-                            At least 100 members in an open group
+                            At least 100 members, posting allowed & current
+                            consent
                           </li>
                           <li>
                             <Check />
@@ -805,7 +849,8 @@ export function Workspace({
                           </li>
                           <li>
                             <X />
-                            No rewards for locked groups or kicked accounts
+                            No rewards where posting is blocked or you are no
+                            longer a member
                           </li>
                         </ul>
                         <a href="#/rules" className="inline-link">
@@ -851,43 +896,16 @@ export function Workspace({
                   </>
                 )}
                 {page === "connections" && worker && (
-                  <section className="panel">
-                    <div className="panel-heading">
-                      <div>
-                        <h2>Connected accounts</h2>
-                        <p>
-                          Only real, provider-confirmed connections belong here.
-                        </p>
-                      </div>
-                      <span className="badge neutral">0 connected</span>
-                    </div>
-                    <Empty
-                      icon={MessageCircle}
-                      title="Connections are not available yet."
-                      action={
-                        <a
-                          href="#/app/status"
-                          className="button button-outline small"
-                        >
-                          View integration status
-                          <ArrowRight size={16} />
-                        </a>
-                      }
-                    >
-                      WhatsApp and Telegram integrations have not been
-                      configured. We won’t generate a fake pairing code or claim
-                      your account is connected.
-                    </Empty>
-                    <div className="notice warning">
-                      <ShieldCheck size={19} />
-                      <p>
-                        Never share your password, WhatsApp registration code or
-                        two-step verification PIN. A supported integration and
-                        consent safeguards must be in place before pairing is
-                        enabled.
-                      </p>
-                    </div>
-                  </section>
+                  <EarningHub revision={earningRevision} view="connections" />
+                )}
+                {page === "calculator" && worker && (
+                  <EarningHub revision={earningRevision} view="calculator" />
+                )}
+                {page === "referrals" && worker && (
+                  <EarningHub revision={earningRevision} view="referrals" />
+                )}
+                {page === "treasury" && admin && (
+                  <TreasuryPanel revision={earningRevision} />
                 )}
                 {page === "campaigns" && !worker && (
                   <>

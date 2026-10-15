@@ -180,13 +180,28 @@ function InfoPage({ path }: { path: string }) {
             <section>
               <h2>3. Group reward rules</h2>
               <p>
-                Only open groups with at least 100 members qualify. Standard
-                mode pays min(member count, 1,000) ÷ 1,000 Coins per verified
-                qualifying delivery. VIP mode pays twice the standard amount for
-                its two required delivery steps. Locked groups, kicked accounts
-                and groups with fewer than 100 members do not qualify. A
-                displayed calculation is not evidence of a delivery or a
-                payment.
+                A group needs at least 100 members, permitted posting and
+                current verified community consent. Each unique successful group
+                earns min(member count, 1,000) ÷ 1,000 Coins. One qualifying
+                group is enough; there is no 100-group earning cap. Two numbers
+                may belong to one owner, but a shared group counts once per
+                campaign. Up to ten campaign participations per worker per UTC
+                day is a capacity limit, not a promise of work. Groups below 100
+                members, accounts no longer in the group and groups where the
+                account cannot post earn zero. Paid campaigns require cleared
+                funding, bonus backing and verified delivery. A calculation is
+                not a delivery or payment. The old draft calculator’s VIP
+                estimate is not an active worker reward mode.
+              </p>
+              <p>
+                Referrals award ₦5 (5.000 Coins) once, after the invited worker
+                pairs and completes their first qualifying verified campaign
+                delivery. Pending referral amounts are conditional, not earned
+                or withdrawable. Signup alone does not qualify. Referral codes
+                must be attached at registration. Self-referrals and multiple
+                owner accounts for the same paired phone number are not
+                permitted. Shared or dynamic IP addresses do not, by themselves,
+                establish someone’s identity.
               </p>
             </section>
             <section>
@@ -233,7 +248,12 @@ function InfoPage({ path }: { path: string }) {
                 time and account verification status; hashed session identifiers
                 and expiry times; conditional bonus ledger entries; saved
                 campaign plans; support messages and staff replies; and audit
-                records of account operations.
+                records of account operations. Referral relationships and
+                pending reward records are stored when a referral code is used.
+                When a messaging integration is approved, masked number labels,
+                keyed account hashes, group inventory and permission records
+                will be used for eligibility and deduplication. Group member
+                lists are not stored by the current application.
               </p>
               <p>
                 Passwords are derived with a unique salt using scrypt. They are

@@ -19,7 +19,9 @@ export function Auth({
   onSuccess: (user: User) => void;
 }) {
   const signup = path.startsWith("/join");
-  const role = path.endsWith("advertiser") ? "ADVERTISER" : "EARNER";
+  const role = path.split("?")[0].endsWith("advertiser")
+    ? "ADVERTISER"
+    : "EARNER";
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [show, setShow] = useState(false),
@@ -36,6 +38,10 @@ export function Auth({
         email: form.get("email"),
         password: form.get("password"),
         role,
+        referralCode:
+          signup && role === "EARNER"
+            ? form.get("referralCode") || undefined
+            : undefined,
       });
       setCsrf(result.csrf);
       onSuccess(result.user);
@@ -152,6 +158,26 @@ export function Auth({
                   maxLength={80}
                   placeholder="How should we call you?"
                 />
+              </label>
+            )}
+            {signup && role === "EARNER" && (
+              <label>
+                Referral code (optional)
+                <input
+                  name="referralCode"
+                  maxLength={20}
+                  pattern="[a-f0-9]{20}"
+                  defaultValue={
+                    new URLSearchParams(path.split("?")[1] || "").get("ref") ||
+                    ""
+                  }
+                  autoComplete="off"
+                />
+                <span className="field-help">
+                  An invited worker’s first verified qualifying delivery unlocks
+                  a 5.000 Coin reward for their referrer. Signup alone does not
+                  earn it.
+                </span>
               </label>
             )}
             <label>

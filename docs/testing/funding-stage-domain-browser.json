@@ -1,0 +1,88 @@
+{
+  "origin": "https://pappy-earnig-hub.duckdns.org",
+  "at": "2026-10-15T03:16:14.481Z",
+  "checks": [
+    {
+      "name": "TLS health is v0.2.0 pre-launch",
+      "passed": true
+    },
+    {
+      "name": "worker registration and protected session",
+      "passed": true
+    },
+    {
+      "name": "secure HttpOnly same-site session cookie",
+      "passed": true
+    },
+    {
+      "name": "calculator starts empty without artificial earnings",
+      "passed": true
+    },
+    {
+      "name": "four agreed groups total exactly 1.290 Coins",
+      "passed": true
+    },
+    {
+      "name": "ten hypothetical broadcasts total 12.900 Coins",
+      "passed": true
+    },
+    {
+      "name": "calculator does not credit wallet",
+      "passed": true
+    },
+    {
+      "name": "two real empty number slots and no invented group inventory",
+      "passed": true
+    },
+    {
+      "name": "desktop has no horizontal document overflow",
+      "passed": true
+    },
+    {
+      "name": "real invite URL has a unique worker code",
+      "passed": true
+    },
+    {
+      "name": "share link registration succeeds as worker with referral attributed",
+      "passed": true
+    },
+    {
+      "name": "header refresh loads exactly 5.000 pending and zero earned referral Coins",
+      "passed": true
+    },
+    {
+      "name": "worker cannot access treasury",
+      "passed": true
+    },
+    {
+      "name": "pairing and withdrawals remain blocked without debiting",
+      "passed": true
+    },
+    {
+      "name": "browser cannot forge delivery confirmation",
+      "passed": true
+    },
+    {
+      "name": "390px mobile connection page has no horizontal overflow",
+      "passed": true
+    },
+    {
+      "name": "390px referral link stays inside viewport",
+      "passed": true
+    },
+    {
+      "name": "advertiser registration and previous workspace remain usable",
+      "passed": true
+    },
+    {
+      "name": "public provider status truthfully remains disabled",
+      "passed": true
+    },
+    {
+      "name": "no uncaught browser application errors",
+      "passed": true
+    }
+  ],
+  "temporaryTestAccounts": 3,
+  "notes": "Temporary deployment-verification accounts only. No live admin, paired account, funding or paid earning created. Cleanup is recorded separately."
+}

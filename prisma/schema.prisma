@@ -1,3 +1,6 @@
+// HISTORICAL DESIGN REFERENCE — not the active schema or a deployable migration.
+// Active funding-stage schema: backend/database.ts + backend/earningSchema.ts.
+// PostgreSQL migration is pending; do not run prisma db push against production.
 // Prisma Schema for NexusSphere State-Plane Architecture
 // PostgreSQL with strict DECIMAL(12,3) for all monetary and coin ledgers
 

@@ -39,3 +39,24 @@ Node's official cryptography documentation describes scrypt as a memory/computat
 ## Follow-up: founder-authorised HTTPS review domain
 
 On 15 October 2026 the founder supplied `pappy-earnig-hub.duckdns.org` and requested a certificate. DNS resolves to the authorised VPS. A dedicated nginx vhost, Let's Encrypt certificate, HTTPS redirect, certificate reload hook and canonical application origin are now configured. The renewal dry-run and real public HTTPS browser sign-in/workflow checks passed. This supersedes the temporary-preview and missing-domain decisions above. It does not change the pre-launch business scope or approve messaging/payment implementation; those designs are still to be agreed.
+
+
+## Founder-authorised funding-first build — 15 October 2026, v0.2.0
+
+The founder agreed to obtain funding before paid broadcasts and authorised implementation. No actual cleared amount or verified deposit was provided. This authorises building, not pretending investment has arrived.
+
+| Decision | Implementation / consequence |
+|---|---|
+| Preserve the deployed app/account before migrating architecture | Additive SQLite schema v2; no destructive PostgreSQL migration, unrelated service changes or new production Redis service. PostgreSQL remains explicitly pending. |
+| Exact worker reward is the current standard | `min(members,1000)` milliCoins for each unique successful qualifying group (100+ members, posting allowed, verified consent). No 100-group ceiling. Legacy VIP remains estimate-only. |
+| Two numbers per owner | Slot 1/2 constraints, keyed provider-number ownership history; one campaign/group reservation across all numbers/owners. No fake pairing or device-uniqueness guarantee. |
+| Referral is ₦5, not undefined points | 5,000 milliCoins pending at signup; backed and activated once by the invited paired worker's first verified qualifying delivery. |
+| Cash first | Only independently checked cleared receipts can be booked by an approved operator. Expected CPA revenue, investments and unsold communities do not increase treasury. |
+| Back obligations before new work | Separate reward reservations, earned payables, full conditional welcome-bonus backing and referral backing. Full bonus backing before first paid work is a conservative cash-reservation policy, not an earlier bonus unlock or changed withdrawal threshold. |
+| Never infer delivery from HTTP 200 | Server acceptance creates no earnings; authenticated matched delivery receipts settle internally. Uncertain outcomes hold funds; no blind resend. |
+| Build real queue machinery without inventing a provider | BullMQ + ioredis installed and real isolated Redis tests executed. Production release runs neither Redis nor the worker; no production messaging adapter is bundled. |
+| Keep unresolved checkout off | Fixed ₦30/80/180 pricing versus exact payout conflict has not been approved; no checkout/charging enabled. |
+| No unsolicited automation | Current verified group-admin consent is required independently of number pairing. No autojoin, anti-ban evasion, automatic group exit or supposed one-IP physical-identity enforcement. |
+| Preserve money and audit under failures | Immediate transactions, unique campaign/group/funding/ledger keys, append-only monetary records, reconciliation, separate-process race tests. Actual payout execution/debits remain unimplemented. |
+
+See `FUNDING-STAGE.md` for operational boundaries, cost backing, verification evidence and remaining launch gates. The earlier mission's no-workflow restriction was superseded by build authorisation; live messaging/payment credentials and unresolved pricing were not approved by that authorisation.

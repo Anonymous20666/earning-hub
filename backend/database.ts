@@ -1,3 +1,4 @@
+import { migrateEarningSchema } from "./earningSchema";
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync, chmodSync } from "node:fs";
 import path from "node:path";
@@ -46,6 +47,7 @@ export function openDatabase(filename: string) {
     CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at);
     INSERT OR IGNORE INTO schema_migrations VALUES(1, datetime('now'));
   `);
+  migrateEarningSchema(db);
   return db;
 }
 export type Database = ReturnType<typeof openDatabase>;

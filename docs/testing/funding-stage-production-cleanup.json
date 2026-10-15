@@ -1,0 +1,15 @@
+{
+  "removedTemporaryAccounts": 3,
+  "remainingUsers": 1,
+  "remainingWallets": 1,
+  "remainingLedgerRows": 1,
+  "campaigns": 0,
+  "pairedAccounts": 0,
+  "referrals": 0,
+  "cashMilli": 0,
+  "dispatchEnabled": 0,
+  "integrity": {
+    "integrity_check": "ok"
+  },
+  "foreignKeys": []
+}

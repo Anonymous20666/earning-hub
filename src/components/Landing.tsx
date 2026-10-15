@@ -21,6 +21,10 @@ import { User } from "../api";
 
 const faqs = [
   [
+    "What is the referral reward?",
+    "₦5 = 5.000 Coins. It stays pending until the referred worker pairs a number and completes their first verified qualifying campaign delivery. Paid broadcasting is not enabled yet.",
+  ],
+  [
     "What is Pappy Earning Hub?",
     "A marketplace being built to connect advertisers with workers who distribute approved WhatsApp and Telegram campaigns. Accounts, campaign planning and support are available. Live delivery and payouts are not yet enabled.",
   ],
@@ -34,7 +38,7 @@ const faqs = [
   ],
   [
     "How are group rewards calculated?",
-    "Under the documented rules, an open group needs at least 100 members. Standard mode pays min(members, 1,000) ÷ 1,000 Coins. VIP mode pays twice that amount for the two delivery steps. Locked groups, kicked accounts and groups under 100 members earn zero. Real rewards must be backed by verified delivery.",
+    "A group needs at least 100 members and permission to post. Each unique successful group earns min(members, 1,000) ÷ 1,000 Coins. One group is enough and there is no 100-group earning cap. Up to two numbers may belong to one owner; shared groups count once per campaign. Real rewards require verified delivery and cash-backed campaigns. 1 Coin = ₦1 worldwide.",
   ],
   [
     "What does a campaign estimate include?",

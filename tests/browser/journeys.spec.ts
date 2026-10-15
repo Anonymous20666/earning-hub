@@ -114,7 +114,7 @@ test("worker registration, persistence, wallet, support, settings, logout and lo
   expect((await download).suggestedFilename()).toBe("pappy-wallet-ledger.csv");
   await nav(page, "Connections");
   await expect(
-    page.getByRole("heading", { name: "Connections are not available yet." }),
+    page.getByRole("heading", { name: "No groups scanned yet." }),
   ).toBeVisible();
   await nav(page, "Support");
   await page.getByRole("button", { name: "New request" }).click();

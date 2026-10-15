@@ -1,0 +1,33 @@
+running healthy sha256:f057b6df1e71333fc4ac7418b798b98517daa11ed5f1ae3323fc5667aa9dff64
+
+> pappy-earning-hub@0.2.0 treasury
+> tsx backend/treasury-cli.ts reconcile
+
+{
+  "ok": true,
+  "checks": {
+    "cashConserved": true,
+    "payableMatchesWallets": true,
+    "bonusMatchesWallets": true,
+    "reservationsMatch": true,
+    "cashMatchesReceipts": true,
+    "walletsMatchEarnedLedger": true,
+    "campaignAllocationsMatchJobs": true,
+    "deliveriesMatchCredits": true,
+    "referralsMatchCredits": true
+  },
+  "treasury": {
+    "id": 1,
+    "cash_milli": 0,
+    "available_milli": 0,
+    "reserved_milli": 0,
+    "payable_milli": 0,
+    "bonus_backing_milli": 0
+  },
+  "expected": {
+    "payableMilli": 0,
+    "bonusMilli": 0,
+    "reservedMilli": 0
+  }
+}
+{"users":1,"wallets":1,"ledger":1,"campaigns":0,"admins":0,"pairedAccounts":0,"schema":[{"version":1},{"version":2}],"integrity":{"integrity_check":"ok"},"foreignKeys":[]}

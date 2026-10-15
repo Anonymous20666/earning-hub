@@ -1,3 +1,12 @@
+import {
+  registerReferral,
+  earningWorkspace,
+  treasuryOverview,
+  createHouseCampaign,
+  fundHouseCampaign,
+  closeHouseCampaign,
+} from "./earning";
+import { parseNgnMilli } from "../shared/earningRules";
 import express from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -207,12 +216,16 @@ export function createApp(
       Promise.resolve(fn(req, res, next)).catch(next);
   app.get("/api/health", (_req, res) => {
     db.prepare("SELECT 1").get();
-    res.json({ status: "ok", version: "0.1.0", mode: "pre-launch" });
+    res.json({ status: "ok", version: "0.2.0", mode: "pre-launch" });
   });
   app.get("/api/status", (_req, res) =>
     res.json({
       mode: "pre-launch",
       registration: true,
+      earningPlans: true,
+      referralRegistration: true,
+      paidBroadcasts: false,
+      queueWorkerActive: false,
       emailDelivery: false,
       googleAuth: false,
       whatsapp: false,
@@ -245,6 +258,23 @@ export function createApp(
         });
         return;
       }
+      if (
+        requestedRole === "EARNER" &&
+        req.body.referralCode !== undefined &&
+        req.body.referralCode !== "" &&
+        (typeof req.body.referralCode !== "string" ||
+          !db
+            .prepare("SELECT user_id FROM referral_codes WHERE code=?")
+            .get(req.body.referralCode))
+      ) {
+        res
+          .status(400)
+          .json({
+            error:
+              "Referral code not found. Check the link or remove the referral code.",
+          });
+        return;
+      }
       const cleanEmail = email.trim().toLowerCase();
       const hash = await passwordHash(password);
       const id = randomUUID(),
@@ -258,6 +288,7 @@ export function createApp(
             db.prepare(
               "INSERT INTO wallets(user_id,locked_milli) VALUES(?,?)",
             ).run(id, RULES.bonusMilli);
+            registerReferral(db, id, req.body.referralCode);
             db.prepare("INSERT INTO ledger VALUES(?,?,?,?,?,?)").run(
               randomUUID(),
               id,
@@ -376,6 +407,101 @@ export function createApp(
       deliveries: [],
     });
   });
+  app.get("/api/earnings", protectedRoute, role("EARNER"), (req: any, res) =>
+    res.json(earningWorkspace(db, req.account.id)),
+  );
+  app.patch(
+    "/api/earnings/groups/exclusion",
+    protectedRoute,
+    role("EARNER"),
+    (req: any, res) => {
+      const { accountId, groupJid, excluded } = req.body || {};
+      if (
+        typeof accountId !== "string" ||
+        typeof groupJid !== "string" ||
+        typeof excluded !== "boolean"
+      ) {
+        res
+          .status(400)
+          .json({ error: "Account, group and exclusion setting required" });
+        return;
+      }
+      const result = db
+        .prepare(
+          "UPDATE group_inventory SET excluded=? WHERE account_id=? AND group_jid=? AND EXISTS(SELECT 1 FROM paired_accounts a WHERE a.id=account_id AND a.user_id=?)",
+        )
+        .run(Number(excluded), accountId, groupJid, req.account.id);
+      if (!result.changes) {
+        res.status(404).json({ error: "Group not found" });
+        return;
+      }
+      audit(req.account.id, "GROUP_EXCLUSION_UPDATED", accountId);
+      res.json({ success: true });
+    },
+  );
+  app.get("/api/admin/treasury", protectedRoute, role("ADMIN"), (_req, res) =>
+    res.json(treasuryOverview(db)),
+  );
+  app.post(
+    "/api/admin/house-campaigns",
+    protectedRoute,
+    role("ADMIN"),
+    (req: any, res) => {
+      try {
+        const result = createHouseCampaign(db, {
+          adminId: req.account.id,
+          title: req.body.title,
+          message: req.body.message,
+          targetUrl: req.body.targetUrl,
+          rewardBudgetMilli: parseNgnMilli(req.body.rewardBudget),
+        });
+        audit(req.account.id, "HOUSE_DRAFT_CREATED", result.id);
+        res.status(201).json(result);
+      } catch (e: any) {
+        res.status(400).json({ error: e.message });
+      }
+    },
+  );
+  app.post(
+    "/api/admin/house-campaigns/:id/fund",
+    protectedRoute,
+    role("ADMIN"),
+    (req: any, res) => {
+      try {
+        fundHouseCampaign(db, req.params.id, req.account.id);
+        audit(req.account.id, "HOUSE_CAMPAIGN_FUNDED", req.params.id);
+        res.json({ success: true });
+      } catch (e: any) {
+        res.status(409).json({ error: e.message });
+      }
+    },
+  );
+  app.post(
+    "/api/admin/house-campaigns/:id/close",
+    protectedRoute,
+    role("ADMIN"),
+    (req: any, res) => {
+      try {
+        closeHouseCampaign(db, req.params.id, req.account.id);
+        audit(req.account.id, "HOUSE_CAMPAIGN_CLOSED", req.params.id);
+        res.json({ success: true });
+      } catch (e: any) {
+        res.status(409).json({ error: e.message });
+      }
+    },
+  );
+  app.post(
+    "/api/admin/dispatch/stop",
+    protectedRoute,
+    role("ADMIN"),
+    (req: any, res) => {
+      db.prepare(
+        "UPDATE broadcast_settings SET dispatch_enabled=0 WHERE id=1",
+      ).run();
+      audit(req.account.id, "DISPATCH_STOPPED");
+      res.json({ success: true });
+    },
+  );
   app.patch("/api/profile", protectedRoute, (req: any, res) => {
     if (
       typeof req.body.name !== "string" ||

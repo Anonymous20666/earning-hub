@@ -12,9 +12,20 @@ A **pre-launch** worker / advertiser marketplace with a real, server-backed acco
 - Responsive public website, registration, login and role-specific workspaces.
 - Database backup command and integrity checking.
 
+## Funding-first earning update (v0.2.0)
+
+- Exact member-based earning calculator; one group suffices; no 100-group earning cap.
+- Two-number inventory model, unique/duplicate/permission counts and ownership-checked exclusion. **Pairing itself is not configured.**
+- Real referral links and ₦5 pending attribution at signup; no credit before a funded verified qualifying delivery.
+- Restricted treasury and house-campaign budgets; verified-cash bookkeeping, separate bonus/referral backing, strict reservations, idempotent internal settlement and reconciliation.
+- Real BullMQ/Redis dispatch framework tested with an isolated Redis and synthetic provider. **No production provider adapter, Redis worker service or real dispatch is enabled.**
+- Additive schema version 2; existing accounts/data preserved. No real cash, paid earnings or public admin is seeded.
+
+Read [the funding-stage implementation and operator guide](docs/FUNDING-STAGE.md) before recording funds or attempting any messaging. The complete paid marketplace is not finished: provider/consent integration, PostgreSQL migration, commercial checkout decisions and actual payments/payouts remain gated.
+
 ## Requirements and package manager
 
-Node **22.13+**; npm; the committed `package-lock.json`. Use `npm ci`, not an unpinned install. SQLite uses Node's built-in `node:sqlite`, which emits an experimental warning on Node 22. No PostgreSQL or Redis is required for this pre-launch, single-instance version. The old Bun lock and prototype code are retained in `legacy/` and are not runtime inputs.
+Node **22.16+**; npm; the committed `package-lock.json`. Use `npm ci`, not an unpinned install. SQLite uses Node's built-in `node:sqlite`, which emits an experimental warning on Node 22. No PostgreSQL or Redis is required for the deployed pre-launch web app. The inactive BullMQ worker requires a separate private Redis and an approved provider adapter; the release does not start either. The old Bun lock and prototype code are retained in `legacy/` and are not runtime inputs.
 
 ```bash
 npm ci
@@ -60,7 +71,7 @@ The release script builds first, verifies a backup of any existing app database,
 
 Data: `/var/lib/pappy-earning-hub/pappy.sqlite` on the VPS; directory `0700`, database `0600`. Local backups are in `/var/lib/pappy-earning-hub/backups`. Automated scheduling and offsite storage are still outstanding.
 
-**Rollback:** stop and remove only the new `pappy-earning-hub` container; rename the preserved `pappy-earning-hub-rollback-<timestamp>` container back to `pappy-earning-hub`, and start it. No schema-breaking migration is introduced by this release. If a future release changes the schema, use a separately reviewed database rollback plan; do not restore over live writes blindly.
+**Rollback:** stop and remove only the new `pappy-earning-hub` container; rename the preserved `pappy-earning-hub-rollback-<timestamp>` container back to `pappy-earning-hub`, and start it. Schema version 2 is additive and compatible with the saved earlier web container; retain all new tables and data on container-only rollback. If a future release changes the schema, use a separately reviewed database rollback plan; do not restore over live writes blindly.
 
 The original repository snapshot is also preserved at `/root/earning-hub-backups/original-20261015.tar.gz`. It is an unsafe prototype, not a production fallback for public exposure.
 
@@ -78,20 +89,20 @@ APP_ORIGIN=https://pappy-earnig-hub.duckdns.org TRUST_PROXY_HOPS=1 bash deploy/r
 
 Actual public HTTPS browser checks passed for registration, sessions, wallet display, saved advertiser drafts, logout/login and desktop/mobile home rendering. Temporary test accounts were removed. No certificate verification bypass was used. The old temporary Arena tunnel is no longer required.
 
-This is a public **design-review/pre-launch** deployment, not permission to enable live messaging or money movement. The founder will review the design and agree the operational workflows separately.
+This is a public **design-review/pre-launch** deployment, not permission to enable live messaging or money movement. The founder has authorised the funding-first build, not unfunded paid broadcasting. Live providers and money movement remain disabled.
 
 ## Administration
 
-There are **no seeded accounts, default passwords or public admin-registration routes**. Register the founder's real account first; then a server operator can explicitly promote that exact account after founder approval. The browser cannot self-promote. Staff can read recent accounts, view conditional bonus liability, reply to support tickets and inspect audit records. Financial override buttons from the prototype are not deployed.
+There are **no seeded accounts, default passwords or public admin-registration routes**. Register the founder's real account first; then a server operator can explicitly promote that exact account after founder approval. The browser cannot self-promote. Staff can read recent accounts, view conditional bonus records, reply to support tickets, inspect audit records and use the implemented treasury/house-campaign controls. Financial override buttons from the prototype are not deployed.
 
 ## Important limitations
 
 - No SMTP/email verification/password reset delivery, Google OAuth, messaging sockets, Telegram webhook, payment provider, payout service or AI key is configured.
-- No real campaign dispatch, group validation, pairing, earning, deposits or withdrawals occur. These APIs fail closed.
+- No real pairing, group scan, campaign dispatch, paid earning, deposit collection or withdrawal occurs. Provider-backed operations fail closed. Internal inventory, budgeting, outbox and verified-receipt settlement logic exist and are tested, but are not a production provider connection.
 - Planning estimates preserve the inherited formulas; conversion and profitability assumptions are unverified.
-- Financial settlement, provider reconciliation, webhook idempotency and fraud controls must be built and tested before live money is enabled.
-- SQLite is appropriate for this limited single-instance foundation, not a claim of distributed scale. Review migration to PostgreSQL and queue architecture against measured workload before adding workers or concurrent settlement.
-- Rate limiting is in process memory. In this SSH-tunnel review topology, requests share the tunnel source IP. A production reverse proxy requires explicitly reviewed trusted-proxy configuration and abuse controls; do not blindly trust arbitrary forwarded headers.
+- The internal earning ledger, delivery idempotency and treasury reconciliation are implemented and tested. Real provider evidence ingestion/reconciliation, payout settlement/debits, fraud/KYC controls and operational bank verification remain launch gates.
+- SQLite is appropriate for this limited single-instance foundation, not a claim of distributed scale. Review migration to PostgreSQL and queue architecture against measured workload before scaled/distributed financial operations.
+- Rate limiting is in process memory. The dedicated nginx proxy overwrites forwarding headers and exactly one trusted proxy hop is enabled. Shared/dynamic client IPs still do not establish physical identity; multi-instance rate limiting requires separate review.
 - Final operator details, retention policy, privacy/legal review and commercial terms remain open. No certification or legal compliance claim is made.
 - The new app does not use Firebase. `firestore.rules` contains a prepared deny-all replacement, **not deployed** to the legacy Firebase project. Cloud rules cannot be confirmed without owner access.
 

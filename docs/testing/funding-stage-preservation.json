@@ -1,0 +1,11 @@
+{
+  "backup": "/app/data/backups/pappy-2026-10-15T03-15-12-525Z.sqlite",
+  "checks": {
+    "originalUserFields": true,
+    "originalWalletBalances": true,
+    "originalLedger": true,
+    "originalAuthSessions": true,
+    "originalCampaigns": true
+  },
+  "allPreserved": true
+}
