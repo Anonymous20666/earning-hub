@@ -1,0 +1,4 @@
+
+> pappy-earning-hub@0.8.1 lint
+> tsc --noEmit
+

@@ -10,7 +10,7 @@ export type PersonalTransport = Pick<
   "refreshGroup" | "messageId" | "send"
 >;
 const stamp = () => new Date().toISOString();
-function finish(db: Database, run: string) {
+export function finishPersonalRun(db: Database, run: string) {
   const changed = db
     .prepare(
       `UPDATE broadcast_runs SET status='FINISHED' WHERE id=? AND status IN('RUNNING','QUEUED') AND NOT EXISTS(SELECT 1 FROM broadcast_targets t JOIN broadcast_placements p ON p.target_id=t.id WHERE t.run_id=? AND p.status IN('RESERVED','SENDING'))`,
@@ -31,7 +31,7 @@ function finish(db: Database, run: string) {
     );
   }
 }
-function skipDependentChat(db: Database, p: any) {
+export function skipDependentChat(db: Database, p: any) {
   if (p.surface !== "GROUP_STATUS") return;
   const chat = db
     .prepare(
@@ -248,7 +248,7 @@ export async function dispatchPersonalPlacement(
       }
     });
   }
-  transaction(db, () => finish(db, p.run_id));
+  transaction(db, () => finishPersonalRun(db, p.run_id));
   return p.id;
 }
 export function startPersonalDispatcher(
@@ -287,7 +287,7 @@ export function startPersonalDispatcher(
         "SELECT id FROM broadcast_runs WHERE purpose='PERSONAL' AND status IN('QUEUED','RUNNING')",
       )
       .all() as any[])
-      finish(db, r.id);
+      finishPersonalRun(db, r.id);
   });
   let busy = false,
     stopped = false,

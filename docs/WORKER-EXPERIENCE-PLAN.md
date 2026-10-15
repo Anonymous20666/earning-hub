@@ -1,6 +1,6 @@
 # Founder revision — completed 15 October 2026
 
-Implemented and deployed as v0.8.0. See `WORKER-EXPERIENCE-0.8.0.md` for acceptance results, evidence, preservation and rollback details. Final local results: lint/build PASS; 179 unit/API tests (178 PASS, one optional Redis SKIP); 44 browser PASS. Public production read-only checks: 39 PASS.
+Implemented and deployed as v0.8.0 with final compatibility release v0.8.1. See `WORKER-EXPERIENCE-0.8.0.md` and `SDK-COMPATIBILITY-0.8.1.md` for acceptance results, evidence, preservation and rollback details. Final local results: lint/build PASS; 184 unit/API tests (183 PASS, one optional Redis SKIP); 44 browser PASS. Public production read-only checks: 39 PASS.
 
 Confirmed economic decision retained: 100 members = 0.100 Coins, 1,000+ = 1 Coin per confirmed funded post type; 1 Coin remains backed by ₦1. Referral 100 Coins. No new funding or paid/payout activation.
 

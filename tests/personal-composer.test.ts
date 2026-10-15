@@ -731,3 +731,104 @@ test("only authoritative numeric WhatsApp rejections are FAILED after send; time
     }
   }
 });
+
+test("asynchronous WhatsApp rejection wins a SENDING/ACCEPTED race, cancels only unsent dependent chat and never credits", async () => {
+  const { recordPersonalProviderErrors } = await import(
+    "../backend/personalAcknowledgements"
+  );
+  const f = fixture();
+  try {
+    const d = await preparePersonalDraft(
+        f.db,
+        "owner",
+        input("SYNTHETIC late server rejection", "DOUBLE"),
+      ),
+      r = await submitPersonalDraft(f.db, "owner", d.draftId, true),
+      calls: any[] = [];
+    const t = transport(calls);
+    t.send = async (a, j, c, id) => {
+      calls.push({ a, j, c, id });
+      assert.equal(
+        recordPersonalProviderErrors(f.db, a, [
+          {
+            key: { id, remoteJid: j, fromMe: true },
+            update: { status: 0, messageStubParameters: ["403"] },
+          },
+        ]),
+        1,
+      );
+      return { key: { id } };
+    };
+    while (await dispatchPersonalPlacement(f.db, t, "/none")) {}
+    const feed = personalRunFeed(f.db, "owner", r.id);
+    assert.equal(calls.length, 2);
+    assert.equal(feed.summary.accepted, 0);
+    assert.equal(feed.summary.failed, 2);
+    assert.equal(feed.summary.cancelled, 2);
+    assert.equal(feed.summary.uncertain, 0);
+    assert.equal(feed.events.filter((e) => e.kind === "FAILED").length, 2);
+    assert.equal(feed.events.filter((e) => e.kind === "DONE").length, 1);
+    assert.equal(
+      (f.db.prepare("SELECT COUNT(*) n FROM ledger").get() as any).n,
+      0,
+    );
+    assert.equal(await dispatchPersonalPlacement(f.db, t, "/none"), null);
+  } finally {
+    f.close();
+  }
+});
+test("late provider errors correlate to account + group + actual wire ID; receipts cannot fake proof or errors", async () => {
+  const { recordPersonalProviderErrors } = await import(
+    "../backend/personalAcknowledgements"
+  );
+  const f = fixture();
+  try {
+    const d = await preparePersonalDraft(f.db, "owner", {
+        ...input(),
+        accountIds: [f.accounts[0]],
+      }),
+      r = await submitPersonalDraft(f.db, "owner", d.draftId, true),
+      calls: any[] = [];
+    while (await dispatchPersonalPlacement(f.db, transport(calls), "/none")) {}
+    const event = {
+      key: { id: calls[0].id, remoteJid: calls[0].j, fromMe: true },
+      update: { status: 0, messageStubParameters: ["404"] },
+    };
+    assert.equal(recordPersonalProviderErrors(f.db, f.accounts[1], [event]), 0);
+    assert.equal(
+      recordPersonalProviderErrors(f.db, f.accounts[0], [
+        { ...event, key: { ...event.key, remoteJid: "foreign@g.us" } },
+      ]),
+      0,
+    );
+    assert.equal(
+      recordPersonalProviderErrors(f.db, f.accounts[0], [
+        { ...event, key: { ...event.key, fromMe: false } },
+      ]),
+      0,
+    );
+    assert.equal(
+      recordPersonalProviderErrors(f.db, f.accounts[0], [
+        { ...event, update: { status: 3, messageStubParameters: ["404"] } },
+      ]),
+      0,
+    );
+    assert.equal(
+      recordPersonalProviderErrors(f.db, f.accounts[0], [
+        {
+          ...event,
+          update: { status: 0, messageStubParameters: ["private raw text"] },
+        },
+      ]),
+      0,
+    );
+    assert.equal(recordPersonalProviderErrors(f.db, f.accounts[0], [event]), 1);
+    assert.equal(recordPersonalProviderErrors(f.db, f.accounts[0], [event]), 0);
+    const feed = personalRunFeed(f.db, "owner", r.id);
+    assert.equal(feed.summary.failed, 1);
+    assert.equal(feed.summary.accepted, 1);
+    assert.equal(feed.events.filter((e) => e.kind === "FAILED").length, 1);
+  } finally {
+    f.close();
+  }
+});

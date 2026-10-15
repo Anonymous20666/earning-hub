@@ -465,10 +465,20 @@ test("native link preview uses real JPEG buffers, thumbnail-link upload, per-soc
         },
       };
     };
-    sock.sendMessage = async (j: any, c: any, o: any) => {
+    f.lib.generateWAMessage = async (j: any, c: any, o: any) => {
       messages.push({ j, c, o });
       delete c.groupStatus;
-      return { key: { id: o.messageId } };
+      return {
+        key: { id: o.messageId, remoteJid: j, fromMe: true },
+        message: c,
+      };
+    };
+    sock.sendMessage = async () => {
+      throw Error("The ID-overwriting wrapper must not be used");
+    };
+    sock.relayMessage = async (j: any, c: any, o: any) => {
+      assert.equal(j, jid);
+      assert.match(o.messageId, /^SYNTHETIC-/);
     };
     const body = {
       text: "Title\n\nAttached text https://example.com/",
@@ -539,4 +549,182 @@ test("installed Plogme 2.1.0 encodes the adapted image preview and status backgr
   assert.equal(ext.thumbnailHeight, 320);
   assert.equal(ext.backgroundArgb! >>> 0, 0xff183c32);
   assert.deepEqual(Buffer.from(ext.jpegThumbnail!), bytes);
+});
+
+test("installed native encoder and adapter preserve each durable wire ID for status, mentions, preview and media without a socket send", async () => {
+  const f = fixture();
+  try {
+    const { sock, accountId } = await f.open();
+    const real: any = await import("plogme");
+    assert.equal(real.proto.WebMessageInfo.Status.ERROR, 0);
+    f.lib.generateWAMessage = real.generateWAMessage;
+    let wrapperCalls = 0;
+    const relays: any[] = [];
+    sock.sendMessage = async () => {
+      wrapperCalls++;
+      throw Error("The wrapper replaces durable IDs");
+    };
+    sock.relayMessage = async (j: any, m: any, o: any) => {
+      relays.push({ j, m, o });
+      return o.messageId;
+    };
+    sock.waUploadToServer = async () => ({
+      mediaUrl: "https://synthetic.invalid/media",
+      directPath: "/SYNTHETIC-no-network",
+    });
+    const image = await (
+      await import("sharp")
+    )
+      .default({
+        create: { width: 4, height: 4, channels: 3, background: "#234533" },
+      })
+      .jpeg()
+      .toBuffer();
+    const inputs = [
+      {
+        text: "SYNTHETIC native status",
+        groupStatus: true,
+        backgroundColor: "#183C32",
+        font: 0,
+      },
+      { text: "SYNTHETIC chat", mentions: ["2348000000099@s.whatsapp.net"] },
+      {
+        text: "SYNTHETIC https://example.com/",
+        groupStatus: true,
+        linkPreview: {
+          "matched-text": "https://example.com/",
+          title: "SYNTHETIC",
+          description: "No network",
+          previewType: 0,
+        },
+      },
+      {
+        image,
+        mimetype: "image/jpeg",
+        caption: "SYNTHETIC attached media",
+        groupStatus: true,
+      },
+    ];
+    for (let i = 0; i < inputs.length; i++) {
+      const id = `SYNTHETIC-DURABLE-${i}`;
+      const result = await f.manager.send(accountId, jid, inputs[i], id);
+      assert.equal(result.key.id, id);
+      assert.equal(result.key.remoteJid, jid);
+      assert.equal(result.key.fromMe, true);
+      assert.equal(relays[i].o.messageId, id);
+    }
+    assert.equal(wrapperCalls, 0);
+    assert.equal(relays.length, 4);
+    assert.equal(
+      relays[0].m.groupStatusMessageV2.message.extendedTextMessage.text,
+      inputs[0].text,
+    );
+    assert.equal(
+      relays[0].m.groupStatusMessageV2.message.extendedTextMessage
+        .backgroundArgb >>> 0,
+      0xff183c32,
+    );
+    assert.deepEqual(
+      relays[1].m.extendedTextMessage.contextInfo.mentionedJid,
+      inputs[1].mentions,
+    );
+    assert.equal(
+      relays[2].m.groupStatusMessageV2.message.extendedTextMessage.title,
+      "SYNTHETIC",
+    );
+    assert.equal(
+      relays[3].m.groupStatusMessageV2.message.imageMessage.caption,
+      "SYNTHETIC attached media",
+    );
+  } finally {
+    await f.close();
+  }
+});
+test("adapter refuses malformed generated identity before any relay instead of accepting or replaying a different message", async () => {
+  const f = fixture();
+  try {
+    const { sock, accountId } = await f.open();
+    let relays = 0;
+    sock.relayMessage = async () => {
+      relays++;
+    };
+    for (const key of [
+      { id: "SYNTHETIC-wrong", remoteJid: jid, fromMe: true },
+      { id: "SYNTHETIC-fixed", remoteJid: "other@g.us", fromMe: true },
+      { id: "SYNTHETIC-fixed", remoteJid: jid, fromMe: false },
+    ]) {
+      f.lib.generateWAMessage = async () => ({
+        key,
+        message: { conversation: "SYNTHETIC" },
+      });
+      await assert.rejects(
+        () =>
+          f.manager.send(
+            accountId,
+            jid,
+            { text: "SYNTHETIC" },
+            "SYNTHETIC-fixed",
+          ),
+        /identity could not be preserved/,
+      );
+    }
+    assert.equal(relays, 0);
+  } finally {
+    await f.close();
+  }
+});
+
+test("current owned socket records late personal post errors, not delivery credit, from SDK messages.update", async () => {
+  const f = fixture();
+  try {
+    f.db.prepare("INSERT INTO wallets(user_id) VALUES('owner')").run();
+    const { sock, accountId } = await f.open();
+    const { preparePersonalDraft, submitPersonalDraft } = await import(
+      "../backend/personalComposer"
+    );
+    const d = await preparePersonalDraft(f.db, "owner", {
+      kind: "TEXT",
+      mode: "ALLSTATUS",
+      payload: "SYNTHETIC ACK routing",
+      accountIds: [accountId],
+    });
+    const r = await submitPersonalDraft(f.db, "owner", d.draftId, true);
+    f.db
+      .prepare(
+        "UPDATE broadcast_placements SET status='SENDING',provider_message_id='SYNTHETIC-EVENT-ID' WHERE target_id IN(SELECT id FROM broadcast_targets WHERE run_id=?)",
+      )
+      .run(r.id);
+    const update = {
+      key: { id: "SYNTHETIC-EVENT-ID", remoteJid: jid, fromMe: true },
+      update: { status: 0, messageStubParameters: ["403"] },
+    };
+    sock.ev.emit("messages.update", [update]);
+    assert.equal(
+      (f.db.prepare("SELECT status FROM broadcast_placements").get() as any)
+        .status,
+      "FAILED",
+    );
+    sock.ev.emit("messages.update", [update]);
+    sock.ev.emit("messages.update", [{ ...update, update: { status: 3 } }]);
+    assert.equal(
+      (
+        f.db
+          .prepare(
+            "SELECT COUNT(*) n FROM broadcast_events WHERE kind='FAILED'",
+          )
+          .get() as any
+      ).n,
+      1,
+    );
+    assert.equal(
+      (
+        f.db
+          .prepare("SELECT earned_milli FROM wallets WHERE user_id='owner'")
+          .get() as any
+      ).earned_milli,
+      0,
+    );
+  } finally {
+    await f.close();
+  }
 });

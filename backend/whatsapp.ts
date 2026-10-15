@@ -1,3 +1,4 @@
+import { recordPersonalProviderErrors } from "./personalAcknowledgements";
 import { createHmac, createHash, randomBytes, randomUUID } from "node:crypto";
 import { type Database, transaction } from "./database";
 import { WaVault } from "./waVault";
@@ -347,6 +348,14 @@ export class WhatsAppManager {
           );
         }
       });
+    });
+    sock.ev.on("messages.update", (updates: any) => {
+      if (!current()) return;
+      try {
+        recordPersonalProviderErrors(this.db, this.accountForSlot(id), updates);
+      } catch {
+        /* A malformed/stale update never authorises a retry or creates credit. */
+      }
     });
     sock.ev.on("messages.upsert", (data: any) => {
       if (current())
@@ -829,7 +838,32 @@ export class WhatsAppManager {
       delete info.thumbnailHeight;
       payload.linkPreview = info;
     }
-    return sock.sendMessage(jid, payload, options);
+    // Plogme 2.1.0's sendMessage wrapper overwrites options.messageId.
+    // Build through its native encoder, then relay exactly once with the durable
+    // pre-claimed ID. Never patch the SDK, substitute a returned ID, or replay.
+    const p = await this.lib();
+    if (
+      typeof p.generateWAMessage !== "function" ||
+      typeof sock.relayMessage !== "function"
+    )
+      throw Error("Native message preparation is unavailable");
+    const message = await p.generateWAMessage(jid, payload, {
+      ...options,
+      userJid: sock.user.id,
+      upload: sock.waUploadToServer,
+    });
+    if (
+      message?.key?.id !== messageId ||
+      message?.key?.remoteJid !== jid ||
+      message?.key?.fromMe !== true
+    )
+      throw Error(
+        "Native message identity could not be preserved before relay",
+      );
+    if (this.socket(accountId) !== sock)
+      throw Error("WhatsApp session changed before relay");
+    await sock.relayMessage(jid, message.message, { messageId });
+    return message;
   }
   async messageId(accountId: string) {
     const p = await this.lib();

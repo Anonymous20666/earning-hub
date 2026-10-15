@@ -1,0 +1,51 @@
+{
+  "passed": true,
+  "checks": {
+    "users": true,
+    "wallets": true,
+    "ledger": true,
+    "treasury": true,
+    "funding_receipts": true,
+    "money_events": true,
+    "referrals": true,
+    "referral_codes": true,
+    "paired_numbers_history": true,
+    "house_campaigns": true,
+    "delivery_jobs": true,
+    "campaign_participation": true,
+    "dispatch_outbox": true,
+    "broadcast_settings": true,
+    "broadcast_runs": true,
+    "broadcast_targets": true,
+    "broadcast_placements": true,
+    "broadcast_request_keys": true,
+    "broadcast_removals": true,
+    "broadcast_permissions": true,
+    "slotIdentity": true,
+    "accountIdentity": true,
+    "referralHistory": true,
+    "settings": true,
+    "authEntries": true,
+    "credentials": true,
+    "groups": true,
+    "foreignKeys": true,
+    "migrations": true,
+    "configuration": true
+  },
+  "slotStatesBefore": [
+    {
+      "slot": 1,
+      "status": "ONLINE"
+    }
+  ],
+  "slotStatesAfter": [
+    {
+      "slot": 1,
+      "status": "ONLINE"
+    }
+  ],
+  "authEntriesBefore": 903,
+  "authEntriesAfter": 903,
+  "foreignKeyErrors": 0,
+  "version": "0.8.1"
+}

@@ -1,5 +1,7 @@
 # Worker experience — v0.8.0
 
+**Final compatibility follow-up v0.8.1 is now live.** See `SDK-COMPATIBILITY-0.8.1.md` for the additional real-SDK message-ID/late-error fix and final 184-test result.
+
 ## Scope implemented
 
 - Real invite metadata: decode nested amp-escaped decimal and hexadecimal entities, including astral Unicode; remove decoded tags, invalid code points and control characters. HTTPS/public-DNS/IP pinning, redirect/body limits and image validation remain intact. A read-only fetch of the founder's supplied invite returned the correct Unicode title, a real thumbnail, native preview type 5, and no remaining numeric entities. This is metadata evidence, not a physical WhatsApp rendering claim. The invite token is not recorded in the new source/tests/evidence.
