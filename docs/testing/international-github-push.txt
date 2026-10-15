@@ -1,0 +1,9 @@
+[mission-01-20261015 2567d34] chore: harden source backup credential scan and document live preservation
+ 4 files changed, 25 insertions(+), 8 deletions(-)
+git@github.com: Permission denied (publickey).
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+GITHUB_BACKUP_PENDING
+2567d34 chore: harden source backup credential scan and document live preservation
