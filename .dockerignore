@@ -1,0 +1,12 @@
+.git
+node_modules
+dist
+data
+.env
+.env.*
+docs/screenshots
+docs/testing
+legacy
+test-results
+playwright-report
+*.log

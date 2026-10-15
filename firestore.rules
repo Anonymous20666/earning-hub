@@ -1,111 +1,11 @@
+// This deployment uses the server-side SQLite API, not browser Firestore access.
+// Fail-closed replacement for the original balance-writable rules.
+// Prepared only: these rules have NOT been deployed to any Firebase project.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Global Safety Net: default deny
     match /{document=**} {
       allow read, write: if false;
-    }
-
-    // Hardened Helper Primitives
-    function isValidId(id) {
-      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    function incoming() {
-      return request.resource.data;
-    }
-
-    function existing() {
-      return resource.data;
-    }
-
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    function isAdmin() {
-      return isSignedIn() && (
-        (request.auth.token.email == 'anonymoustechgodfather@gmail.com' && request.auth.token.email_verified == true) ||
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
-      );
-    }
-
-    // Entity Schema Validators
-    function isValidUser(data) {
-      return data.keys().hasAll(['id', 'email', 'name', 'role', 'authProvider']) &&
-        data.id is string && data.id.size() <= 128 &&
-        data.email is string && data.email.size() <= 256 &&
-        data.name is string && data.name.size() <= 128 &&
-        data.role in ['EARNER', 'ADVERTISER', 'ADMIN'] &&
-        data.authProvider in ['google', 'email'];
-    }
-
-    function isValidWallet(data) {
-      return data.keys().hasAll(['id', 'userId', 'locked_bonus', 'earned_balance']) &&
-        data.id is string && data.id.size() <= 128 &&
-        data.userId is string && data.userId.size() <= 128 &&
-        data.locked_bonus is number &&
-        data.earned_balance is number;
-    }
-
-    function isValidChatMessage(data) {
-      return data.keys().hasAll(['id', 'userId', 'role', 'text', 'createdAt']) &&
-        data.id is string && data.id.size() <= 128 &&
-        data.userId is string && data.userId.size() <= 128 &&
-        data.role in ['user', 'model'] &&
-        data.text is string && data.text.size() <= 10000 &&
-        data.createdAt is string && data.createdAt.size() <= 64;
-    }
-
-    function isValidCampaign(data) {
-      return data.keys().hasAll(['id', 'advertiserId', 'title', 'status']) &&
-        data.id is string && data.id.size() <= 128 &&
-        data.advertiserId is string && data.advertiserId.size() <= 128 &&
-        data.title is string && data.title.size() <= 256 &&
-        data.status is string && data.status.size() <= 64;
-    }
-
-    // USERS COLLECTION
-    match /users/{userId} {
-      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
-      allow list: if isAdmin();
-      allow create: if isValidId(userId) && isOwner(userId) && isValidUser(incoming());
-      allow update: if isValidId(userId) && (isOwner(userId) || isAdmin()) && isValidUser(incoming());
-      allow delete: if isValidId(userId) && isAdmin();
-
-      // Chat Messages Subcollection for Gemini AI multi-turn dialogue
-      match /chatMessages/{messageId} {
-        allow get, list: if isValidId(userId) && (isOwner(userId) || isAdmin());
-        allow create: if isValidId(userId) && isValidId(messageId) && isOwner(userId) && 
-                         incoming().userId == request.auth.uid && isValidChatMessage(incoming());
-        allow update: if isValidId(userId) && isValidId(messageId) && isOwner(userId) && 
-                         incoming().userId == request.auth.uid && isValidChatMessage(incoming());
-        allow delete: if isValidId(userId) && isValidId(messageId) && (isOwner(userId) || isAdmin());
-      }
-    }
-
-    // WALLETS COLLECTION
-    match /wallets/{userId} {
-      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
-      allow list: if isAdmin();
-      allow create: if isValidId(userId) && isOwner(userId) && incoming().userId == request.auth.uid && isValidWallet(incoming());
-      allow update: if isValidId(userId) && (isOwner(userId) || isAdmin()) && isValidWallet(incoming());
-      allow delete: if isValidId(userId) && isAdmin();
-    }
-
-    // CAMPAIGNS COLLECTION
-    match /campaigns/{campaignId} {
-      allow get, list: if isSignedIn();
-      allow create: if isValidId(campaignId) && isSignedIn() && 
-                       (incoming().advertiserId == request.auth.uid || isAdmin()) && isValidCampaign(incoming());
-      allow update: if isValidId(campaignId) && isSignedIn() && 
-                       (existing().advertiserId == request.auth.uid || isAdmin()) && isValidCampaign(incoming());
-      allow delete: if isValidId(campaignId) && isAdmin();
     }
   }
 }

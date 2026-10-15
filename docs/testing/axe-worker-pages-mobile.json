@@ -1,0 +1,22 @@
+[
+  {
+    "route": "wallet",
+    "violations": []
+  },
+  {
+    "route": "connections",
+    "violations": []
+  },
+  {
+    "route": "support",
+    "violations": []
+  },
+  {
+    "route": "settings",
+    "violations": []
+  },
+  {
+    "route": "status",
+    "violations": []
+  }
+]

@@ -1,0 +1,126 @@
+{
+  "transport": "Browser through SSH tunnel to actual VPS",
+  "testedAt": "2026-10-15T01:33:41.342Z",
+  "results": [
+    {
+      "width": 360,
+      "route": "/",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 360,
+      "route": "/login",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 360,
+      "route": "/rules",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 360,
+      "route": "/privacy",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 360,
+      "route": "/status",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "route": "/",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "route": "/login",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "route": "/rules",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "route": "/privacy",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "route": "/status",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 768,
+      "route": "/",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 768,
+      "route": "/login",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 768,
+      "route": "/rules",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 768,
+      "route": "/privacy",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 768,
+      "route": "/status",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 1440,
+      "route": "/",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 1440,
+      "route": "/login",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 1440,
+      "route": "/rules",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 1440,
+      "route": "/privacy",
+      "documentStatus": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 1440,
+      "route": "/status",
+      "documentStatus": 200,
+      "noOverflow": true
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-export type UserRole = 'EARNER' | 'ADVERTISER' | 'ADMIN';
+export type UserRole = "EARNER" | "ADVERTISER" | "ADMIN";
 
 export interface AuthUser {
   id: string;
@@ -7,7 +7,7 @@ export interface AuthUser {
   role: UserRole;
   avatarUrl?: string;
   isEmailVerified: boolean;
-  authProvider: 'google' | 'email';
+  authProvider: "google" | "email";
   createdAt: string;
 }
 
@@ -20,38 +20,51 @@ export interface AuthSession {
 export interface TaskOpportunity {
   id: string;
   title: string;
-  category: 'WHATSAPP_BROADCAST' | 'TELEGRAM_COMMUNITY' | 'APP_TESTING' | 'SURVEY';
-  platform: 'WHATSAPP' | 'TELEGRAM' | 'WEB';
+  category:
+    | "WHATSAPP_BROADCAST"
+    | "TELEGRAM_COMMUNITY"
+    | "APP_TESTING"
+    | "SURVEY";
+  platform: "WHATSAPP" | "TELEGRAM" | "WEB";
   rewardCoins: number;
   rewardNgn: number;
   estimatedMinutes: number;
   remainingSlots: number;
   instructions: string;
   requirements: string[];
-  status: 'OPEN' | 'COMPLETED' | 'IN_REVIEW';
+  status: "OPEN" | "COMPLETED" | "IN_REVIEW";
 }
 
-export type SessionTier = 'BRONZE' | 'SILVER' | 'GOLD';
+export type SessionTier = "BRONZE" | "SILVER" | "GOLD";
 
-export type SessionStatus = 'ONLINE' | 'OFFLINE' | 'INCUBATING' | 'PAIRING' | 'BANNED';
+export type SessionStatus =
+  | "ONLINE"
+  | "OFFLINE"
+  | "INCUBATING"
+  | "PAIRING"
+  | "BANNED";
 
-export type GroupStatus = 'OPEN' | 'LOCKED' | 'KICKED';
+export type GroupStatus = "OPEN" | "LOCKED" | "KICKED";
 
-export type CampaignPathway = 'DIRECT_SESSION' | 'SMART_VERIFIED';
+export type CampaignPathway = "DIRECT_SESSION" | "SMART_VERIFIED";
 
-export type SmartSystemType = 'WA_GROUP' | 'WA_CHANNEL' | 'TG_GROUP' | 'TG_CHANNEL';
+export type SmartSystemType =
+  | "WA_GROUP"
+  | "WA_CHANNEL"
+  | "TG_GROUP"
+  | "TG_CHANNEL";
 
-export type BroadcastMode = 'ALLSTATUS_1X' | 'ALLCHAT_2X_VIP';
+export type BroadcastMode = "ALLSTATUS_1X" | "ALLCHAT_2X_VIP";
 
-export type CountryFilterMode = 'RANDOM' | 'SPECIFIC_COUNTRIES';
+export type CountryFilterMode = "RANDOM" | "SPECIFIC_COUNTRIES";
 
-export type CampaignStatus = 
-  | 'PENDING_ADMIN_VERIFICATION' 
-  | 'VERIFIED_ACTIVE' 
-  | 'RUNNING' 
-  | 'PAUSED' 
-  | 'COMPLETED' 
-  | 'CANCELLED_TIMEOUT';
+export type CampaignStatus =
+  | "PENDING_ADMIN_VERIFICATION"
+  | "VERIFIED_ACTIVE"
+  | "RUNNING"
+  | "PAUSED"
+  | "COMPLETED"
+  | "CANCELLED_TIMEOUT";
 
 export interface Wallet {
   id: string;
@@ -108,10 +121,10 @@ export interface ValidatedGroupPoolItem {
 
 export interface AdminMonitorBot {
   id: string;
-  role: 'PRIMARY' | 'BACKUP';
+  role: "PRIMARY" | "BACKUP";
   phoneNumber: string;
   jid: string;
-  status: 'ONLINE' | 'ACTIVE_IN_GC' | 'OFFLINE';
+  status: "ONLINE" | "ACTIVE_IN_GC" | "OFFLINE";
   activeGroupCount: number;
   lastHealthPing: string;
 }
@@ -136,7 +149,7 @@ export interface Campaign {
   broadcastMode: BroadcastMode;
   targetUrl: string;
   messagePayload: {
-    type: 'TEXT' | 'IMAGE' | 'VIDEO' | 'AUDIO';
+    type: "TEXT" | "IMAGE" | "VIDEO" | "AUDIO";
     caption: string;
     mediaUrl?: string;
   };
@@ -183,8 +196,8 @@ export interface SupportTicket {
   userEmail: string;
   subject: string;
   message: string;
-  category: 'VERIFICATION_DISPUTE' | 'WITHDRAWAL_ISSUE' | 'PAIRING' | 'GENERAL';
-  status: 'OPEN' | 'REPLIED' | 'RESOLVED';
+  category: "VERIFICATION_DISPUTE" | "WITHDRAWAL_ISSUE" | "PAIRING" | "GENERAL";
+  status: "OPEN" | "REPLIED" | "RESOLVED";
   adminNotes?: string;
   telegramNotified: boolean;
   createdAt: string;
@@ -208,8 +221,14 @@ export interface SystemPricingConfig {
 export interface LiveTerminalLog {
   id: string;
   timestamp: string;
-  source: 'STATE_PLANE' | 'AI_ACCOUNTANT' | 'VALIDATOR_HUB' | 'BROADCAST_WORKER' | 'TELEGRAM_BRIDGE' | 'JOIN_MANAGER';
-  level: 'INFO' | 'SUCCESS' | 'WARN' | 'ERROR' | 'LOCK';
+  source:
+    | "STATE_PLANE"
+    | "AI_ACCOUNTANT"
+    | "VALIDATOR_HUB"
+    | "BROADCAST_WORKER"
+    | "TELEGRAM_BRIDGE"
+    | "JOIN_MANAGER";
+  level: "INFO" | "SUCCESS" | "WARN" | "ERROR" | "LOCK";
   message: string;
   metadata?: Record<string, any>;
 }

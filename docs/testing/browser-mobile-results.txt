@@ -1,0 +1,16 @@
+(node:8940) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 7 tests using 1 worker
+
+(node:8952) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [mobile] › tests/browser/extended.spec.ts:23:1 › worker subpages: accessibility, no horizontal overflow, keyboard dialog dismissal (4.4s)
+  ✓  2 [mobile] › tests/browser/extended.spec.ts:69:1 › admin UI is only reached by server-provisioned role in isolated QA database (3.9s)
+  ✓  3 [mobile] › tests/browser/journeys.spec.ts:40:1 › landing, navigation, FAQs and honest service status (2.4s)
+  ✓  4 [mobile] › tests/browser/journeys.spec.ts:79:1 › worker registration, persistence, wallet, support, settings, logout and login (7.2s)
+  ✓  5 [mobile] › tests/browser/journeys.spec.ts:171:1 › advertiser creates, estimates, edits and deletes a persisted draft (3.8s)
+  ✓  6 [mobile] › tests/browser/journeys.spec.ts:228:1 › auth validation, password visibility and truthful reset state (1.2s)
+  ✓  7 [mobile] › tests/browser/journeys.spec.ts:262:1 › WCAG automated checks: landing, auth, workspace and campaign dialog (3.2s)
+
+  7 passed (27.2s)

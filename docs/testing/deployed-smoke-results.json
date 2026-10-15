@@ -1,0 +1,12 @@
+{
+  "testedAt": "2026-10-15T01:32:26.387Z",
+  "transport": "SSH tunnel to VPS container; direct unauthenticated Arena HTTPS request is access-gated",
+  "checks": [
+    "Deployed database health responds 200",
+    "Anonymous admin API denied",
+    "Worker registration, locked bonus, support persistence and payout fail-closed verified",
+    "Advertiser registration and persisted draft create/read/delete verified",
+    "Server-side logout revocation and Secure cookie flags verified",
+    "Deployed HTML and favicon load"
+  ]
+}

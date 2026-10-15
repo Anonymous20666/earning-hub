@@ -1,0 +1,318 @@
+
+> pappy-earning-hub@0.1.0 test
+> tsx --test tests/*.test.ts
+
+TAP version 13
+# (node:8802) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: health checks real database
+ok 1 - health checks real database
+  ---
+  duration_ms: 106.257414
+  type: 'test'
+  ...
+# Subtest: anonymous workspace and admin access denied
+ok 2 - anonymous workspace and admin access denied
+  ---
+  duration_ms: 16.75977
+  type: 'test'
+  ...
+# Subtest: cross-origin auth blocked
+ok 3 - cross-origin auth blocked
+  ---
+  duration_ms: 13.770602
+  type: 'test'
+  ...
+# Subtest: custom header is required on state changes
+ok 4 - custom header is required on state changes
+  ---
+  duration_ms: 7.197298
+  type: 'test'
+  ...
+# Subtest: admin cannot self-register
+ok 5 - admin cannot self-register
+  ---
+  duration_ms: 15.481619
+  type: 'test'
+  ...
+# Subtest: registration creates a conditional bonus once, not earned cash
+ok 6 - registration creates a conditional bonus once, not earned cash
+  ---
+  duration_ms: 269.396738
+  type: 'test'
+  ...
+# Subtest: cookies are HttpOnly and SameSite, no token in body
+ok 7 - cookies are HttpOnly and SameSite, no token in body
+  ---
+  duration_ms: 259.647739
+  type: 'test'
+  ...
+# Subtest: passwords are salted hashes, session tokens are hashed
+ok 8 - passwords are salted hashes, session tokens are hashed
+  ---
+  duration_ms: 0.56751
+  type: 'test'
+  ...
+# Subtest: duplicate registration does not duplicate bonus
+ok 9 - duplicate registration does not duplicate bonus
+  ---
+  duration_ms: 258.124177
+  type: 'test'
+  ...
+# Subtest: login has generic error and no seeded admin
+ok 10 - login has generic error and no seeded admin
+  ---
+  duration_ms: 524.05648
+  type: 'test'
+  ...
+# Subtest: CSRF token required
+ok 11 - CSRF token required
+  ---
+  duration_ms: 4.323346
+  type: 'test'
+  ...
+# Subtest: profile updates cannot promote account
+ok 12 - profile updates cannot promote account
+  ---
+  duration_ms: 5.507945
+  type: 'test'
+  ...
+# Subtest: browser cannot write wallet
+ok 13 - browser cannot write wallet
+  ---
+  duration_ms: 12.827826
+  type: 'test'
+  ...
+# Subtest: worker cannot create advertiser drafts
+ok 14 - worker cannot create advertiser drafts
+  ---
+  duration_ms: 2.752226
+  type: 'test'
+  ...
+# Subtest: advertiser draft is real, persistent and not launched
+ok 15 - advertiser draft is real, persistent and not launched
+  ---
+  duration_ms: 519.290986
+  type: 'test'
+  ...
+# Subtest: quote is explicitly an estimate
+ok 16 - quote is explicitly an estimate
+  ---
+  duration_ms: 4.542891
+  type: 'test'
+  ...
+# Subtest: cross-account draft read, update and delete blocked
+ok 17 - cross-account draft read, update and delete blocked
+  ---
+  duration_ms: 12.566443
+  type: 'test'
+  ...
+# Subtest: draft validation enforced on server
+ok 18 - draft validation enforced on server
+  ---
+  duration_ms: 13.787614
+  type: 'test'
+  ...
+# Subtest: own draft edit persists
+ok 19 - own draft edit persists
+  ---
+  duration_ms: 4.940789
+  type: 'test'
+  ...
+# Subtest: support ticket persists and is isolated
+ok 20 - support ticket persists and is isolated
+  ---
+  duration_ms: 6.909618
+  type: 'test'
+  ...
+# Subtest: server-provisioned admin can reply, worker cannot
+ok 21 - server-provisioned admin can reply, worker cannot
+  ---
+  duration_ms: 7.453236
+  type: 'test'
+  ...
+# Subtest: unconfigured operations fail closed and never debit
+ok 22 - unconfigured operations fail closed and never debit
+  ---
+  duration_ms: 14.666969
+  type: 'test'
+  ...
+# Subtest: reset never falsely claims email was sent
+ok 23 - reset never falsely claims email was sent
+  ---
+  duration_ms: 2.792909
+  type: 'test'
+  ...
+# Subtest: own draft deletion works
+ok 24 - own draft deletion works
+  ---
+  duration_ms: 5.61249
+  type: 'test'
+  ...
+# Subtest: logout revokes session on server
+ok 25 - logout revokes session on server
+  ---
+  duration_ms: 5.816538
+  type: 'test'
+  ...
+# Subtest: API has security headers and unknown routes are JSON 404
+ok 26 - API has security headers and unknown routes are JSON 404
+  ---
+  duration_ms: 2.408518
+  type: 'test'
+  ...
+# Subtest: auth rate limit is enforced
+ok 27 - auth rate limit is enforced
+  ---
+  duration_ms: 9.514143
+  type: 'test'
+  ...
+# (node:8821) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: database survives restart, rollback is atomic, backup restores
+ok 28 - database survives restart, rollback is atomic, backup restores
+  ---
+  duration_ms: 4.349927
+  type: 'test'
+  ...
+# Subtest: payout: 99/OPEN/ALLSTATUS_1X
+ok 29 - payout: 99/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 1.172049
+  type: 'test'
+  ...
+# Subtest: payout: 100/OPEN/ALLSTATUS_1X
+ok 30 - payout: 100/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 0.119026
+  type: 'test'
+  ...
+# Subtest: payout: 742/OPEN/ALLSTATUS_1X
+ok 31 - payout: 742/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 0.122062
+  type: 'test'
+  ...
+# Subtest: payout: 1001/OPEN/ALLSTATUS_1X
+ok 32 - payout: 1001/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 0.075424
+  type: 'test'
+  ...
+# Subtest: payout: 742/OPEN/ALLCHAT_2X_VIP
+ok 33 - payout: 742/OPEN/ALLCHAT_2X_VIP
+  ---
+  duration_ms: 0.138586
+  type: 'test'
+  ...
+# Subtest: payout: 1000/LOCKED/ALLCHAT_2X_VIP
+ok 34 - payout: 1000/LOCKED/ALLCHAT_2X_VIP
+  ---
+  duration_ms: 0.091975
+  type: 'test'
+  ...
+# Subtest: payout: 1000/KICKED/ALLSTATUS_1X
+ok 35 - payout: 1000/KICKED/ALLSTATUS_1X
+  ---
+  duration_ms: 0.127024
+  type: 'test'
+  ...
+# Subtest: payout: -1/OPEN/ALLSTATUS_1X
+ok 36 - payout: -1/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 0.070541
+  type: 'test'
+  ...
+# Subtest: payout: NaN/OPEN/ALLSTATUS_1X
+ok 37 - payout: NaN/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 0.265316
+  type: 'test'
+  ...
+# Subtest: payout: 100.5/OPEN/ALLSTATUS_1X
+ok 38 - payout: 100.5/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 0.327221
+  type: 'test'
+  ...
+# Subtest: first threshold boundary
+ok 39 - first threshold boundary
+  ---
+  duration_ms: 0.19815
+  type: 'test'
+  ...
+# Subtest: subsequent payout boundary
+ok 40 - subsequent payout boundary
+  ---
+  duration_ms: 0.099543
+  type: 'test'
+  ...
+# Subtest: first payout consumes bonus exactly once
+ok 41 - first payout consumes bonus exactly once
+  ---
+  duration_ms: 0.676609
+  type: 'test'
+  ...
+# Subtest: overdraw and non-finite amounts rejected
+ok 42 - overdraw and non-finite amounts rejected
+  ---
+  duration_ms: 0.363869
+  type: 'test'
+  ...
+# Subtest: invalid balances rejected
+ok 43 - invalid balances rejected
+  ---
+  duration_ms: 0.255075
+  type: 'test'
+  ...
+# Subtest: integer precision
+ok 44 - integer precision
+  ---
+  duration_ms: 0.130445
+  type: 'test'
+  ...
+# Subtest: legacy wallet API also refuses overdraw
+ok 45 - legacy wallet API also refuses overdraw
+  ---
+  duration_ms: 0.188387
+  type: 'test'
+  ...
+# Subtest: locked group cannot earn even when admin
+ok 46 - locked group cannot earn even when admin
+  ---
+  duration_ms: 0.132955
+  type: 'test'
+  ...
+# Subtest: existing quote outputs retained as estimates
+ok 47 - existing quote outputs retained as estimates
+  ---
+  duration_ms: 0.155518
+  type: 'test'
+  ...
+# Subtest: draft input rejects unsafe destinations
+ok 48 - draft input rejects unsafe destinations
+  ---
+  duration_ms: 0.457199
+  type: 'test'
+  ...
+# Subtest: draft rejects invalid numbers and empty targeted countries
+ok 49 - draft rejects invalid numbers and empty targeted countries
+  ---
+  duration_ms: 0.317052
+  type: 'test'
+  ...
+# Subtest: draft strips untrusted status, owner and pricing
+ok 50 - draft strips untrusted status, owner and pricing
+  ---
+  duration_ms: 0.148663
+  type: 'test'
+  ...
+1..50
+# tests 50
+# suites 0
+# pass 50
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3002.373839
