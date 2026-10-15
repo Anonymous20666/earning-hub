@@ -1,0 +1,1040 @@
+
+> pappy-earning-hub@0.6.1 test
+> tsx --test tests/*.test.ts
+
+TAP version 13
+# (node:43592) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: health checks real database
+ok 1 - health checks real database
+  ---
+  duration_ms: 51.316782
+  type: 'test'
+  ...
+# Subtest: anonymous workspace and admin access denied
+ok 2 - anonymous workspace and admin access denied
+  ---
+  duration_ms: 26.95786
+  type: 'test'
+  ...
+# Subtest: cross-origin auth blocked
+ok 3 - cross-origin auth blocked
+  ---
+  duration_ms: 9.838609
+  type: 'test'
+  ...
+# Subtest: custom header is required on state changes
+ok 4 - custom header is required on state changes
+  ---
+  duration_ms: 4.947517
+  type: 'test'
+  ...
+# Subtest: admin cannot self-register
+ok 5 - admin cannot self-register
+  ---
+  duration_ms: 19.933743
+  type: 'test'
+  ...
+# Subtest: registration creates a conditional bonus once, not earned cash
+ok 6 - registration creates a conditional bonus once, not earned cash
+  ---
+  duration_ms: 265.602915
+  type: 'test'
+  ...
+# Subtest: cookies are HttpOnly and SameSite, no token in body
+ok 7 - cookies are HttpOnly and SameSite, no token in body
+  ---
+  duration_ms: 275.614465
+  type: 'test'
+  ...
+# Subtest: passwords are salted hashes, session tokens are hashed
+ok 8 - passwords are salted hashes, session tokens are hashed
+  ---
+  duration_ms: 0.587035
+  type: 'test'
+  ...
+# Subtest: duplicate registration does not duplicate bonus
+ok 9 - duplicate registration does not duplicate bonus
+  ---
+  duration_ms: 271.55799
+  type: 'test'
+  ...
+# Subtest: login has generic error and no seeded admin
+ok 10 - login has generic error and no seeded admin
+  ---
+  duration_ms: 526.706883
+  type: 'test'
+  ...
+# Subtest: CSRF token required
+ok 11 - CSRF token required
+  ---
+  duration_ms: 5.381453
+  type: 'test'
+  ...
+# Subtest: profile updates cannot promote account
+ok 12 - profile updates cannot promote account
+  ---
+  duration_ms: 6.40313
+  type: 'test'
+  ...
+# Subtest: browser cannot write wallet
+ok 13 - browser cannot write wallet
+  ---
+  duration_ms: 10.654417
+  type: 'test'
+  ...
+# Subtest: worker cannot create advertiser drafts
+ok 14 - worker cannot create advertiser drafts
+  ---
+  duration_ms: 5.647889
+  type: 'test'
+  ...
+# Subtest: advertiser draft is real, persistent and not launched
+ok 15 - advertiser draft is real, persistent and not launched
+  ---
+  duration_ms: 520.632843
+  type: 'test'
+  ...
+# Subtest: quote is explicitly an estimate
+ok 16 - quote is explicitly an estimate
+  ---
+  duration_ms: 3.818026
+  type: 'test'
+  ...
+# Subtest: cross-account draft read, update and delete blocked
+ok 17 - cross-account draft read, update and delete blocked
+  ---
+  duration_ms: 8.735409
+  type: 'test'
+  ...
+# Subtest: draft validation enforced on server
+ok 18 - draft validation enforced on server
+  ---
+  duration_ms: 6.597978
+  type: 'test'
+  ...
+# Subtest: own draft edit persists
+ok 19 - own draft edit persists
+  ---
+  duration_ms: 5.870971
+  type: 'test'
+  ...
+# Subtest: support ticket persists and is isolated
+ok 20 - support ticket persists and is isolated
+  ---
+  duration_ms: 8.725666
+  type: 'test'
+  ...
+# Subtest: server-provisioned admin can reply, worker cannot
+ok 21 - server-provisioned admin can reply, worker cannot
+  ---
+  duration_ms: 6.379072
+  type: 'test'
+  ...
+# Subtest: unconfigured operations fail closed and never debit
+ok 22 - unconfigured operations fail closed and never debit
+  ---
+  duration_ms: 13.093389
+  type: 'test'
+  ...
+# Subtest: reset never falsely claims email was sent
+ok 23 - reset never falsely claims email was sent
+  ---
+  duration_ms: 2.469656
+  type: 'test'
+  ...
+# Subtest: own draft deletion works
+ok 24 - own draft deletion works
+  ---
+  duration_ms: 11.512486
+  type: 'test'
+  ...
+# Subtest: logout revokes session on server
+ok 25 - logout revokes session on server
+  ---
+  duration_ms: 5.010221
+  type: 'test'
+  ...
+# Subtest: API has security headers and unknown routes are JSON 404
+ok 26 - API has security headers and unknown routes are JSON 404
+  ---
+  duration_ms: 2.013274
+  type: 'test'
+  ...
+# Subtest: auth rate limit is enforced
+ok 27 - auth rate limit is enforced
+  ---
+  duration_ms: 7.799023
+  type: 'test'
+  ...
+# (node:43611) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: new WhatsApp, history and asset routes require authentication; disabled dispatch is advertised honestly
+ok 28 - new WhatsApp, history and asset routes require authentication; disabled dispatch is advertised honestly
+  ---
+  duration_ms: 897.866724
+  type: 'test'
+  ...
+# Subtest: only workers can access paired sessions or queue personal broadcasts
+ok 29 - only workers can access paired sessions or queue personal broadcasts
+  ---
+  duration_ms: 22.426724
+  type: 'test'
+  ...
+# Subtest: narrow raw-upload exception still requires CSRF, custom header, same origin and a session
+ok 30 - narrow raw-upload exception still requires CSRF, custom header, same origin and a session
+  ---
+  duration_ms: 26.801931
+  type: 'test'
+  ...
+# Subtest: valid media is normalised, privately stored and owner-only; no financial records are added
+ok 31 - valid media is normalised, privately stored and owner-only; no financial records are added
+  ---
+  duration_ms: 31.449678
+  type: 'test'
+  ...
+# Subtest: fake, oversized and unsupported SVG payloads are rejected, never relabelled valid media
+ok 32 - fake, oversized and unsupported SVG payloads are rejected, never relabelled valid media
+  ---
+  duration_ms: 60.588107
+  type: 'test'
+  ...
+# Subtest: owner can remove uploaded media; another owner cannot delete or inspect it
+ok 33 - owner can remove uploaded media; another owner cannot delete or inspect it
+  ---
+  duration_ms: 14.955157
+  type: 'test'
+  ...
+# Subtest: a malformed pair request or foreign slot never opens a real socket or yields a fabricated code
+ok 34 - a malformed pair request or foreign slot never opens a real socket or yields a fabricated code
+  ---
+  duration_ms: 9.717838
+  type: 'test'
+  ...
+# Subtest: private MP4 validation and GIF conversion really execute ffprobe/ffmpeg, rejecting unsupported encodings
+ok 35 - private MP4 validation and GIF conversion really execute ffprobe/ffmpeg, rejecting unsupported encodings
+  ---
+  duration_ms: 489.623878
+  type: 'test'
+  ...
+# Subtest: automatic composer API enforces roles, CSRF, atomic owned ignores, immutable review, idempotency and private event feeds
+ok 36 - automatic composer API enforces roles, CSRF, atomic owned ignores, immutable review, idempotency and private event feeds
+  ---
+  duration_ms: 45.816819
+  type: 'test'
+  ...
+# (node:43652) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: safe URL policy blocks private, metadata, reserved, mapped and NAT64 addresses
+ok 37 - safe URL policy blocks private, metadata, reserved, mapped and NAT64 addresses
+  ---
+  duration_ms: 6.54934
+  type: 'test'
+  ...
+# Subtest: preview extraction sanitises bounded metadata and uses explicit destination
+ok 38 - preview extraction sanitises bounded metadata and uses explicit destination
+  ---
+  duration_ms: 0.839979
+  type: 'test'
+  ...
+# Subtest: fresh status/chat payloads do not leak mutable flags between surfaces and null disables auto-fetch
+ok 39 - fresh status/chat payloads do not leak mutable flags between surfaces and null disables auto-fetch
+  ---
+  duration_ms: 0.370803
+  type: 'test'
+  ...
+# Subtest: personal 2x creates two zero-reward placements and never touches cash, bonuses or referral qualification
+ok 40 - personal 2x creates two zero-reward placements and never touches cash, bonuses or referral qualification
+  ---
+  duration_ms: 8.493991
+  type: 'test'
+  ...
+# Subtest: personal request replay is idempotent; changing content under the same key is rejected
+ok 41 - personal request replay is idempotent; changing content under the same key is rejected
+  ---
+  duration_ms: 5.186647
+  type: 'test'
+  ...
+# Subtest: browser cannot switch personal purpose, claim rewards, borrow another owner or bypass preview requirement
+ok 42 - browser cannot switch personal purpose, claim rewards, borrow another owner or bypass preview requirement
+  ---
+  duration_ms: 4.283211
+  type: 'test'
+  ...
+# Subtest: status/chat scoped permission is required; no hidden mention fallback or active targets without approval
+ok 43 - status/chat scoped permission is required; no hidden mention fallback or active targets without approval
+  ---
+  duration_ms: 4.519631
+  type: 'test'
+  ...
+# Subtest: personal dispatcher posts status before chat, labels acceptance honestly and never creates earnings
+ok 44 - personal dispatcher posts status before chat, labels acceptance honestly and never creates earnings
+  ---
+  duration_ms: 7.032549
+  type: 'test'
+  ...
+# Subtest: uncertain personal send is not retried, chat does not follow an unknown status, cancellation keeps unknown evidence
+ok 45 - uncertain personal send is not retried, chat does not follow an unknown status, cancellation keeps unknown evidence
+  ---
+  duration_ms: 6.607817
+  type: 'test'
+  ...
+# Subtest: personal database rows cannot be assigned rewards or relabelled paid
+ok 46 - personal database rows cannot be assigned rewards or relabelled paid
+  ---
+  duration_ms: 4.779723
+  type: 'test'
+  ...
+# Subtest: paid 2x fully succeeds at exactly 1.484 Coins, with status confirmed before chat and idempotent receipts
+ok 47 - paid 2x fully succeeds at exactly 1.484 Coins, with status confirmed before chat and idempotent receipts
+  ---
+  duration_ms: 9.073182
+  type: 'test'
+  ...
+# Subtest: status success then kick credits 1x, cancels unsent chat and releases only its reward reservation
+ok 48 - status success then kick credits 1x, cancels unsent chat and releases only its reward reservation
+  ---
+  duration_ms: 7.530649
+  type: 'test'
+  ...
+# Subtest: confirmed status and unknown chat keep 1x earned and 1x reserved until later verified receipt
+ok 49 - confirmed status and unknown chat keep 1x earned and 1x reserved until later verified receipt
+  ---
+  duration_ms: 7.85512
+  type: 'test'
+  ...
+# Subtest: funding and real surface-evidence capability are mandatory; no default paid sending
+ok 50 - funding and real surface-evidence capability are mandatory; no default paid sending
+  ---
+  duration_ms: 6.363083
+  type: 'test'
+  ...
+# Subtest: same group on two numbers has only one paid status/chat pair and cannot enter the legacy path too
+ok 51 - same group on two numbers has only one paid status/chat pair and cannot enter the legacy path too
+  ---
+  duration_ms: 7.030622
+  type: 'test'
+  ...
+# Subtest: new paid placement activates the backed 100-Coin referral once; second placement never doubles it
+ok 52 - new paid placement activates the backed 100-Coin referral once; second placement never doubles it
+  ---
+  duration_ms: 7.93445
+  type: 'test'
+  ...
+# Subtest: two actual slots sharing a group deduplicate to a single chosen account and placement pair
+ok 53 - two actual slots sharing a group deduplicate to a single chosen account and placement pair
+  ---
+  duration_ms: 7.21112
+  type: 'test'
+  ...
+# Subtest: ten paid campaigns count independently from their two legs; eleventh campaign cannot reserve
+ok 54 - ten paid campaigns count independently from their two legs; eleventh campaign cannot reserve
+  ---
+  duration_ms: 22.333777
+  type: 'test'
+  ...
+# Subtest: paid eligibility works above 100 groups and above the personal 200-membership resource limit
+ok 55 - paid eligibility works above 100 groups and above the personal 200-membership resource limit
+  ---
+  duration_ms: 54.414535
+  type: 'test'
+  ...
+# Subtest: personal reward and target identity remain immutable on UPDATE, not only INSERT
+ok 56 - personal reward and target identity remain immutable on UPDATE, not only INSERT
+  ---
+  duration_ms: 5.456626
+  type: 'test'
+  ...
+# Subtest: personal submissions do not consume the ten funded-campaign participation slots
+ok 57 - personal submissions do not consume the ten funded-campaign participation slots
+  ---
+  duration_ms: 6.78577
+  type: 'test'
+  ...
+# Subtest: cancelling a legacy reservation transfers the 100-Coin referral hold to outstanding new paid work
+ok 58 - cancelling a legacy reservation transfers the 100-Coin referral hold to outstanding new paid work
+  ---
+  duration_ms: 9.640831
+  type: 'test'
+  ...
+# Subtest: media removal during asynchronous preview cannot leave a newly queued run referencing a deleted file
+ok 59 - media removal during asynchronous preview cannot leave a newly queued run referencing a deleted file
+  ---
+  duration_ms: 4.282533
+  type: 'test'
+  ...
+# Subtest: a persisted owner-level removal blocks an otherwise online and approved personal or funded target
+ok 60 - a persisted owner-level removal blocks an otherwise online and approved personal or funded target
+  ---
+  duration_ms: 5.425647
+  type: 'test'
+  ...
+# Subtest: small groups receive funded-campaign placements at zero reward, with no referral or bonus progress
+ok 61 - small groups receive funded-campaign placements at zero reward, with no referral or bonus progress
+  ---
+  duration_ms: 7.287826
+  type: 'test'
+  ...
+# Subtest: member threshold changes pay, not post eligibility: 99 pays zero, 100 pays exactly 0.100 Coins
+ok 62 - member threshold changes pay, not post eligibility: 99 pays zero, 100 pays exactly 0.100 Coins
+  ---
+  duration_ms: 12.225333
+  type: 'test'
+  ...
+# Subtest: a small-group success cannot consume a referral hold belonging to qualifying paid work
+ok 63 - a small-group success cannot consume a referral hold belonging to qualifying paid work
+  ---
+  duration_ms: 9.096222
+  type: 'test'
+  ...
+# Subtest: cancelling the last qualifying placement releases referral cash even if zero-reward work remains
+ok 64 - cancelling the last qualifying placement releases referral cash even if zero-reward work remains
+  ---
+  duration_ms: 7.617661
+  type: 'test'
+  ...
+# (node:43664) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: outbound server acceptance never credits earned wallet; replay cannot send again
+ok 65 - outbound server acceptance never credits earned wallet; replay cannot send again
+  ---
+  duration_ms: 14.661121
+  type: 'test'
+  ...
+# Subtest: uncertain transport outcomes hold cash and are never automatically resent
+ok 66 - uncertain transport outcomes hold cash and are never automatically resent
+  ---
+  duration_ms: 8.883362
+  type: 'test'
+  ...
+# Subtest: fresh membership mismatch cancels the unsent job without posting or underpaying
+ok 67 - fresh membership mismatch cancels the unsent job without posting or underpaying
+  ---
+  duration_ms: 7.253774
+  type: 'test'
+  ...
+# Subtest: explicit provider rejection returns reserved rewards without creating earnings
+ok 68 - explicit provider rejection returns reserved rewards without creating earnings
+  ---
+  duration_ms: 6.410421
+  type: 'test'
+  ...
+# Subtest: unready provider does not begin sending or consume an unsent reservation
+ok 69 - unready provider does not begin sending or consume an unsent reservation
+  ---
+  duration_ms: 7.180117
+  type: 'test'
+  ...
+# Subtest: real Redis/BullMQ outbox replay, worker processing and confirmed-receipt settlement
+ok 70 - real Redis/BullMQ outbox replay, worker processing and confirmed-receipt settlement # SKIP
+  ---
+  duration_ms: 0.192298
+  type: 'test'
+  ...
+# (node:43676) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: new earnings and treasury APIs reject anonymous access
+ok 71 - new earnings and treasury APIs reject anonymous access
+  ---
+  duration_ms: 54.274503
+  type: 'test'
+  ...
+# Subtest: worker referral link is real; signup registers one pending 100-Coin reward without earning cash
+ok 72 - worker referral link is real; signup registers one pending 100-Coin reward without earning cash
+  ---
+  duration_ms: 585.754469
+  type: 'test'
+  ...
+# Subtest: bad referral code is rejected atomically, not silently attached to someone else
+ok 73 - bad referral code is rejected atomically, not silently attached to someone else
+  ---
+  duration_ms: 15.978875
+  type: 'test'
+  ...
+# Subtest: real empty inventory has two available slots and no synthetic groups or deliveries
+ok 74 - real empty inventory has two available slots and no synthetic groups or deliveries
+  ---
+  duration_ms: 4.064629
+  type: 'test'
+  ...
+# Subtest: clients cannot self-pair, invent consent, deposit funds or claim delivery credits
+ok 75 - clients cannot self-pair, invent consent, deposit funds or claim delivery credits
+  ---
+  duration_ms: 24.420963
+  type: 'test'
+  ...
+# Subtest: worker/advertiser cannot inspect treasury or create/fund house campaigns
+ok 76 - worker/advertiser cannot inspect treasury or create/fund house campaigns
+  ---
+  duration_ms: 281.257792
+  type: 'test'
+  ...
+# Subtest: group exclusion is server-owned and isolated; no automatic leaving occurs
+ok 77 - group exclusion is server-owned and isolated; no automatic leaving occurs
+  ---
+  duration_ms: 267.985805
+  type: 'test'
+  ...
+# Subtest: server-provisioned isolated admin can plan but cannot reserve nonexistent cash; no new admin is created by API
+ok 78 - server-provisioned isolated admin can plan but cannot reserve nonexistent cash; no new admin is created by API
+  ---
+  duration_ms: 311.630723
+  type: 'test'
+  ...
+# Subtest: funding operations require CSRF; invalid numeric budgets never become float balances
+ok 79 - funding operations require CSRF; invalid numeric budgets never become float balances
+  ---
+  duration_ms: 16.429092
+  type: 'test'
+  ...
+# (node:43689) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: independent concurrent processes cannot reserve or credit the same shared group twice
+ok 80 - independent concurrent processes cannot reserve or credit the same shared group twice
+  ---
+  duration_ms: 1244.1061
+  type: 'test'
+  ...
+# Subtest: concurrent campaign funding cannot overspend the available treasury cash
+ok 81 - concurrent campaign funding cannot overspend the available treasury cash
+  ---
+  duration_ms: 627.915212
+  type: 'test'
+  ...
+# (node:43739) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: schema v1 upgrade preserves existing account/password/bonus/ledger and does not seed money or administrators
+ok 82 - schema v1 upgrade preserves existing account/password/bonus/ledger and does not seed money or administrators
+  ---
+  duration_ms: 13.31831
+  type: 'test'
+  ...
+# (node:43746) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: standard rewards: exact counts, membership cap, permission and minimum
+ok 83 - standard rewards: exact counts, membership cap, permission and minimum
+  ---
+  duration_ms: 1.680865
+  type: 'test'
+  ...
+# Subtest: amount parsing uses integer decimals, rejects floats, exponent, negative, overflow and extra precision
+ok 84 - amount parsing uses integer decimals, rejects floats, exponent, negative, overflow and extra precision
+  ---
+  duration_ms: 0.589948
+  type: 'test'
+  ...
+# Subtest: tier bands and 100-GC virtual units do not cap groups
+ok 85 - tier bands and 100-GC virtual units do not cap groups
+  ---
+  duration_ms: 0.707918
+  type: 'test'
+  ...
+# Subtest: zero cash cannot fund, and promised money never appears in treasury
+ok 86 - zero cash cannot fund, and promised money never appears in treasury
+  ---
+  duration_ms: 7.253333
+  type: 'test'
+  ...
+# Subtest: cleared funding requires admin, verification note and unique reference
+ok 87 - cleared funding requires admin, verification note and unique reference
+  ---
+  duration_ms: 5.576924
+  type: 'test'
+  ...
+# Subtest: two slots and number ownership persist across disconnects; failed third slot changes nothing
+ok 88 - two slots and number ownership persist across disconnects; failed third slot changes nothing
+  ---
+  duration_ms: 8.296104
+  type: 'test'
+  ...
+# Subtest: inventory accepts only complete valid provider snapshots and retains manual exclusions
+ok 89 - inventory accepts only complete valid provider snapshots and retains manual exclusions
+  ---
+  duration_ms: 5.020278
+  type: 'test'
+  ...
+# Subtest: duplicate shared groups count once per campaign, but can count for another campaign
+ok 90 - duplicate shared groups count once per campaign, but can count for another campaign
+  ---
+  duration_ms: 17.434973
+  type: 'test'
+  ...
+# Subtest: all 130 qualifying groups earn; no 100-group ceiling
+ok 91 - all 130 qualifying groups earn; no 100-group ceiling
+  ---
+  duration_ms: 212.209575
+  type: 'test'
+  ...
+# Subtest: campaign cannot reserve a partial reward and backing cash is separate from the campaign reward budget
+ok 92 - campaign cannot reserve a partial reward and backing cash is separate from the campaign reward budget
+  ---
+  duration_ms: 6.539754
+  type: 'test'
+  ...
+# Subtest: unapproved, expired, revoked, stale, locked and excluded groups never receive reserved jobs
+ok 93 - unapproved, expired, revoked, stale, locked and excluded groups never receive reserved jobs
+  ---
+  duration_ms: 5.306244
+  type: 'test'
+  ...
+# Subtest: changed members or revoked permission block sending after reservation
+ok 94 - changed members or revoked permission block sending after reservation
+  ---
+  duration_ms: 6.031536
+  type: 'test'
+  ...
+# Subtest: receipt matching, idempotency and no credit from reservation or sending alone
+ok 95 - receipt matching, idempotency and no credit from reservation or sending alone
+  ---
+  duration_ms: 6.058942
+  type: 'test'
+  ...
+# Subtest: unknown delivery retains cash, cannot close or resend, but a later verified receipt settles
+ok 96 - unknown delivery retains cash, cannot close or resend, but a later verified receipt settles
+  ---
+  duration_ms: 6.57017
+  type: 'test'
+  ...
+# Subtest: unsent failure returns reward to the campaign, is idempotent and never credits a worker
+ok 97 - unsent failure returns reward to the campaign, is idempotent and never credits a worker
+  ---
+  duration_ms: 5.469793
+  type: 'test'
+  ...
+# Subtest: 100-Coin referral is pending at signup; another simultaneous delivery may qualify it exactly once
+ok 98 - 100-Coin referral is pending at signup; another simultaneous delivery may qualify it exactly once
+  ---
+  duration_ms: 7.579652
+  type: 'test'
+  ...
+# Subtest: referral funding is transferred to another in-flight delivery, not prematurely released on failure
+ok 99 - referral funding is transferred to another in-flight delivery, not prematurely released on failure
+  ---
+  duration_ms: 7.184756
+  type: 'test'
+  ...
+# Subtest: failed first delivery releases conditional referral cash but preserves separately disclosed bonus backing
+ok 100 - failed first delivery releases conditional referral cash but preserves separately disclosed bonus backing
+  ---
+  duration_ms: 5.878453
+  type: 'test'
+  ...
+# Subtest: daily capacity applies to owners, not separately to their two numbers; campaign groups are not extra broadcasts
+ok 101 - daily capacity applies to owners, not separately to their two numbers; campaign groups are not extra broadcasts
+  ---
+  duration_ms: 22.56486
+  type: 'test'
+  ...
+# Subtest: round-robin takes the least recently selected account, using real inventory
+ok 102 - round-robin takes the least recently selected account, using real inventory
+  ---
+  duration_ms: 6.983153
+  type: 'test'
+  ...
+# Subtest: kill switch blocks reservation and send without erasing earned obligations
+ok 103 - kill switch blocks reservation and send without erasing earned obligations
+  ---
+  duration_ms: 6.183904
+  type: 'test'
+  ...
+# Subtest: money events are append-only, and reconciliation detects unsupported manual wallet credit
+ok 104 - money events are append-only, and reconciliation detects unsupported manual wallet credit
+  ---
+  duration_ms: 4.083668
+  type: 'test'
+  ...
+# Subtest: reconciliation detects an unsupported credit even if wallet and treasury totals were manually balanced
+ok 105 - reconciliation detects an unsupported credit even if wallet and treasury totals were manually balanced
+  ---
+  duration_ms: 3.46322
+  type: 'test'
+  ...
+# Subtest: reused provider receipt rolls back the entire second settlement atomically
+ok 106 - reused provider receipt rolls back the entire second settlement atomically
+  ---
+  duration_ms: 6.917308
+  type: 'test'
+  ...
+# (node:43753) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: database survives restart, rollback is atomic, backup restores
+ok 107 - database survives restart, rollback is atomic, backup restores
+  ---
+  duration_ms: 13.185017
+  type: 'test'
+  ...
+# (node:43760) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: automatic plan includes sub-100 groups, deduplicates two numbers, and never bypasses scoped consent
+ok 108 - automatic plan includes sub-100 groups, deduplicates two numbers, and never bypasses scoped consent
+  ---
+  duration_ms: 8.114837
+  type: 'test'
+  ...
+# Subtest: ignore lists, owner removal, offline and excluded memberships cannot be bypassed through a second number
+ok 109 - ignore lists, owner removal, offline and excluded memberships cannot be bypassed through a second number
+  ---
+  duration_ms: 4.718815
+  type: 'test'
+  ...
+# Subtest: plain text is review-only until explicit confirmation; confirmation is idempotent and earns nothing
+ok 110 - plain text is review-only until explicit confirmation; confirmation is idempotent and earns nothing
+  ---
+  duration_ms: 11.075272
+  type: 'test'
+  ...
+# Subtest: link title is extracted without losing attached multiline text, exact URL matching, or duplicating a canonical slash
+ok 111 - link title is extracted without losing attached multiline text, exact URL matching, or duplicating a canonical slash
+  ---
+  duration_ms: 11.481099
+  type: 'test'
+  ...
+# Subtest: failed or absent website previews fall back to the untouched text, not invented thumbnails
+ok 112 - failed or absent website previews fall back to the untouched text, not invented thumbnails
+  ---
+  duration_ms: 6.942973
+  type: 'test'
+  ...
+# Subtest: changed ignore lists or group permissions invalidate review rather than silently changing recipients
+ok 113 - changed ignore lists or group permissions invalidate review rather than silently changing recipients
+  ---
+  duration_ms: 5.911656
+  type: 'test'
+  ...
+# Subtest: expired reviews and deleted media cannot post; a second post rotates status colour but existing rate limits remain
+ok 114 - expired reviews and deleted media cannot post; a second post rotates status colour but existing rate limits remain
+  ---
+  duration_ms: 7.739619
+  type: 'test'
+  ...
+# Subtest: uncertain status is never retried; dependent chat is skipped and the run reaches an honest final summary
+ok 115 - uncertain status is never retried; dependent chat is skipped and the run reaches an honest final summary
+  ---
+  duration_ms: 7.654235
+  type: 'test'
+  ...
+# Subtest: pre-send revocation makes no send and logs failure; current ignore changes are honoured even after queueing
+ok 116 - pre-send revocation makes no send and logs failure; current ignore changes are honoured even after queueing
+  ---
+  duration_ms: 6.843083
+  type: 'test'
+  ...
+# Subtest: restart recovery logs uncertainty and skips blocked double-mode chats instead of stranding the run
+ok 117 - restart recovery logs uncertainty and skips blocked double-mode chats instead of stranding the run
+  ---
+  duration_ms: 6.860339
+  type: 'test'
+  ...
+# Subtest: real-image normalization preserves aspect ratio, bounds dimensions, supplies JPEG bytes and rejects SVG/decompression bombs
+ok 118 - real-image normalization preserves aspect ratio, bounds dimensions, supplies JPEG bytes and rejects SVG/decompression bombs
+  ---
+  duration_ms: 61.309498
+  type: 'test'
+  ...
+# Subtest: Open Graph/Twitter title extraction handles swapped attributes, apostrophes and entities without deleting captions
+ok 119 - Open Graph/Twitter title extraction handles swapped attributes, apostrophes and entities without deleting captions
+  ---
+  duration_ms: 0.912354
+  type: 'test'
+  ...
+# Subtest: completed posts cannot be relabelled stopped; cancellation logs are durable and idempotent
+ok 120 - completed posts cannot be relabelled stopped; cancellation logs are durable and idempotent
+  ---
+  duration_ms: 9.811012
+  type: 'test'
+  ...
+# Subtest: more than 200 eligible groups is an explicit error, never a silently truncated all-status run
+ok 121 - more than 200 eligible groups is an explicit error, never a silently truncated all-status run
+  ---
+  duration_ms: 17.247399
+  type: 'test'
+  ...
+# Subtest: safe fetch follows only validated public redirects, reads real OG images and returns native-image metadata
+ok 122 - safe fetch follows only validated public redirects, reads real OG images and returns native-image metadata
+  ---
+  duration_ms: 26.228741
+  type: 'test'
+  ...
+# Subtest: an OG image pointing at metadata/private IPs is rejected before any request; text title remains usable
+ok 123 - an OG image pointing at metadata/private IPs is rejected before any request; text title remains usable
+  ---
+  duration_ms: 1.137872
+  type: 'test'
+  ...
+# Subtest: redirects to private HTTPS destinations are never followed
+ok 124 - redirects to private HTTPS destinations are never followed
+  ---
+  duration_ms: 0.821989
+  type: 'test'
+  ...
+# Subtest: mislabelled SVG and oversized images do not create invented thumbnails
+ok 125 - mislabelled SVG and oversized images do not create invented thumbnails
+  ---
+  duration_ms: 2.861099
+  type: 'test'
+  ...
+# Subtest: large HTML is bounded at 256 KiB of head data, redirect loops and expired budgets fail closed
+ok 126 - large HTML is bounded at 256 KiB of head data, redirect loops and expired budgets fail closed
+  ---
+  duration_ms: 2.293056
+  type: 'test'
+  ...
+# Subtest: small useful real images are proportionally enlarged for native cards, but tracking pixels are not thumbnails
+ok 127 - small useful real images are proportionally enlarged for native cards, but tracking pixels are not thumbnails
+  ---
+  duration_ms: 29.976752
+  type: 'test'
+  ...
+# (node:43790) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: v4 referral rebuild preserves identities, child foreign keys, settled ledger and booked rates; only pending reward changes
+ok 128 - v4 referral rebuild preserves identities, child foreign keys, settled ledger and booked rates; only pending reward changes
+  ---
+  duration_ms: 10.808273
+  type: 'test'
+  ...
+# Subtest: 100-Coin referral funding is atomic down to one milli-Coin and remains conditional, not signup earnings
+ok 129 - 100-Coin referral funding is atomic down to one milli-Coin and remains conditional, not signup earnings
+  ---
+  duration_ms: 11.017193
+  type: 'test'
+  ...
+# Subtest: published daily example is exactly derived from unchanged funded placement rules, not a daily guarantee or upper earning cap
+ok 130 - published daily example is exactly derived from unchanged funded placement rules, not a daily guarantee or upper earning cap
+  ---
+  duration_ms: 0.316798
+  type: 'test'
+  ...
+# Subtest: failed legacy rebuild rolls back the table, pending rate and migration marker, and restores FK enforcement
+ok 131 - failed legacy rebuild rolls back the table, pending rate and migration marker, and restores FK enforcement
+  ---
+  duration_ms: 5.606664
+  type: 'test'
+  ...
+# Subtest: payout: 99/OPEN/ALLSTATUS_1X
+ok 132 - payout: 99/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 1.081405
+  type: 'test'
+  ...
+# Subtest: payout: 100/OPEN/ALLSTATUS_1X
+ok 133 - payout: 100/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 0.124262
+  type: 'test'
+  ...
+# Subtest: payout: 742/OPEN/ALLSTATUS_1X
+ok 134 - payout: 742/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 0.086792
+  type: 'test'
+  ...
+# Subtest: payout: 1001/OPEN/ALLSTATUS_1X
+ok 135 - payout: 1001/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 0.081947
+  type: 'test'
+  ...
+# Subtest: payout: 742/OPEN/ALLCHAT_2X_VIP
+ok 136 - payout: 742/OPEN/ALLCHAT_2X_VIP
+  ---
+  duration_ms: 0.192985
+  type: 'test'
+  ...
+# Subtest: payout: 1000/LOCKED/ALLCHAT_2X_VIP
+ok 137 - payout: 1000/LOCKED/ALLCHAT_2X_VIP
+  ---
+  duration_ms: 0.080681
+  type: 'test'
+  ...
+# Subtest: payout: 1000/KICKED/ALLSTATUS_1X
+ok 138 - payout: 1000/KICKED/ALLSTATUS_1X
+  ---
+  duration_ms: 0.190061
+  type: 'test'
+  ...
+# Subtest: payout: -1/OPEN/ALLSTATUS_1X
+ok 139 - payout: -1/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 0.083499
+  type: 'test'
+  ...
+# Subtest: payout: NaN/OPEN/ALLSTATUS_1X
+ok 140 - payout: NaN/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 0.273861
+  type: 'test'
+  ...
+# Subtest: payout: 100.5/OPEN/ALLSTATUS_1X
+ok 141 - payout: 100.5/OPEN/ALLSTATUS_1X
+  ---
+  duration_ms: 0.464908
+  type: 'test'
+  ...
+# Subtest: first threshold boundary
+ok 142 - first threshold boundary
+  ---
+  duration_ms: 0.403016
+  type: 'test'
+  ...
+# Subtest: subsequent payout boundary
+ok 143 - subsequent payout boundary
+  ---
+  duration_ms: 0.164289
+  type: 'test'
+  ...
+# Subtest: first payout consumes bonus exactly once
+ok 144 - first payout consumes bonus exactly once
+  ---
+  duration_ms: 1.00204
+  type: 'test'
+  ...
+# Subtest: overdraw and non-finite amounts rejected
+ok 145 - overdraw and non-finite amounts rejected
+  ---
+  duration_ms: 0.529657
+  type: 'test'
+  ...
+# Subtest: invalid balances rejected
+ok 146 - invalid balances rejected
+  ---
+  duration_ms: 0.33181
+  type: 'test'
+  ...
+# Subtest: integer precision
+ok 147 - integer precision
+  ---
+  duration_ms: 0.287352
+  type: 'test'
+  ...
+# Subtest: legacy wallet API also refuses overdraw
+ok 148 - legacy wallet API also refuses overdraw
+  ---
+  duration_ms: 0.330969
+  type: 'test'
+  ...
+# Subtest: locked group cannot earn even when admin
+ok 149 - locked group cannot earn even when admin
+  ---
+  duration_ms: 0.339376
+  type: 'test'
+  ...
+# Subtest: existing quote outputs retained as estimates
+ok 150 - existing quote outputs retained as estimates
+  ---
+  duration_ms: 0.425316
+  type: 'test'
+  ...
+# Subtest: draft input rejects unsafe destinations
+ok 151 - draft input rejects unsafe destinations
+  ---
+  duration_ms: 0.974496
+  type: 'test'
+  ...
+# Subtest: draft rejects invalid numbers and empty targeted countries
+ok 152 - draft rejects invalid numbers and empty targeted countries
+  ---
+  duration_ms: 0.851687
+  type: 'test'
+  ...
+# Subtest: draft strips untrusted status, owner and pricing
+ok 153 - draft strips untrusted status, owner and pricing
+  ---
+  duration_ms: 0.321048
+  type: 'test'
+  ...
+# (node:43809) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Plogme exact installed module imports without opening a socket
+ok 154 - Plogme exact installed module imports without opening a socket
+  ---
+  duration_ms: 842.748129
+  type: 'test'
+  ...
+# Subtest: private eight-character pairing code exists only after provider readiness; account not credited until matching open
+ok 155 - private eight-character pairing code exists only after provider readiness; account not credited until matching open
+  ---
+  duration_ms: 41.631153
+  type: 'test'
+  ...
+# Subtest: registered provider identity opens actual account inventory, checks self admin and removes temporary code
+ok 156 - registered provider identity opens actual account inventory, checks self admin and removes temporary code
+  ---
+  duration_ms: 18.129656
+  type: 'test'
+  ...
+# Subtest: wrong provider phone is refused without creating a paired account or claiming connection
+ok 157 - wrong provider phone is refused without creating a paired account or claiming connection
+  ---
+  duration_ms: 7.898062
+  type: 'test'
+  ...
+# Subtest: only real current group admin command grants scoped approval; token alone or empty author is insufficient
+ok 158 - only real current group admin command grants scoped approval; token alone or empty author is insufficient
+  ---
+  duration_ms: 14.349582
+  type: 'test'
+  ...
+# Subtest: two-slot and same-phone owner guards cannot be bypassed with another slot or owner
+ok 159 - two-slot and same-phone owner guards cannot be bypassed with another slot or owner
+  ---
+  duration_ms: 16.484021
+  type: 'test'
+  ...
+# Subtest: unlink removes auth, revokes group permission and membership; another owner cannot take number history
+ok 160 - unlink removes auth, revokes group permission and membership; another owner cannot take number history
+  ---
+  duration_ms: 9.297701
+  type: 'test'
+  ...
+# Subtest: cancelling during lazy library import prevents any late socket creation
+ok 161 - cancelling during lazy library import prevents any late socket creation
+  ---
+  duration_ms: 5.43405
+  type: 'test'
+  ...
+# Subtest: AES-GCM vault uses unique nonces and detects ciphertext tampering and slot/key substitution
+ok 162 - AES-GCM vault uses unique nonces and detects ciphertext tampering and slot/key substitution
+  ---
+  duration_ms: 4.820741
+  type: 'test'
+  ...
+# Subtest: graceful shutdown expires an unfinished pairing, rather than stranding it as a reconnectable session
+ok 163 - graceful shutdown expires an unfinished pairing, rather than stranding it as a reconnectable session
+  ---
+  duration_ms: 5.505682
+  type: 'test'
+  ...
+# Subtest: provider kick creates an owner-level block; scanning/rejoining does not clear it, fresh verified admin approval does
+ok 164 - provider kick creates an owner-level block; scanning/rejoining does not clear it, fresh verified admin approval does
+  ---
+  duration_ms: 7.993307
+  type: 'test'
+  ...
+# Subtest: ignore invite lookup is strict, owner-scoped and never joins or imports a foreign group
+ok 165 - ignore invite lookup is strict, owner-scoped and never joins or imports a foreign group
+  ---
+  duration_ms: 6.861796
+  type: 'test'
+  ...
+# Subtest: native link preview uses real JPEG buffers, thumbnail-link upload, per-socket cache and status options; original payload stays intact
+ok 166 - native link preview uses real JPEG buffers, thumbnail-link upload, per-socket cache and status options; original payload stays intact
+  ---
+  duration_ms: 5.820893
+  type: 'test'
+  ...
+# Subtest: installed Plogme 2.1.0 encodes the adapted image preview and status background fields without any connection
+ok 167 - installed Plogme 2.1.0 encodes the adapted image preview and status background fields without any connection
+  ---
+  duration_ms: 2.755322
+  type: 'test'
+  ...
+1..167
+# tests 167
+# suites 0
+# pass 166
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 12945.512825

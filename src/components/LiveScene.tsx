@@ -7,13 +7,8 @@ export function LiveScene() {
       !matchMedia("(prefers-reduced-motion: reduce)").matches &&
       !(navigator as any).connection?.saveData,
   );
-  // A brief decorative entrance settles automatically; no playback controls or consent prompts.
-  useEffect(() => {
-    if (!moving) return;
-    const timer = setTimeout(() => setMoving(false), 4500);
-    return () => clearTimeout(timer);
-  }, [moving]);
-  const [visible, setVisible] = useState(true),
+  // Keep the scene moving while visible; pause for device preferences or hidden content.
+  const [visible, setVisible] = useState(() => !document.hidden),
     [inView, setInView] = useState(true);
   useEffect(() => {
     const changed = () => setVisible(!document.hidden);
@@ -23,6 +18,8 @@ export function LiveScene() {
         setMoving(!reduced.matches && !(navigator as any).connection?.saveData);
       };
     reduced.addEventListener("change", onReduced);
+    const connection = (navigator as any).connection;
+    connection?.addEventListener?.("change", onReduced);
     const observer =
       typeof IntersectionObserver !== "undefined"
         ? new IntersectionObserver(([entry]) => setInView(entry.isIntersecting))
@@ -31,6 +28,7 @@ export function LiveScene() {
     return () => {
       document.removeEventListener("visibilitychange", changed);
       reduced.removeEventListener("change", onReduced);
+      connection?.removeEventListener?.("change", onReduced);
       observer?.disconnect();
     };
   }, []);

@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-test("landing has no design/playback controls; reduced-motion is automatic and the decorative entrance settles", async ({
+test("landing has no design/playback controls; motion keeps running beyond five seconds, pauses offscreen and respects reduced motion", async ({
   page,
 }, info) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -22,9 +22,29 @@ test("landing has no design/playback controls; reduced-motion is automatic and t
   await page.goto("/");
   await page.locator(".live-hero-scene").scrollIntoViewIfNeeded();
   await expect(page.locator(".live-hero-scene")).toHaveClass(/is-playing/);
-  await expect(page.locator(".live-hero-scene")).toHaveClass(/is-paused/, {
-    timeout: 6000,
+  // Deliberately observe past the removed 4.5-second cutoff, not just the initial class.
+  const frames = await page.locator(".scene-phone").evaluate(async (el) => {
+    await new Promise((resolve) => setTimeout(resolve, 5500));
+    const style = getComputedStyle(el),
+      first = style.transform;
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return {
+      first,
+      second: getComputedStyle(el).transform,
+      playState: getComputedStyle(el).animationPlayState,
+    };
   });
+  expect(frames.playState).toBe("running");
+  expect(frames.first).not.toBe(frames.second);
+  await expect(page.locator(".live-hero-scene")).toHaveClass(/is-playing/);
+  await page.locator(".public-footer").scrollIntoViewIfNeeded();
+  await expect(page.locator(".live-hero-scene")).toHaveClass(/is-paused/);
+  await page.locator(".live-hero-scene").scrollIntoViewIfNeeded();
+  await expect(page.locator(".live-hero-scene")).toHaveClass(/is-playing/);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator(".live-hero-scene")).toHaveClass(/is-paused/);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect(page.locator(".live-hero-scene")).toHaveClass(/is-playing/);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

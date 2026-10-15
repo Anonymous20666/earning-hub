@@ -70,3 +70,7 @@ A conditional 1,000-Coin daily illustration is derived from existing rules (50 e
 Existing GitHub origin was found at `Anonymous20666/earning-hub`; read access works but HTTPS write access is not configured. A repository-specific public deploy key was supplied for the founder to grant write access. Source-only backup uses a separate `backup/earning-hub` branch, with no force push/default-branch replacement. No database, WhatsApp sessions or secrets belong in GitHub. Off-server encrypted private-data recovery remains unresolved.
 
 See `INTERNATIONAL-AND-MENU-0.6.0.md` for migration safeguards, verification and actual release/push outcome.
+
+## Continuous scene correction — v0.6.1
+
+The founder reported that the 3D scene stopped moving. The v0.6.0 4.5-second cutoff caused this, particularly before the scene entered a small mobile viewport. Removed that cutoff: animation continues while visible and resumes on re-entry, still respecting reduced-motion/data-saving preferences and hidden tabs. No playback buttons restored. See `MOTION-FIX-0.6.1.md`; manual motion-accessibility review remains a stated limitation, not a blanket WCAG claim.
