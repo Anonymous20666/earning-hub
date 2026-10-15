@@ -8,6 +8,10 @@ case "$branch" in main|master|HEAD) echo 'Use a dedicated backup branch, not the
 git check-ref-format "refs/heads/$branch"
 # Inspect every reachable commit's filenames, not just today's working tree.
 if git rev-list --objects --all | awk '{$1="";sub(/^ /,"");print}' | grep -E '(^|/)(\.env($|\.)|data/|\.ssh/)|\.(sqlite([.-].*)?|db|pem|key)$' | grep -v -E '(^|/)\.env\.example$' >/dev/null; then echo 'Sensitive paths found in Git history. Stop and review before any push.' >&2; exit 1; fi
+# Fail closed on high-confidence token/private-key patterns without printing values.
+scan=0
+git grep --quiet -I -E '(ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|-----BEGIN (OPENSSH|RSA|EC) PRIVATE KEY-----|WA_(ENCRYPTION|IDENTITY)_KEY=[a-fA-F0-9]{64})' $(git rev-list --all) -- || scan=$?
+case "$scan" in 0) echo 'Potential credential found in reachable history. Stop and review before any push.' >&2;exit 1;; 1) :;; *) echo 'Credential scan failed; backup blocked.' >&2;exit 1;; esac
 remote="${SOURCE_BACKUP_REMOTE:-origin}"
 key="${GITHUB_DEPLOY_KEY:-$(git config --get pappy.githubDeployKey || true)}"
 if [[ -n "$key" ]]; then

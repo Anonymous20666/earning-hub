@@ -41,3 +41,14 @@ git add .env && git commit -qm 'Synthetic filename rejection fixture'
 git remote set-url origin "$tmp/origin.git"
 if ./deploy/push-source-backup.sh; then exit 1; fi
 echo 'PASS: sensitive filename in reachable history blocks push'
+
+git init -q -b main "$tmp/secret-fixture"
+cd "$tmp/secret-fixture"
+git config user.name 'Synthetic secret-pattern QA'
+git config user.email 'secret-pattern@example.test'
+mkdir deploy && cp "$root/deploy/push-source-backup.sh" deploy/
+printf 'ghp_%036d\n' 0 > synthetic-token-pattern.txt
+git add . && git commit -qm 'Explicitly fake credential-pattern fixture'
+git remote add origin "$tmp/origin.git"
+if ./deploy/push-source-backup.sh; then exit 1; fi
+echo 'PASS: high-confidence credential pattern in history blocks push without printing its value'

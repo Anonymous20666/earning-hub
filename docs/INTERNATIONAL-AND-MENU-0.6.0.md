@@ -27,7 +27,7 @@ Foreign keys are disabled only around the table rebuild, checked before commit a
 - Desktop/mobile browser suite: **32 passed**. Includes automated WCAG A/AA checks, drawer focus/Tab/Escape/inert/reduced-motion behavior, no horizontal overflow, closed initial desktop menu, public Coins copy, 100-Coin pending referral, unchanged synthetic zero-earned balance, consistent 1,000-Coin calculator, composer/auth/admin/advertiser regressions.
 - Browser tests use isolated QA data and contract doubles where stated; they are not evidence of actual WhatsApp rendering or delivery. No real messages or joins are issued by the tests.
 - Public production read-only checks: **28 passed**, **0 accounts created**, **0 WhatsApp requests**.
-- Local Git-only backup tests: **6 passed** (dedicated branch, no main overwrite, dirty-tree rejection, subsequent commit hook, local commit retained offline, sensitive-history filename rejection).
+- Local Git-only backup tests: **7 passed** (dedicated branch, no main overwrite, dirty-tree rejection, subsequent commit hook, local commit retained offline, sensitive-history filename rejection, high-confidence credential-pattern rejection).
 
 ## GitHub source preservation
 
@@ -35,7 +35,7 @@ Existing origin discovered on the authorised VPS: `https://github.com/Anonymous2
 
 A fresh repository-specific Ed25519 deploy key was generated under root's protected SSH directory. Only its public half was shown to the founder. The founder must add it in this repository's **Settings → Deploy keys**, with **Allow write access**. The private key is not in the source tree or deliverables. Official GitHub SSH host keys are obtained over verified HTTPS from GitHub's `/meta` endpoint; no unverified keyscan or disabled host checking is used.
 
-`deploy/push-source-backup.sh` pushes committed source to **backup/earning-hub**, never force-pushes, refuses `main`/`master`, checks reachable Git history for sensitive filenames and refuses a dirty source tree. An optional per-repository `.githooks/post-commit` hook retries source backup after future commits, retaining local commits and clearly warning if remote authentication fails. The hook requires explicit local installation (`git config --local core.hooksPath .githooks`); cloning alone does not execute it.
+`deploy/push-source-backup.sh` pushes committed source to **backup/earning-hub**, never force-pushes, refuses `main`/`master`, checks reachable Git history for sensitive filenames and high-confidence credential patterns and refuses a dirty source tree. An optional per-repository `.githooks/post-commit` hook retries source backup after future commits, retaining local commits and clearly warning if remote authentication fails. The hook requires explicit local installation (`git config --local core.hooksPath .githooks`); cloning alone does not execute it.
 
 GitHub is a **source backup only**. SQLite, account data, WhatsApp authentication, encryption keys and environment secrets are excluded. Existing protected on-server database backups do not replace encrypted off-server disaster recovery; that remains an operational gap, not a claim of permanent safety.
 
