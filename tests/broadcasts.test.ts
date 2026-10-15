@@ -856,3 +856,146 @@ test("a persisted owner-level removal blocks an otherwise online and approved pe
     f.db.close();
   }
 });
+
+test("small groups receive funded-campaign placements at zero reward, with no referral or bonus progress", () => {
+  const f = fixture(42);
+  try {
+    user(f.db, "referrer");
+    registerReferral(f.db, "worker", referralCode(f.db, "referrer"));
+    const c = funded(f.db);
+    const run = reservePaidRun(f.db, "admin", c, "worker", "DOUBLE", [
+      { accountId: f.a, groupJid: jid },
+    ]);
+    assert.equal(run.totalMilli, 0);
+    assert.equal(placements(f.db).length, 2);
+    assert.equal(
+      (f.db.prepare("SELECT bonus_backing_milli FROM treasury").get() as any)
+        .bonus_backing_milli,
+      0,
+    );
+    for (const p of placements(f.db)) {
+      assert.equal(p.reward_milli, 0);
+      start(f.db, p);
+      confirm(f.db, p);
+    }
+    assert.equal(balance(f.db), 0);
+    assert.equal(
+      (f.db.prepare("SELECT status FROM referrals").get() as any).status,
+      "PENDING",
+    );
+    assert.equal(
+      (
+        f.db
+          .prepare(
+            "SELECT COUNT(*) n FROM ledger WHERE kind IN('VERIFIED_STATUS_DELIVERY','VERIFIED_CHAT_DELIVERY','QUALIFIED_REFERRAL')",
+          )
+          .get() as any
+      ).n,
+      0,
+    );
+    check(f.db);
+  } finally {
+    f.db.close();
+  }
+});
+test("member threshold changes pay, not post eligibility: 99 pays zero, 100 pays exactly 0.100 Coins", () => {
+  for (const [members, reward] of [
+    [99, 0],
+    [100, 100],
+  ]) {
+    const f = fixture(members);
+    try {
+      const c = funded(f.db),
+        run = reservePaidRun(f.db, "admin", c, "worker", "ALLSTATUS", [
+          { accountId: f.a, groupJid: jid },
+        ]);
+      assert.equal(run.totalMilli, reward);
+      const p = placements(f.db)[0];
+      start(f.db, p);
+      confirm(f.db, p);
+      assert.equal(balance(f.db), reward);
+      check(f.db);
+    } finally {
+      f.db.close();
+    }
+  }
+});
+test("a small-group success cannot consume a referral hold belonging to qualifying paid work", () => {
+  const f = fixture(42);
+  try {
+    user(f.db, "referrer");
+    registerReferral(f.db, "worker", referralCode(f.db, "referrer"));
+    const smallCampaign = funded(f.db);
+    reservePaidRun(f.db, "admin", smallCampaign, "worker", "ALLSTATUS", [
+      { accountId: f.a, groupJid: jid },
+    ]);
+    const small = placements(f.db)[0];
+    f.db.prepare("UPDATE group_inventory SET member_count=742").run();
+    const bigCampaign = funded(f.db);
+    reservePaidRun(f.db, "admin", bigCampaign, "worker", "ALLSTATUS", [
+      { accountId: f.a, groupJid: jid },
+    ]);
+    const big = placements(f.db).find((p) => p.reward_milli === 742);
+    assert.equal(
+      (f.db.prepare("SELECT status FROM referrals").get() as any).status,
+      "RESERVED",
+    );
+    f.db.prepare("UPDATE group_inventory SET member_count=42").run();
+    start(f.db, small);
+    confirm(f.db, small);
+    assert.equal(
+      (f.db.prepare("SELECT status FROM referrals").get() as any).status,
+      "RESERVED",
+    );
+    assert.equal(
+      (
+        f.db
+          .prepare("SELECT earned_milli FROM wallets WHERE user_id='referrer'")
+          .get() as any
+      ).earned_milli,
+      0,
+    );
+    f.db.prepare("UPDATE group_inventory SET member_count=742").run();
+    start(f.db, big);
+    confirm(f.db, big);
+    assert.equal(balance(f.db), 742);
+    assert.equal(
+      (
+        f.db
+          .prepare("SELECT earned_milli FROM wallets WHERE user_id='referrer'")
+          .get() as any
+      ).earned_milli,
+      5000,
+    );
+    check(f.db);
+  } finally {
+    f.db.close();
+  }
+});
+test("cancelling the last qualifying placement releases referral cash even if zero-reward work remains", () => {
+  const f = fixture(42);
+  try {
+    user(f.db, "referrer");
+    registerReferral(f.db, "worker", referralCode(f.db, "referrer"));
+    const small = funded(f.db);
+    reservePaidRun(f.db, "admin", small, "worker", "ALLSTATUS", [
+      { accountId: f.a, groupJid: jid },
+    ]);
+    f.db.prepare("UPDATE group_inventory SET member_count=742").run();
+    const big = funded(f.db);
+    reservePaidRun(f.db, "admin", big, "worker", "ALLSTATUS", [
+      { accountId: f.a, groupJid: jid },
+    ]);
+    cancelUnsentPlacement(
+      f.db,
+      placements(f.db).find((p) => p.reward_milli === 742).id,
+    );
+    assert.equal(
+      (f.db.prepare("SELECT status FROM referrals").get() as any).status,
+      "PENDING",
+    );
+    check(f.db);
+  } finally {
+    f.db.close();
+  }
+});

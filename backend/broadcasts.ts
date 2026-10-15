@@ -1,3 +1,4 @@
+import { placementRewardMilli } from "../shared/earningRules";
 import { createHash, randomUUID } from "node:crypto";
 import { type Database, transaction } from "./database";
 import { destination, safePreview } from "./safePreview";
@@ -131,8 +132,6 @@ function selected(
       throw Error(
         "A selected group is unavailable, excluded or needs a fresh scan",
       );
-    if (paid && g.member_count < 100)
-      throw Error("Paid groups need at least 100 members");
     if (
       (mode === "ALLCHAT" || mode === "DOUBLE") &&
       g.announce &&
@@ -164,7 +163,7 @@ function insertTargets(
 ) {
   for (const g of groups) {
     const target = randomUUID();
-    const reward = paid ? Math.min(g.member_count, 1000) : 0;
+    const reward = paid ? placementRewardMilli(g.member_count) : 0;
     db.prepare("INSERT INTO broadcast_targets VALUES(?,?,?,?,?,?)").run(
       target,
       runId,
@@ -398,17 +397,21 @@ export function reservePaidRun(
     )
       throw Error("Daily paid campaign capacity reached");
     const total = groups.reduce(
-      (sum, g) => sum + Math.min(g.member_count, 1000) * surfaces(mode).length,
+      (sum, g) =>
+        sum + placementRewardMilli(g.member_count) * surfaces(mode).length,
       0,
     );
     if (total > c.remaining_milli)
       throw Error("Insufficient full-placement campaign reward budget");
-    ensureBonusBacking(db, user);
-    const ref = get(
-      db,
-      "SELECT * FROM referrals WHERE referred_id=? AND status='PENDING'",
-      user,
-    );
+    if (total > 0) ensureBonusBacking(db, user);
+    const ref =
+      total > 0
+        ? get(
+            db,
+            "SELECT * FROM referrals WHERE referred_id=? AND status='PENDING'",
+            user,
+          )
+        : null;
     if (ref) {
       ensureBonusBacking(db, ref.referrer_id);
       treasury(db, -ref.reward_milli, ref.reward_milli, 0);
@@ -477,7 +480,7 @@ export function confirmPlacement(
     db.prepare(
       "UPDATE broadcast_placements SET status='CONFIRMED',receipt_id=?,confirmed_at=? WHERE id=?",
     ).run(proof.receiptId, now(), p.id);
-    if (p.purpose === "PAID_CAMPAIGN") {
+    if (p.purpose === "PAID_CAMPAIGN" && p.reward_milli > 0) {
       treasury(db, 0, -p.reward_milli, p.reward_milli);
       db.prepare(
         "UPDATE wallets SET earned_milli=earned_milli+? WHERE user_id=?",
@@ -562,7 +565,7 @@ export function cancelUnsentPlacement(
       if (ref) {
         const next = get(
           db,
-          `SELECT r.id FROM broadcast_runs r JOIN broadcast_targets t ON t.run_id=r.id JOIN broadcast_placements bp ON bp.target_id=t.id WHERE r.user_id=? AND r.purpose='PAID_CAMPAIGN' AND bp.status IN('RESERVED','SENDING','ACCEPTED','UNKNOWN') LIMIT 1`,
+          `SELECT r.id FROM broadcast_runs r JOIN broadcast_targets t ON t.run_id=r.id JOIN broadcast_placements bp ON bp.target_id=t.id WHERE r.user_id=? AND r.purpose='PAID_CAMPAIGN' AND bp.reward_milli>0 AND bp.status IN('RESERVED','SENDING','ACCEPTED','UNKNOWN') LIMIT 1`,
           p.user_id,
         );
         const old = get(
@@ -698,7 +701,6 @@ export function beginPaidPlacement(
       g.status !== "ONLINE" ||
       !g.is_member ||
       g.excluded ||
-      g.member_count < 100 ||
       g.member_count !== p.member_snapshot ||
       g.synced_at < new Date(Date.now() - 15 * 60000).toISOString() ||
       (p.surface === "GROUP_CHAT" && g.announce && !g.user_is_admin)

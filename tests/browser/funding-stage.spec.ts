@@ -18,7 +18,7 @@ async function fillSignup(page: Page) {
   await expect(
     page.getByRole("heading", {
       level: 1,
-      name: "A little progress, every day.",
+      name: "Welcome to Pappy.",
     }),
   ).toBeVisible();
   return email;
@@ -75,7 +75,7 @@ test("earning pages show exact illustration, empty real inventory, and a real pe
   await check(page, "calculator", info.project.name);
   await page.goto("/#/app/connections");
   await expect(
-    page.getByRole("heading", { name: "No groups scanned yet." }),
+    page.getByRole("heading", { name: "No groups found yet." }),
   ).toBeVisible();
   await expect(page.locator(".number-slot")).toHaveCount(2);
   await check(page, "connections", info.project.name);

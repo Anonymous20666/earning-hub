@@ -10,6 +10,38 @@ import {
 } from "lucide-react";
 import { api, send, date } from "../api";
 import { EarningHub } from "./EarningHub";
+const plainError = (text: string) => {
+  if (/fresh scan|needs a fresh|fresh metadata/.test(text))
+    return "Your group list needs an update. Open My WhatsApp and tap Find my groups.";
+  if (/group-admin approval|Surface permission/.test(text))
+    return "Please get the group admin’s permission first. Use the permission button beside the group.";
+  if (/Wait at least one minute/.test(text))
+    return "Please wait 1 minute before sending another post.";
+  if (/safe preview/.test(text))
+    return "We could not make a preview for this link. Try another link, or turn off the preview option to send the plain link.";
+  if (/Daily|three runs per UTC/.test(text))
+    return "You have used today’s personal posts. Try again after midnight UTC (1am in Nigeria).";
+  return text;
+};
+const friendlyState = (s: string) =>
+  ({
+    ONLINE: "Connected",
+    OFFLINE: "Not connected",
+    PAIRING: "Waiting for you",
+    ERROR: "Needs attention",
+    EXPIRED: "Code expired",
+    LOGGED_OUT: "Disconnected",
+    QUEUED: "Waiting",
+    RUNNING: "Sending",
+    FINISHED: "Finished",
+    CANCELLED: "Stopped",
+    UNKNOWN: "Not sure — check WhatsApp",
+    FAILED: "Not sent",
+    RESERVED: "Waiting",
+    SENDING: "Sending",
+    ACCEPTED: "Sent to WhatsApp — delivery not checked",
+    CONFIRMED: "Delivery checked",
+  })[s] || s;
 export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
   const [data, setData] = useState<any>(null),
     [error, setError] = useState(""),
@@ -21,7 +53,7 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
       setData(await api("/whatsapp"));
       setCounter((n) => n + 1);
     } catch (e: any) {
-      setError(e.message);
+      setError(plainError(e.message));
     }
   }
   useEffect(() => {
@@ -37,15 +69,15 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
       setNotice(
         what === "unlink"
           ? r.remoteUnlinked
-            ? "Session unlinked."
-            : "Disconnected locally. Check WhatsApp → Linked devices and remove any remaining device."
+            ? "Your WhatsApp is disconnected."
+            : "Disconnected here. Open WhatsApp → Linked devices and remove this device if it is still listed."
           : what === "scan"
-            ? `${r.scanned} actual groups scanned.`
-            : "Connection attempt started.",
+            ? `${r.scanned} groups found. Open Send a post to choose which ones can receive your message.`
+            : "Trying to connect your WhatsApp. Please wait.",
       );
       await load();
     } catch (e: any) {
-      setError(e.message);
+      setError(plainError(e.message));
     } finally {
       setBusy(false);
     }
@@ -61,12 +93,10 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
         phone: form.get("phone"),
         authoriseLinkedDevice: form.get("authorise") === "on",
       });
-      setNotice(
-        "Pairing attempt started. A private code appears only when WhatsApp supplies it.",
-      );
+      setNotice("Getting your connection code. Please wait here.");
       await load();
     } catch (e: any) {
-      setError(e.message);
+      setError(plainError(e.message));
     } finally {
       setBusy(false);
     }
@@ -74,9 +104,7 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
   async function copy(code: string) {
     try {
       await navigator.clipboard.writeText(code);
-      setNotice(
-        "Private pairing code copied. Only enter it in your own WhatsApp app.",
-      );
+      setNotice("Code copied. Open your own WhatsApp to enter it.");
     } catch {
       setNotice(
         "Clipboard unavailable. Select and copy the displayed private code.",
@@ -99,31 +127,57 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
       <section className="panel wa-connections">
         <div className="panel-heading">
           <div>
-            <span className="eyebrow">
-              PAPPYPAY · PRIVATE LINKED-DEVICE PAIRING
-            </span>
-            <h2>Room for two connections.</h2>
+            <span className="eyebrow">PAPPYPAY · CONNECT YOUR WHATSAPP</span>
+            <h2>My WhatsApp numbers.</h2>
             <p>
-              Your own numbers. Private, per-attempt codes. No shared public
-              pairing secret.
+              Use a number you own. We give you a new private code each time.
             </p>
           </div>
           <Link2 />
         </div>
         {!data ? (
-          <p role="status">Loading connection state…</p>
+          <p role="status">Checking your WhatsApp…</p>
         ) : (
           <>
             <div className="notice warning">
               <ShieldCheck size={19} />
               <p>
                 {data.configured
-                  ? "Plogme owner-testing pilot. Pair only a number you control. Real-device group-status, previews and receipts still require validation. Paid campaigns and payouts remain off."
-                  : "WhatsApp is not configured on this server. No code or connected account is simulated."}{" "}
-                Never share your WhatsApp registration OTP or two-step
-                verification PIN.
+                  ? "This feature is still being tested. Use only your own number. Paid jobs and withdrawals are not open."
+                  : "WhatsApp connection is not available right now. Please try again later."}{" "}
+                Never enter a WhatsApp login code or PIN here. Only use the
+                connection code shown on this page.
               </p>
             </div>
+            <details
+              className="connect-help"
+              open={!data.slots.some((s: any) => s.status === "ONLINE")}
+            >
+              <summary>How do I connect my WhatsApp?</summary>
+              <ol>
+                <li>
+                  Enter your number below, with the country code. Leave out the
+                  + sign.
+                </li>
+                <li>
+                  Tap <strong>Get my connection code</strong>. Keep this page
+                  open.
+                </li>
+                <li>
+                  Open WhatsApp on your phone. Tap <strong>Settings</strong> or
+                  the <strong>⋮ menu</strong>, then{" "}
+                  <strong>
+                    Linked devices → Link a device → Link with phone number
+                  </strong>
+                  .
+                </li>
+                <li>
+                  Enter the code from this page in WhatsApp. Come back here when
+                  it says Connected.
+                </li>
+              </ol>
+              <p>Example: a Nigerian number starting with 080 becomes 23480…</p>
+            </details>
             <div className="wa-slot-grid">
               {[1, 2].map((slot) => {
                 const s = data.slots.find((v: any) => v.slot === slot),
@@ -140,7 +194,7 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
                     <span className="eyebrow">NUMBER {slot}</span>
                     <h3>{s?.phone_label || "Not connected"}</h3>
                     <span className="badge neutral">
-                      {s?.status || "NOT PAIRED"}
+                      {s ? friendlyState(s.status) : "Not connected"}
                     </span>
                     {s?.last_error && (
                       <p className="field-help">{s.last_error}</p>
@@ -150,10 +204,10 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
                         {s.code ? (
                           <>
                             <label>
-                              Private pairing code
+                              Your connection code
                               <input
                                 readOnly
-                                aria-label={`Private pairing code ${slot}`}
+                                aria-label={`Your connection code ${slot}`}
                                 value={s.code}
                                 onFocus={(e) => e.target.select()}
                               />
@@ -174,7 +228,7 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
                           </>
                         ) : (
                           <p role="status">
-                            Connecting to WhatsApp to request your private code…
+                            Getting your code from WhatsApp. Please wait…
                           </p>
                         )}
                       </div>
@@ -193,7 +247,7 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
                             pattern="[1-9][0-9]{6,14}"
                             autoComplete="tel"
                             required
-                            placeholder="Country code + number, digits only"
+                            placeholder="Example: 2348012345678"
                             disabled={!data.configured || busy}
                           />
                         </label>
@@ -205,16 +259,16 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
                             disabled={!data.configured || busy}
                           />
                           <span>
-                            I own this number and authorise linked-device
-                            access. Group permission is still required before
-                            broadcasting.
+                            This is my number. I allow Pappy to connect it. I
+                            still need permission from each group before
+                            posting.
                           </span>
                         </label>
                         <button
                           className="button small"
                           disabled={!data.configured || busy}
                         >
-                          Generate private code
+                          Get my connection code
                         </button>
                       </form>
                     )}
@@ -237,7 +291,7 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
                               );
                               await load();
                             } catch (err: any) {
-                              setError(err.message);
+                              setError(plainError(err.message));
                             } finally {
                               setBusy(false);
                             }
@@ -258,7 +312,7 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
                             onClick={() => action(s.id, "scan")}
                           >
                             <RefreshCw size={14} />
-                            Scan groups
+                            Find my groups
                           </button>
                         )}
                         {["OFFLINE", "ERROR"].includes(s.status) && (
@@ -267,7 +321,7 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
                             disabled={busy}
                             onClick={() => action(s.id, "reconnect")}
                           >
-                            Reconnect
+                            Connect again
                           </button>
                         )}
                         <button
@@ -283,8 +337,8 @@ export function WhatsAppConnections({ revision = 0 }: { revision?: number }) {
                           }}
                         >
                           {s.status === "PAIRING"
-                            ? "Cancel pairing"
-                            : "Unlink number"}
+                            ? "Cancel connection"
+                            : "Disconnect number"}
                         </button>
                       </div>
                     )}
@@ -324,7 +378,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
     try {
       setData(await api("/broadcasts"));
     } catch (e: any) {
-      setError(e.message);
+      setError(plainError(e.message));
     }
   }
   useEffect(() => {
@@ -345,17 +399,17 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
       });
       if (result.approved) {
         setNotice(
-          "Current group-admin authority verified; scoped permission recorded for 30 days or until revoked.",
+          "You are an admin in this group. Posting is allowed for 30 days, unless you remove permission.",
         );
         await load();
       } else {
         setApproval(result.instructions);
         setNotice(
-          "Ask a current group admin to send the approval command in that group. No permission is claimed until the real provider verifies it.",
+          "Copy the request below. Ask a group admin to send the command inside that group. Then come back here.",
         );
       }
     } catch (e: any) {
-      setError(e.message);
+      setError(plainError(e.message));
     } finally {
       setBusy(false);
     }
@@ -391,7 +445,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
       );
       setRequestId(crypto.randomUUID());
     } catch (e: any) {
-      setError(e.message);
+      setError(plainError(e.message));
     } finally {
       setBusy(false);
     }
@@ -414,13 +468,13 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
         requestId,
       });
       setNotice(
-        `Personal broadcast queued for ${result.uniqueGroups ?? Object.keys(chosen).length} unique groups. No charge, earning or referral activation.`,
+        `Your post is ready for ${result.uniqueGroups ?? Object.keys(chosen).length} unique groups. It is free to send. No Coins or referral rewards are earned.`,
       );
       setRequestId(crypto.randomUUID());
       setChosen({});
       await load();
     } catch (e: any) {
-      setError(e.message);
+      setError(plainError(e.message));
     } finally {
       setBusy(false);
     }
@@ -435,7 +489,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
       );
       await load();
     } catch (e: any) {
-      setError(e.message);
+      setError(plainError(e.message));
     } finally {
       setBusy(false);
     }
@@ -456,27 +510,41 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
       <div className="workspace-banner">
         <Send size={22} />
         <div>
-          <strong>Your session. Your authorised broadcasts.</strong>
+          <strong>Your own post. Sent from your WhatsApp.</strong>
           <p>
-            Personal benefit: no charge, no earnings and no referral
-            qualification. Paid campaign accounting is separate.
+            Sending your own post is free. It does not earn Coins or referral
+            rewards.
           </p>
         </div>
-        <a href="#/app/connections">Manage numbers →</a>
+        <a href="#/app/connections">My WhatsApp →</a>
       </div>
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <span className="eyebrow">PERSONAL BROADCAST COMPOSER</span>
-            <h2>Choose where your message goes.</h2>
+            <span className="eyebrow">SEND YOUR OWN POST</span>
+            <h2>Send a post to your groups.</h2>
           </div>
-          <span className="badge neutral">Free · no reward</span>
+          <span className="badge neutral">Free to send · no earnings</span>
         </div>
+        <h3 className="plain-step-title">1. Where should the post go?</h3>
+        <p className="plain-help">
+          Small groups can get posts too. Groups below 100 members do not earn
+          paid rewards. Your own posts never earn Coins, whatever the group
+          size.
+        </p>
         <div className="wa-mode-grid">
           {[
-            ["ALLSTATUS", "allstatus", "Group status only"],
-            ["ALLCHAT", "allchat", "Group chat + authorised mention-all"],
-            ["DOUBLE", "2x", "Group status first, then group chat"],
+            [
+              "ALLSTATUS",
+              "Group status",
+              "allstatus · Post to the group’s status",
+            ],
+            [
+              "ALLCHAT",
+              "Group chat",
+              "allchat · Send a chat message and notify members",
+            ],
+            ["DOUBLE", "Both", "2x · Group status first, then group chat"],
           ].map(([id, name, note]) => (
             <button
               type="button"
@@ -495,7 +563,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
           ))}
         </div>
         {!data ? (
-          <p role="status">Loading your real group inventory…</p>
+          <p role="status">Finding your groups…</p>
         ) : (
           <form
             className="form-stack"
@@ -503,126 +571,144 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
             onChange={() => setRequestId(crypto.randomUUID())}
           >
             <label>
-              Message / caption
+              2. Write your message
               <textarea
                 name="caption"
                 rows={4}
                 maxLength={2000}
-                placeholder="Write the message your communities agreed to receive"
+                placeholder="What do you want to share with your groups?"
               />
             </label>
             <label>
-              Destination link (required)
+              Add a link (needed for every post)
               <input
                 type="url"
                 name="targetUrl"
                 required
                 maxLength={1500}
-                placeholder="https://"
+                placeholder="https://your-website.com"
               />
             </label>
-            <label>
-              Optional media · up to 8 MiB
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,video/mp4"
-                disabled={busy || !data.configured}
-                onChange={upload}
-              />
-              <span className="field-help">
-                JPEG/PNG/WebP, H.264/AAC MP4, or GIF converted to MP4.
-                Video/GIF: up to 90 seconds and 1920px. Audio, stickers and
-                documents are not enabled; unsupported payloads are rejected,
-                never silently dropped.
-              </span>
-            </label>
-            <label>
-              Saved private media
-              <select
-                value={asset?.id || ""}
-                onChange={(e) => {
-                  const a = data.assets?.find(
-                    (v: any) => v.id === e.target.value,
-                  );
-                  setAsset(
-                    a
-                      ? {
-                          ...a,
-                          notice:
-                            a.mime === "image/jpeg"
-                              ? "Saved image"
-                              : "Saved MP4",
-                        }
-                      : null,
-                  );
-                  setRequestId(crypto.randomUUID());
-                }}
-              >
-                <option value="">Text only — no attached media</option>
-                {(data.assets || []).map((a: any) => (
-                  <option value={a.id} key={a.id}>
-                    {a.mime === "image/jpeg" ? "Image" : "MP4"} ·{" "}
-                    {(a.bytes / 1024).toFixed(0)} KiB · {date(a.created_at)} ·{" "}
-                    {a.id.slice(0, 8)}
-                  </option>
-                ))}
-              </select>
-              <span className="field-help">
-                50 MiB / 100 stored files per owner. Select a file to preview or
-                remove it. Removing media from an active broadcast is blocked.
-              </span>
-            </label>
-            {asset && (
-              <div className="wa-uploaded">
-                {asset.mime === "image/jpeg" && (
-                  <img
-                    src={`/api/broadcast-assets/${asset.id}`}
-                    alt="Your uploaded broadcast image"
-                  />
-                )}
-                <p>
-                  {asset.notice} · {(asset.bytes / 1024).toFixed(0)} KiB
-                </p>
-                <button
-                  type="button"
-                  className="text-link"
-                  disabled={busy}
-                  onClick={async () => {
-                    try {
-                      await send(`/broadcast-assets/${asset.id}`, {}, "DELETE");
-                      setAsset(null);
-                      setRequestId(crypto.randomUUID());
-                    } catch (e: any) {
-                      setError(e.message);
-                    }
+            <details className="post-extra-options">
+              <summary>Add a picture, video or link preview (optional)</summary>
+              <label>
+                Add a picture or video (optional)
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4"
+                  disabled={busy || !data.configured}
+                  onChange={upload}
+                />
+                <span className="field-help">
+                  Choose a picture, GIF or MP4 video up to 8 MiB. Videos can be
+                  up to 90 seconds. Audio, stickers and documents are not
+                  supported yet.
+                </span>
+              </label>
+              <label>
+                Pictures and videos you saved
+                <select
+                  value={asset?.id || ""}
+                  onChange={(e) => {
+                    const a = data.assets?.find(
+                      (v: any) => v.id === e.target.value,
+                    );
+                    setAsset(
+                      a
+                        ? {
+                            ...a,
+                            notice:
+                              a.mime === "image/jpeg"
+                                ? "Saved image"
+                                : "Saved MP4",
+                          }
+                        : null,
+                    );
+                    setRequestId(crypto.randomUUID());
                   }}
                 >
-                  Remove uploaded media
-                </button>
-              </div>
-            )}
-            <label className="checkbox-label">
-              <input type="checkbox" name="requirePreview" disabled={!!asset} />
-              <span>
-                Require a safely generated link preview before sending (text
-                only). Otherwise a visible link is always included, with a
-                preview when available.
-              </span>
-            </label>
+                  <option value="">No picture or video</option>
+                  {(data.assets || []).map((a: any) => (
+                    <option value={a.id} key={a.id}>
+                      {a.mime === "image/jpeg" ? "Image" : "MP4"} ·{" "}
+                      {(a.bytes / 1024).toFixed(0)} KiB · {date(a.created_at)} ·{" "}
+                      {a.id.slice(0, 8)}
+                    </option>
+                  ))}
+                </select>
+                <span className="field-help">
+                  You can save up to 100 files, using 50 MiB altogether. You
+                  cannot delete a file while it is being sent.
+                </span>
+              </label>
+              {asset && (
+                <div className="wa-uploaded">
+                  {asset.mime === "image/jpeg" && (
+                    <img
+                      src={`/api/broadcast-assets/${asset.id}`}
+                      alt="Your uploaded broadcast image"
+                    />
+                  )}
+                  <p>
+                    {asset.notice} · {(asset.bytes / 1024).toFixed(0)} KiB
+                  </p>
+                  <button
+                    type="button"
+                    className="text-link"
+                    disabled={busy}
+                    onClick={async () => {
+                      try {
+                        await send(
+                          `/broadcast-assets/${asset.id}`,
+                          {},
+                          "DELETE",
+                        );
+                        setAsset(null);
+                        setRequestId(crypto.randomUUID());
+                      } catch (e: any) {
+                        setError(plainError(e.message));
+                      }
+                    }}
+                  >
+                    Delete this picture or video
+                  </button>
+                </div>
+              )}
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  name="requirePreview"
+                  disabled={!!asset}
+                />
+                <span>
+                  Only send if we can make a link preview. Leave this off to
+                  send a plain link if a preview is unavailable. Pictures and
+                  videos always carry the link in their caption.
+                </span>
+              </label>
+            </details>
             <div className="wa-target-heading">
-              <h3>Select approved groups</h3>
-              <span>{Object.keys(chosen).length} unique groups selected</span>
+              <h3>3. Choose your groups</h3>
+              <span>
+                {Object.keys(chosen).length} groups selected (shared groups
+                count once)
+              </span>
             </div>
+            <p className="plain-help">
+              Can’t tick a group? Use the permission button beside it first. If
+              you are an admin, tap Allow posts in this group. Otherwise ask a
+              group admin to approve.
+            </p>
             {!data.groups.length ? (
               <div className="earning-empty">
                 <Link2 />
-                <h3>No connected group inventory yet.</h3>
+                <h3>No groups found yet.</h3>
                 <p>
-                  Pair your own number, scan groups and obtain current
-                  group-admin permission before sending.
+                  First connect your WhatsApp and tap Find my groups. Then ask
+                  the group admin for permission to post.
                 </p>
                 <a href="#/app/connections" className="text-link">
-                  Open Connections →
+                  Open My WhatsApp →
                 </a>
               </div>
             ) : (
@@ -679,16 +765,23 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                           <td>
                             <strong>{g.subject || "Unnamed group"}</strong>
                             <small>
-                              {g.status}
+                              {friendlyState(g.status)}
                               {g.excluded ? " · excluded" : ""}
                             </small>
                           </td>
                           <td>{g.slot}</td>
-                          <td>{g.member_count}</td>
+                          <td>
+                            {g.member_count}
+                            <small>
+                              {g.member_count < 100
+                                ? "Can get posts · no paid reward"
+                                : "Can get posts · 100+ members"}
+                            </small>
+                          </td>
                           <td>
                             {permitted(g) ? (
                               <>
-                                <span>Approved</span>
+                                <span>Allowed</span>
                                 <button
                                   type="button"
                                   className="text-link"
@@ -702,11 +795,11 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                                       await load();
                                       setChosen({});
                                     } catch (e: any) {
-                                      setError(e.message);
+                                      setError(plainError(e.message));
                                     }
                                   }}
                                 >
-                                  Revoke
+                                  Remove permission
                                 </button>
                               </>
                             ) : (
@@ -716,7 +809,9 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                                 disabled={busy || g.status !== "ONLINE"}
                                 onClick={() => approve(g)}
                               >
-                                Obtain admin approval
+                                {g.user_is_admin
+                                  ? "Allow posts in this group"
+                                  : "Ask admin for permission"}
                               </button>
                             )}
                           </td>
@@ -730,7 +825,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
             {approval && (
               <div className="wa-approval">
                 <label>
-                  Group-admin approval instructions
+                  Send this request to your group admin
                   <textarea
                     readOnly
                     rows={5}
@@ -745,7 +840,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                     try {
                       await navigator.clipboard.writeText(approval);
                       setNotice(
-                        "Approval instructions copied. A real group admin must approve in that group.",
+                        "Request copied. Send it to the group admin and ask them to approve it inside the group.",
                       );
                     } catch {
                       setNotice("Select and copy the instructions manually.");
@@ -753,26 +848,25 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                   }}
                 >
                   <Copy size={15} />
-                  Copy approval instructions
+                  Copy the admin request
                 </button>
               </div>
             )}
             <div className="notice warning">
               <Lock size={18} />
               <p>
-                Beta resource limits: {data.limits.maxGroups} memberships per
-                personal run, {data.limits.dailyRuns} runs per UTC day, at least
-                one minute apart. These are personal-use limits—not a 100-group
-                earning cap. Mention-all must be authorised; notifications,
-                views and new members are not guaranteed.
+                While we test this feature, you can send {data.limits.dailyRuns}{" "}
+                personal posts per day (resets at midnight UTC, 1am in Nigeria).
+                Choose up to {data.limits.maxGroups} groups each time and wait 1
+                minute between posts. Not everyone may see the post or get a
+                notification.
               </p>
             </div>
             <label className="checkbox-label">
               <input type="checkbox" required />
               <span>
-                I confirm this content and destination are appropriate for the
-                selected communities, and understand this is a personal
-                broadcast with no earnings.
+                These groups allow this kind of post. I understand that sending
+                my own post does not earn Coins.
               </span>
             </label>
             <button
@@ -781,8 +875,8 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
             >
               <Send size={16} />
               {busy
-                ? "Working…"
-                : `Queue personal ${mode === "DOUBLE" ? "2x" : mode.toLowerCase()} broadcast`}
+                ? "Please wait…"
+                : `Send my post to ${Object.keys(chosen).length} ${Object.keys(chosen).length === 1 ? "group" : "groups"}`}
             </button>
           </form>
         )}
@@ -790,33 +884,33 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <h2>Personal broadcast history</h2>
+            <h2>Your recent posts</h2>
             <p>
-              “Submitted” means provider acceptance, not proof that everybody
-              received or viewed it.
+              “Sent to WhatsApp” does not mean everyone received or read your
+              post. Check your groups in WhatsApp if you are unsure.
             </p>
           </div>
           <button className="button button-outline small" onClick={load}>
             <RefreshCw size={14} />
-            Refresh history
+            Check again
           </button>
         </div>
         {!data?.runs.length ? (
           <div className="earning-empty">
             <Send />
-            <h3>No personal broadcasts yet.</h3>
-            <p>Only your real queued runs appear here.</p>
+            <h3>You have not sent a post yet.</h3>
+            <p>Your posts will show here after you send one.</p>
           </div>
         ) : (
           <div className="table-scroll">
             <table>
               <thead>
                 <tr>
-                  <th>Created</th>
-                  <th>Mode</th>
-                  <th>State</th>
-                  <th>Submitted</th>
-                  <th>Attention</th>
+                  <th>Date</th>
+                  <th>Where</th>
+                  <th>Progress</th>
+                  <th>Sent to WhatsApp</th>
+                  <th>Needs checking</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -824,8 +918,14 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                 {data.runs.map((r: any) => (
                   <tr key={r.id}>
                     <td>{date(r.created_at)}</td>
-                    <td>{r.mode === "DOUBLE" ? "2x" : r.mode.toLowerCase()}</td>
-                    <td>{r.status}</td>
+                    <td>
+                      {r.mode === "DOUBLE"
+                        ? "Both (2x)"
+                        : r.mode === "ALLSTATUS"
+                          ? "Group status"
+                          : "Group chat"}
+                    </td>
+                    <td>{friendlyState(r.status)}</td>
                     <td>
                       {r.submitted} / {r.placements}
                     </td>
@@ -839,7 +939,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                               (await api(`/broadcasts/${r.id}`)).placements,
                             );
                           } catch (e: any) {
-                            setError(e.message);
+                            setError(plainError(e.message));
                           }
                         }}
                       >
@@ -851,7 +951,7 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                           disabled={busy}
                           onClick={() => cancel(r.id)}
                         >
-                          Cancel unsent
+                          Stop posts not sent yet
                         </button>
                       )}
                     </td>
@@ -863,20 +963,17 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
         )}
         {details && (
           <div className="wa-run-details">
-            <h3>Placement-by-placement results</h3>
+            <h3>What happened in each group</h3>
             <button className="text-link" onClick={() => setDetails(null)}>
-              Close details
+              Close
             </button>
             {details.map((p) => (
               <p key={p.id}>
                 <strong>
                   {p.surface === "GROUP_STATUS" ? "Group status" : "Group chat"}{" "}
-                  ·{" "}
-                  {p.status === "ACCEPTED"
-                    ? "Submitted — delivery unverified"
-                    : p.status}
+                  · {friendlyState(p.status)}
                 </strong>
-                <span>{p.failure_reason || "No failure recorded"}</span>
+                <span>{p.failure_reason || "No problem reported"}</span>
               </p>
             ))}
           </div>

@@ -29,20 +29,20 @@ test("private pairing and personal composer are accessible, responsive and never
     .getByRole("button", { name: "Create account", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "A little progress, every day." }),
+    page.getByRole("heading", { name: "Welcome to Pappy." }),
   ).toBeVisible();
-  await navigate(page, "Connections");
+  await navigate(page, "My WhatsApp");
   await expect(
-    page.getByRole("heading", { name: "Room for two connections." }),
+    page.getByRole("heading", { name: "My WhatsApp numbers." }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Generate private code" }),
+    page.getByRole("button", { name: "Get my connection code" }),
   ).toHaveCount(2);
   await expect(
-    page.getByRole("textbox", { name: /Private pairing code/ }),
+    page.getByRole("textbox", { name: /Your connection code/ }),
   ).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "No groups scanned yet." }),
+    page.getByRole("heading", { name: "No groups found yet." }),
   ).toBeVisible();
   expect(
     (
@@ -60,27 +60,27 @@ test("private pairing and personal composer are accessible, responsive and never
     path: `docs/screenshots/plogme-connections-${info.project.name}.png`,
     fullPage: true,
   });
-  await navigate(page, "Personal broadcasts");
+  await navigate(page, "Send a post");
   await expect(
-    page.getByRole("heading", { name: "Choose where your message goes." }),
+    page.getByRole("heading", { name: "Send a post to your groups." }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "No personal broadcasts yet." }),
+    page.getByRole("heading", { name: "You have not sent a post yet." }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "2x Group status first, then group chat" })
+    .getByRole("button", {
+      name: "Both 2x · Group status first, then group chat",
+    })
     .click();
   await expect(
     page.getByRole("button", {
-      name: "2x Group status first, then group chat",
+      name: "Both 2x · Group status first, then group chat",
     }),
   ).toHaveAttribute("aria-pressed", "true");
   await expect(
-    page.getByRole("button", { name: "Queue personal 2x broadcast" }),
+    page.getByRole("button", { name: "Send my post to 0 groups" }),
   ).toBeDisabled();
-  await expect(
-    page.getByText("No connected group inventory yet."),
-  ).toBeVisible();
+  await expect(page.getByText("No groups found yet.")).toBeVisible();
   expect(
     (
       await new AxeBuilder({ page })

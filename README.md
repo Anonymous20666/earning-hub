@@ -2,6 +2,10 @@
 
 A **pre-launch** worker / advertiser marketplace with a real, server-backed account and planning foundation. A real **personal WhatsApp owner-testing pilot** is available when explicitly configured. Paid earning, paid dispatch and payments remain **off**.
 
+## Easier use and small groups (v0.4.0)
+
+Small groups can receive approved posts without earning a paid reward below 100 members. Overview now guides users through My WhatsApp → Choose groups → Send a post. Plain language, larger controls, mobile group cards and a lightweight moving 3D-style landing scene make the main path easier to use. See [the change and validation notes](docs/EASY-USE-0.4.0.md). Paid dispatch and payouts remain off.
+
 ## What works
 
 - Server-side email/password registration and login; salted scrypt password derivation.

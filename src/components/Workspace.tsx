@@ -1,3 +1,4 @@
+import { QuickStart } from "./QuickStart";
 import { WhatsAppConnections, PersonalBroadcasts } from "./WhatsApp";
 import { EarningHub, TreasuryPanel } from "./EarningHub";
 import React, { useState, useEffect, useRef } from "react";
@@ -235,8 +236,8 @@ export function Workspace({
     ...(worker
       ? [
           ["wallet", "Wallet & rewards", Wallet],
-          ["connections", "Connections", Link2],
-          ["broadcasts", "Personal broadcasts", Send],
+          ["connections", "My WhatsApp", Link2],
+          ["broadcasts", "Send a post", Send],
           ["calculator", "Earning calculator", Coins],
           ["referrals", "Referrals", Link2],
         ]
@@ -286,30 +287,30 @@ export function Workspace({
   const wallet = data?.wallet;
   const titles: Record<string, [string, string]> = {
     overview: [
-      `A little progress, every day.`,
+      `Welcome to Pappy.`,
       worker
-        ? "Your balances, connections and next steps, all in one place."
+        ? "Connect WhatsApp, choose your groups and send a post."
         : "Turn a clear idea into a thoughtfully planned campaign.",
     ],
     wallet: [
-      "Every Coin, accounted for.",
-      "Your earned balance and conditional bonus stay separate.",
+      "My money.",
+      "Your earned Coins and welcome bonus are shown separately.",
     ],
     connections: [
-      "Your community connections.",
-      "Real accounts and verified activity will appear here when connected.",
+      "My WhatsApp.",
+      "Connect your number here. You can use up to two numbers.",
     ],
     broadcasts: [
-      "Your message. Your communities.",
-      "Authorised personal broadcasts, without charges or earnings.",
+      "Send a post.",
+      "Post to groups that have given permission. Your own posts are free.",
     ],
     calculator: [
-      "Know what each group earns.",
-      "An exact planning tool. Never a simulated wallet balance.",
+      "Check group rewards.",
+      "Try an example. This does not add Coins to your account.",
     ],
     referrals: [
-      "Good people bring good people.",
-      "Your invitations, conditional rewards and earned credits.",
+      "Invite a friend.",
+      "Share your link. See which rewards are waiting and which are earned.",
     ],
     treasury: [
       "Funding before promises.",
@@ -320,17 +321,11 @@ export function Workspace({
       "Create a campaign draft. Refine it. Come back when you’re ready.",
     ],
     support: [
-      "A little help goes a long way.",
-      "Keep your questions and replies together in your workspace.",
+      "My help requests.",
+      "Ask a question here. Replies will show on this page.",
     ],
-    settings: [
-      "Make yourself at home.",
-      "Manage your profile and understand your account status.",
-    ],
-    status: [
-      "Built on clear expectations.",
-      "See exactly what is available—and what is not connected.",
-    ],
+    settings: ["My account.", "Change your details and check your account."],
+    status: ["What is ready?", "Check what you can use now."],
     admin: [
       "A clear view of the platform.",
       "Real users, support requests and recorded operations.",
@@ -338,7 +333,7 @@ export function Workspace({
   };
   const heading = titles[page];
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${worker ? "easy-workspace" : ""}`}>
       <a
         href="#main-content"
         className="skip-link"
@@ -546,20 +541,20 @@ export function Workspace({
               <>
                 {page === "overview" && (
                   <>
+                    {worker && <QuickStart revision={earningRevision} />}
                     <div className="workspace-banner">
-                      <span className="banner-icon">
-                        <Globe2 size={20} />
-                      </span>
+                      <Lock size={21} />
                       <div>
-                        <strong>A clear start. No simulated results.</strong>
+                        <strong>
+                          Paid jobs and withdrawals are not open yet.
+                        </strong>
                         <p>
-                          Accounts and planning are live. Check Connections for
-                          the personal WhatsApp pilot. Paid earning and payouts
-                          remain off.
+                          You can use your own WhatsApp to send free personal
+                          posts. These posts do not earn money.
                         </p>
                       </div>
                       <a href="#/app/status">
-                        Service status
+                        What is available?
                         <ArrowRight size={16} />
                       </a>
                     </div>
@@ -569,7 +564,7 @@ export function Workspace({
                           label="Earned balance"
                           value={coins(wallet?.earned_milli || 0)}
                           unit="Coins"
-                          note="From verified campaign deliveries"
+                          note="From confirmed paid posts only"
                           icon={Coins}
                           featured
                         />
@@ -577,14 +572,14 @@ export function Workspace({
                           label="Locked welcome bonus"
                           value={coins(wallet?.locked_milli || 0)}
                           unit="Coins"
-                          note="Conditional · not available to withdraw"
+                          note="Not ready to withdraw"
                           icon={Lock}
                         />
                         <Metric
                           label="Total withdrawn"
                           value={coins(wallet?.withdrawn_milli || 0)}
                           unit="Coins"
-                          note="No payout provider connected"
+                          note="Withdrawals are not open yet"
                           icon={ArrowUpRight}
                         />
                       </div>
@@ -615,141 +610,147 @@ export function Workspace({
                       <a className="earning-link" href="#/app/calculator">
                         <Coins size={20} />
                         <div>
-                          <strong>
-                            See exactly how your groups would earn
-                          </strong>
+                          <strong>How would my groups earn Coins?</strong>
                           <span>
-                            Member-based rewards, two-number deduplication and
-                            ₦5 referrals.
+                            Groups with 100+ members can earn from paid posts.
+                            Smaller groups can receive posts for no reward.
                           </span>
                         </div>
                         <ArrowRight size={18} />
                       </a>
                     )}
-                    <div className="overview-grid">
-                      <section className="panel next-steps">
-                        <div className="panel-heading">
-                          <div>
-                            <span className="eyebrow">YOUR NEXT CHAPTER</span>
-                            <h2>
-                              {worker
-                                ? "A good place to begin."
-                                : "From idea to intention."}
-                            </h2>
-                          </div>
-                          <span className="outlined-icon">
-                            <ArrowUpRight />
-                          </span>
-                        </div>
-                        <div className="checklist-row">
-                          <span className="checklist-number done">
-                            <Check size={15} />
-                          </span>
-                          <div>
-                            <strong>Your account is ready</strong>
-                            <p>
-                              Your {worker ? "worker" : "advertiser"} workspace
-                              is set up.
-                            </p>
-                          </div>
-                          <span className="badge green">Done</span>
-                        </div>
-                        <a
-                          className="checklist-row"
-                          href={worker ? "#/app/wallet" : "#/app/campaigns"}
-                        >
-                          <span className="checklist-number">02</span>
-                          <div>
-                            <strong>
-                              {worker
-                                ? "Understand your reward rules"
-                                : "Build your first campaign draft"}
-                            </strong>
-                            <p>
-                              {worker
-                                ? "Know what is earned, locked and withdrawable."
-                                : "Choose a destination, a message and an audience."}
-                            </p>
-                          </div>
-                          <ChevronRight size={18} />
-                        </a>
-                        <a className="checklist-row" href="#/app/status">
-                          <span className="checklist-number">03</span>
-                          <div>
-                            <strong>
-                              {worker
-                                ? "Explore connection availability"
-                                : "Check launch availability"}
-                            </strong>
-                            <p>
-                              See which integrations are still being prepared.
-                            </p>
-                          </div>
-                          <ChevronRight size={18} />
-                        </a>
-                      </section>
-                      <section className="panel activity-panel">
-                        <div className="panel-heading">
-                          <h2>
-                            {worker
-                              ? "The first milestone"
-                              : "Your campaign workspace"}
-                          </h2>
-                          <span className="badge neutral">
-                            {worker ? "FIRST PAYOUT" : "DRAFTS"}
-                          </span>
-                        </div>
-                        {worker ? (
-                          <>
-                            <div className="milestone-number">
-                              {coins(wallet?.earned_milli || 0)}
-                              <span> / 300.000 Coins earned</span>
+                    {!worker && (
+                      <>
+                        {" "}
+                        <div className="overview-grid">
+                          <section className="panel next-steps">
+                            <div className="panel-heading">
+                              <div>
+                                <span className="eyebrow">
+                                  YOUR NEXT CHAPTER
+                                </span>
+                                <h2>
+                                  {worker
+                                    ? "A good place to begin."
+                                    : "From idea to intention."}
+                                </h2>
+                              </div>
+                              <span className="outlined-icon">
+                                <ArrowUpRight />
+                              </span>
                             </div>
-                            <progress
-                              max={300000}
-                              value={wallet?.earned_milli || 0}
-                              aria-label="Earned progress towards first withdrawal"
-                            />
-                            <p>
-                              Earn 300.000 Coins to meet the first earned
-                              threshold. Add the 200.000 locked bonus for a
-                              minimum 500.000 Coin first cashout.
-                            </p>
-                            <a href="#/app/wallet" className="inline-link">
-                              Understand your wallet
-                              <ArrowRight size={16} />
+                            <div className="checklist-row">
+                              <span className="checklist-number done">
+                                <Check size={15} />
+                              </span>
+                              <div>
+                                <strong>Your account is ready</strong>
+                                <p>
+                                  Your {worker ? "worker" : "advertiser"}{" "}
+                                  workspace is set up.
+                                </p>
+                              </div>
+                              <span className="badge green">Done</span>
+                            </div>
+                            <a
+                              className="checklist-row"
+                              href={worker ? "#/app/wallet" : "#/app/campaigns"}
+                            >
+                              <span className="checklist-number">02</span>
+                              <div>
+                                <strong>
+                                  {worker
+                                    ? "Understand your reward rules"
+                                    : "Build your first campaign draft"}
+                                </strong>
+                                <p>
+                                  {worker
+                                    ? "Know what is earned, locked and withdrawable."
+                                    : "Choose a destination, a message and an audience."}
+                                </p>
+                              </div>
+                              <ChevronRight size={18} />
                             </a>
-                          </>
-                        ) : (
-                          <Empty
-                            icon={FileText}
-                            title={
-                              data.campaigns.length
-                                ? `${data.campaigns.length} saved draft${data.campaigns.length === 1 ? "" : "s"}`
-                                : "A blank page. A new opportunity."
-                            }
-                            action={
-                              <button
-                                className="inline-link"
-                                onClick={() =>
+                            <a className="checklist-row" href="#/app/status">
+                              <span className="checklist-number">03</span>
+                              <div>
+                                <strong>
+                                  {worker
+                                    ? "Explore connection availability"
+                                    : "Check launch availability"}
+                                </strong>
+                                <p>
+                                  See which integrations are still being
+                                  prepared.
+                                </p>
+                              </div>
+                              <ChevronRight size={18} />
+                            </a>
+                          </section>
+                          <section className="panel activity-panel">
+                            <div className="panel-heading">
+                              <h2>
+                                {worker
+                                  ? "The first milestone"
+                                  : "Your campaign workspace"}
+                              </h2>
+                              <span className="badge neutral">
+                                {worker ? "FIRST PAYOUT" : "DRAFTS"}
+                              </span>
+                            </div>
+                            {worker ? (
+                              <>
+                                <div className="milestone-number">
+                                  {coins(wallet?.earned_milli || 0)}
+                                  <span> / 300.000 Coins earned</span>
+                                </div>
+                                <progress
+                                  max={300000}
+                                  value={wallet?.earned_milli || 0}
+                                  aria-label="Earned progress towards first withdrawal"
+                                />
+                                <p>
+                                  Earn 300.000 Coins to meet the first earned
+                                  threshold. Add the 200.000 locked bonus for a
+                                  minimum 500.000 Coin first cashout.
+                                </p>
+                                <a href="#/app/wallet" className="inline-link">
+                                  Understand your wallet
+                                  <ArrowRight size={16} />
+                                </a>
+                              </>
+                            ) : (
+                              <Empty
+                                icon={FileText}
+                                title={
                                   data.campaigns.length
-                                    ? go("/app/campaigns")
-                                    : openCampaign()
+                                    ? `${data.campaigns.length} saved draft${data.campaigns.length === 1 ? "" : "s"}`
+                                    : "A blank page. A new opportunity."
+                                }
+                                action={
+                                  <button
+                                    className="inline-link"
+                                    onClick={() =>
+                                      data.campaigns.length
+                                        ? go("/app/campaigns")
+                                        : openCampaign()
+                                    }
+                                  >
+                                    {data.campaigns.length
+                                      ? "View your campaigns"
+                                      : "Create your first draft"}
+                                    <ArrowRight size={15} />
+                                  </button>
                                 }
                               >
-                                {data.campaigns.length
-                                  ? "View your campaigns"
-                                  : "Create your first draft"}
-                                <ArrowRight size={15} />
-                              </button>
-                            }
-                          >
-                            Your campaign planning lives here. Nothing is
-                            charged when you save a draft.
-                          </Empty>
-                        )}
-                      </section>
-                    </div>
+                                Your campaign planning lives here. Nothing is
+                                charged when you save a draft.
+                              </Empty>
+                            )}
+                          </section>
+                        </div>
+                      </>
+                    )}
                     <section className="panel">
                       <div className="panel-heading">
                         <div>
@@ -760,7 +761,7 @@ export function Workspace({
                           </h2>
                           <p>
                             {worker
-                              ? "Your actual ledger entries, without invented earnings."
+                              ? "Your account’s Coin history."
                               : "Your most recently saved plans."}
                           </p>
                         </div>
@@ -1205,7 +1206,7 @@ function Ledger({ entries }: { entries: any[] }) {
                         ? "Welcome bonus"
                         : e.kind}
                     </strong>
-                    <small>Registration reward · conditional</small>
+                    <small>Welcome bonus · locked</small>
                   </span>
                 </span>
               </td>

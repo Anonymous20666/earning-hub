@@ -16,7 +16,7 @@ async function signup(page: Page, role = "worker") {
     .getByRole("button", { name: "Create account", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "A little progress, every day." }),
+    page.getByRole("heading", { name: "Welcome to Pappy." }),
   ).toBeVisible();
   return email;
 }
@@ -26,11 +26,11 @@ test("worker subpages: accessibility, no horizontal overflow, keyboard dialog di
   await signup(page);
   const results: any[] = [];
   for (const [route, title] of [
-    ["wallet", "Every Coin, accounted for."],
-    ["connections", "Your community connections."],
-    ["support", "A little help goes a long way."],
-    ["settings", "Make yourself at home."],
-    ["status", "Built on clear expectations."],
+    ["wallet", "My money."],
+    ["connections", "My WhatsApp."],
+    ["support", "My help requests."],
+    ["settings", "My account."],
+    ["status", "What is ready?"],
   ]) {
     await page.goto("/#/app/" + route);
     await expect(

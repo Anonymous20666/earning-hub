@@ -1,3 +1,4 @@
+import { LiveScene } from "./LiveScene";
 import React, { useState } from "react";
 import {
   ArrowUpRight,
@@ -22,23 +23,23 @@ import { User } from "../api";
 const faqs = [
   [
     "What is the referral reward?",
-    "₦5 = 5.000 Coins. It stays pending until the referred worker pairs a number and completes their first verified qualifying campaign delivery. Paid broadcasting is not enabled yet.",
+    "Invite a friend. You get 5 Coins (₦5) only after they connect their number and complete their first confirmed paid post in a group with 100+ members. Signing up or sending their own posts does not count. Paid jobs are not open yet.",
   ],
   [
     "What is Pappy Earning Hub?",
-    "A marketplace being built to connect advertisers with workers who distribute approved WhatsApp and Telegram campaigns. Accounts, campaign planning and support are available. Live delivery and payouts are not yet enabled.",
+    "Pappy helps you connect your own WhatsApp and share posts with groups that allow them. Your own posts are free. Businesses can save ad plans. Paid jobs and withdrawals are not open yet.",
   ],
   [
     "Can I earn or withdraw money right now?",
-    "Not yet. Paid campaign delivery and payouts are not enabled. Personal WhatsApp broadcasting may be available as an owner-testing pilot through Connections. Your dashboard shows actual records, never simulated earnings.",
+    "No. Paid jobs and withdrawals are not open yet. You can still connect your WhatsApp and send your own posts for free. Those posts do not earn Coins.",
   ],
   [
     "How does the 200 Coin welcome bonus work?",
-    "Worker registration adds 200.000 locked Coins. It is not cash you can withdraw immediately. Your first payout requires at least 300.000 earned Coins and a minimum total of 500.000 Coins. Later payouts require 500.000 earned Coins. Payouts remain unavailable until the payment service is configured.",
+    "You start with 200 locked Coins. You cannot withdraw them now. For your first withdrawal, you need 300 earned Coins plus the 200 bonus, making at least 500 Coins. For later withdrawals, you need at least 500 earned Coins. Withdrawals are not open yet.",
   ],
   [
     "How are group rewards calculated?",
-    "A group needs at least 100 members and permission to post. Each unique successful group earns min(members, 1,000) ÷ 1,000 Coins. One group is enough and there is no 100-group earning cap. Up to two numbers may belong to one owner; shared groups count once per campaign. Real rewards require verified delivery and cash-backed campaigns. 1 Coin = ₦1 worldwide.",
+    "Small groups can receive posts, but groups below 100 members earn no paid reward. For paid work, 100 members earn 0.100 Coins, 742 earn 0.742 Coins and 1,000 or more earn 1 Coin per confirmed post. A status post and a chat post are checked separately. Shared groups count once per post type. Your own posts never earn Coins. 1 Coin = ₦1. Paid jobs are not open yet.",
   ],
   [
     "What does a campaign estimate include?",
@@ -46,7 +47,7 @@ const faqs = [
   ],
   [
     "Will you send messages without permission?",
-    "Campaigns must respect community rules, recipient consent and the relevant platform policies. Messaging automation is disabled pending a supported, reviewed integration. Never share your WhatsApp security code or password.",
+    "No post is queued without your choice. Your groups must allow it, and you need the admin’s permission. Never share your WhatsApp login code or PIN. Only enter the connection code from this website inside your own WhatsApp app.",
   ],
 ];
 export function Landing({ user }: { user: User | null }) {
@@ -54,12 +55,18 @@ export function Landing({ user }: { user: User | null }) {
     [audience, setAudience] = useState<"worker" | "advertiser">("worker");
   const scroll = (id: string) => {
     setMenu(false);
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    document
+      .getElementById(id)
+      ?.scrollIntoView({
+        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
   };
   return (
-    <div className="landing">
+    <div className="landing landing-v4">
       <div className="announcement">
-        <span className="status-dot" /> THE NEXT CHAPTER OF COMMUNITY GROWTH{" "}
+        <span className="status-dot" /> YOUR WHATSAPP. YOUR GROUPS. YOUR CHOICE.{" "}
         <span className="announcement-tag">Pre-launch</span>
       </div>
       <header className="public-header wrap">
@@ -70,7 +77,7 @@ export function Landing({ user }: { user: User | null }) {
         >
           <button onClick={() => scroll("how-it-works")}>How it works</button>
           <button onClick={() => scroll("two-sides")}>
-            For workers & brands
+            For you & businesses
           </button>
           <button onClick={() => scroll("the-rules")}>The rules</button>
           <button onClick={() => scroll("faq")}>FAQs</button>
@@ -97,25 +104,36 @@ export function Landing({ user }: { user: User | null }) {
         <section className="hero wrap">
           <div className="hero-copy">
             <div className="eyebrow">
-              <span className="little-line" /> BUILT AROUND REAL CONNECTIONS
+              <span className="little-line" /> SIMPLE STEPS. YOUR OWN WHATSAPP.
             </div>
             <h1>
-              Good communities.
+              One post.
               <br />
-              Greater <span className="serif-word">possibilities.</span>
+              <span className="serif-word">Your WhatsApp</span>
+              <br />
+              groups.
             </h1>
             <p className="hero-description">
-              A better way for brands to reach communities.
-              <br className="desktop-break" /> A clearer path for workers to
-              share in the value.
+              Connect your number. Choose your groups.
+              <br className="desktop-break" /> Share your message—with
+              permission.
             </p>
             <div className="hero-actions">
-              <ArrowLink href="#/join/worker">Join as a worker</ArrowLink>
-              <a href="#/join/advertiser" className="button button-outline">
-                Plan a campaign
-                <ArrowUpRight size={18} />
-              </a>
+              <ArrowLink href={user ? "#/app/connections" : "#/join/worker"}>
+                Connect my WhatsApp
+              </ArrowLink>
+              <button
+                className="button button-outline"
+                onClick={() => scroll("how-it-works")}
+              >
+                Show me how
+                <ArrowRight size={18} />
+              </button>
             </div>
+            <p className="hero-availability">
+              Your own posts are free. Paid jobs and withdrawals are not open
+              yet.
+            </p>
             <div className="hero-footnote">
               <Lock size={14} />
               <span>
@@ -126,92 +144,7 @@ export function Landing({ user }: { user: User | null }) {
               </span>
             </div>
           </div>
-          <div
-            className="hero-visual"
-            aria-label="Illustration of how brands and communities connect, not live performance data"
-          >
-            <div className="diagram-label">
-              <span className="status-dot" /> THE COMMUNITY CONNECTION
-            </div>
-            <svg
-              className="network-lines"
-              viewBox="0 0 520 470"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M260 230C260 140 120 170 100 105M260 230C350 230 390 160 428 125M260 230C240 310 130 300 108 365M260 230C330 230 380 310 410 360"
-                stroke="#bfd3be"
-                strokeWidth="1.5"
-              />
-              <circle
-                cx="260"
-                cy="230"
-                r="106"
-                stroke="#dce5d9"
-                strokeDasharray="3 8"
-              />
-              <circle cx="260" cy="230" r="166" stroke="#e5ebe0" />
-              <path
-                d="M100 105L108 365M428 125L410 360"
-                stroke="#e5ebe0"
-                strokeDasharray="4 8"
-              />
-            </svg>
-            <div className="connection-node node-brand">
-              <span className="node-icon">
-                <Layers />
-              </span>
-              <div>
-                <strong>Ambitious brands</strong>
-                <small>Find your audience</small>
-              </div>
-              <ArrowUpRight size={15} />
-            </div>
-            <div className="connection-node node-wa">
-              <span className="node-icon wa">
-                <MessageCircle />
-              </span>
-              <div>
-                <strong>WhatsApp</strong>
-                <small>Community campaigns</small>
-              </div>
-            </div>
-            <div className="connection-center">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M6 19V5h7a4 4 0 0 1 0 8h-3M10 9h3M10 15v4"
-                  stroke="currentColor"
-                  strokeWidth="3"
-                />
-              </svg>
-              <span>pappy</span>
-            </div>
-            <div className="connection-node node-worker">
-              <span className="node-icon">
-                <Coins />
-              </span>
-              <div>
-                <strong>Community workers</strong>
-                <small>Value for your contribution</small>
-              </div>
-            </div>
-            <div className="connection-node node-tg">
-              <span className="node-icon tg">
-                <Send />
-              </span>
-              <div>
-                <strong>Telegram</strong>
-                <small>Grow with intention</small>
-              </div>
-            </div>
-            <span className="diagram-caption">
-              One ecosystem. Shared opportunity.
-            </span>
-            <span className="illustration-tag">
-              PLATFORM CONCEPT · NOT LIVE DATA
-            </span>
-          </div>
+          <LiveScene />
         </section>
         <div className="principle-strip">
           <div className="wrap">
@@ -234,14 +167,14 @@ export function Landing({ user }: { user: User | null }) {
             <div>
               <div className="eyebrow">01 / SHARED VALUE</div>
               <h2>
-                Two sides.
+                For you. For businesses.
                 <br />
-                One better ecosystem.
+                Made for real people.
               </h2>
             </div>
             <p>
-              Communities aren’t just numbers. We’re building a marketplace that
-              makes the contribution—and the conditions—clear for everyone.
+              Use your own WhatsApp to share posts with your groups. Businesses
+              can plan ads for when paid campaigns open.
             </p>
           </div>
           <div className="audience-grid">
@@ -251,13 +184,13 @@ export function Landing({ user }: { user: User | null }) {
                 <Coins size={28} />
               </div>
               <h3>
-                Your contribution
+                Your groups.
                 <br />
-                should count.
+                Your message.
               </h3>
               <p>
-                Create your worker account, understand the reward rules, and get
-                ready for approved community campaigns.
+                Connect your WhatsApp and send your own posts for free. Small
+                groups are welcome too. You need the group admin’s permission.
               </p>
               <ul>
                 <li>
@@ -266,11 +199,12 @@ export function Landing({ user }: { user: User | null }) {
                 </li>
                 <li>
                   <Check />
-                  Separate earned and locked balances
+                  Your own posts are always separate from paid work
                 </li>
                 <li>
                   <Check />
-                  Clear qualification and payout conditions
+                  Groups under 100 members can get posts, but earn no paid
+                  reward
                 </li>
               </ul>
               <a href="#/join/worker" className="card-link">
@@ -319,8 +253,9 @@ export function Landing({ user }: { user: User | null }) {
               <div>
                 <div className="eyebrow">02 / YOUR FIRST STEPS</div>
                 <h2>
-                  Less guesswork.
-                  <br />A clearer way forward.
+                  Three steps.
+                  <br />
+                  We’ll guide you.
                 </h2>
               </div>
               <div className="segmented" aria-label="Choose a journey">
@@ -329,14 +264,14 @@ export function Landing({ user }: { user: User | null }) {
                   onClick={() => setAudience("worker")}
                   aria-pressed={audience === "worker"}
                 >
-                  I’m a worker
+                  I want to post
                 </button>
                 <button
                   className={audience === "advertiser" ? "selected" : ""}
                   onClick={() => setAudience("advertiser")}
                   aria-pressed={audience === "advertiser"}
                 >
-                  I’m an advertiser
+                  I want to plan an ad
                 </button>
               </div>
             </div>
@@ -344,16 +279,16 @@ export function Landing({ user }: { user: User | null }) {
               {(audience === "worker"
                 ? [
                     [
-                      "Make it yours",
-                      "Create your account. Your locked bonus and earned balance stay separate from day one.",
+                      "Connect your WhatsApp",
+                      "Create an account. Open My WhatsApp and get a connection code. Enter it in your own WhatsApp app.",
                     ],
                     [
-                      "Know the conditions",
-                      "Understand qualified groups, delivery requirements and withdrawal thresholds before taking part.",
+                      "Choose your groups",
+                      "Tap Find my groups. Small groups are welcome. Ask the group admin for permission before posting.",
                     ],
                     [
-                      "Be ready for launch",
-                      "Pairing and earning will open only when real integrations are ready. No simulated activity.",
+                      "Send your post",
+                      "Open Send a post. Write your message, add a link and choose group status, group chat or both. Your own posts are free and do not earn Coins.",
                     ],
                   ]
                 : [

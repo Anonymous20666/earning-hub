@@ -6,6 +6,14 @@ export const EARNING_RULES = Object.freeze({
   minMembers: 100,
   maxPaidMembers: 1000,
 });
+// Receiving a post and earning for it are separate decisions.
+export function placementRewardMilli(members: number) {
+  if (!Number.isSafeInteger(members) || members < 0)
+    throw Error("Invalid member count");
+  return members < EARNING_RULES.minMembers
+    ? 0
+    : Math.min(members, EARNING_RULES.maxPaidMembers);
+}
 export type GroupSnapshot = {
   accountId: string;
   groupJid: string;

@@ -33,7 +33,7 @@ async function register(page: Page, role: "worker" | "advertiser") {
     .getByRole("button", { name: "Create account", exact: true })
     .click();
   await expect(
-    page.getByRole("heading", { name: "A little progress, every day." }),
+    page.getByRole("heading", { name: "Welcome to Pappy." }),
   ).toBeVisible();
   return email;
 }
@@ -44,7 +44,7 @@ test("landing, navigation, FAQs and honest service status", async ({
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "Good communities.",
+    "One post.",
   );
   await checkOverflow(page);
   await page.screenshot({
@@ -55,13 +55,12 @@ test("landing, navigation, FAQs and honest service status", async ({
     .getByText("Can I earn or withdraw money right now?", { exact: true })
     .click();
   await expect(
-    page.getByText(
-      "Not yet. Paid campaign delivery and payouts are not enabled.",
-      { exact: false },
-    ),
+    page.getByText("No. Paid jobs and withdrawals are not open yet.", {
+      exact: false,
+    }),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "I’m an advertiser", exact: true })
+    .getByRole("button", { name: "I want to plan an ad", exact: true })
     .click();
   await expect(
     page.getByRole("heading", { name: "Build your campaign", exact: true }),
@@ -90,7 +89,7 @@ test("worker registration, persistence, wallet, support, settings, logout and lo
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "A little progress, every day." }),
+    page.getByRole("heading", { name: "Welcome to Pappy." }),
   ).toBeVisible();
   await checkOverflow(page);
   await page.screenshot({
@@ -112,9 +111,9 @@ test("worker registration, persistence, wallet, support, settings, logout and lo
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Export CSV" }).click();
   expect((await download).suggestedFilename()).toBe("pappy-wallet-ledger.csv");
-  await nav(page, "Connections");
+  await nav(page, "My WhatsApp");
   await expect(
-    page.getByRole("heading", { name: "No groups scanned yet." }),
+    page.getByRole("heading", { name: "No groups found yet." }),
   ).toBeVisible();
   await nav(page, "Support");
   await page.getByRole("button", { name: "New request" }).click();
@@ -149,7 +148,7 @@ test("worker registration, persistence, wallet, support, settings, logout and lo
       .click();
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
-    "Good communities.",
+    "One post.",
   );
   await page.goto("/#/app");
   await expect(
@@ -159,7 +158,7 @@ test("worker registration, persistence, wallet, support, settings, logout and lo
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "A little progress, every day." }),
+    page.getByRole("heading", { name: "Welcome to Pappy." }),
   ).toBeVisible();
   await page.context().clearCookies();
   await page.getByRole("button", { name: "Refresh", exact: true }).click();

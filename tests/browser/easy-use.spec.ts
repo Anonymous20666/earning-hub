@@ -1,0 +1,178 @@
+import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+test("landing motion can be paused, respects reduced motion and does not create horizontal overflow", async ({
+  page,
+}, info) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(
+    "One post.",
+  );
+  await expect(
+    page.getByRole("button", { name: "Play movement" }),
+  ).toBeVisible();
+  expect(
+    await page.locator(".scene-phone").evaluate((el) => {
+      const style = getComputedStyle(el);
+      return style.animationName === "none"
+        ? "paused"
+        : style.animationPlayState;
+    }),
+  ).toBe("paused");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.getByRole("button", { name: "Play movement" }).click();
+  await expect(
+    page.getByRole("button", { name: "Pause movement" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Pause movement" }).click();
+  await expect(
+    page.getByRole("button", { name: "Play movement" }),
+  ).toBeVisible();
+  expect(
+    await page.locator(".scene-phone").evaluate((el) => {
+      const style = getComputedStyle(el);
+      return style.animationName === "none"
+        ? "paused"
+        : style.animationPlayState;
+    }),
+  ).toBe("paused");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  await page.screenshot({
+    path: `docs/screenshots/easy-landing-${info.project.name}.png`,
+    fullPage: true,
+  });
+});
+test("overview guides a connected owner forward and approved small groups stay selectable with no earnings", async ({
+  page,
+  baseURL,
+}, info) => {
+  test.skip(
+    !baseURL?.includes("127.0.0.1:3108"),
+    "Synthetic display fixture is only allowed on isolated local QA",
+  );
+  await page.route("**/api/whatsapp", (route) =>
+    route.fulfill({
+      json: {
+        configured: true,
+        slots: [
+          {
+            id: "synthetic-slot",
+            slot: 1,
+            status: "ONLINE",
+            account_id: "synthetic-account",
+          },
+        ],
+      },
+    }),
+  );
+  await page.route("**/api/broadcasts", (route) =>
+    route.fulfill({
+      json: {
+        configured: true,
+        limits: { maxGroups: 200, dailyRuns: 3, minGapSeconds: 60 },
+        assets: [],
+        runs: [],
+        groups: [42, 99].map((n) => ({
+          account_id: "synthetic-account",
+          group_jid: `1203630000000000${n}@g.us`,
+          subject: `SYNTHETIC small group ${n}`,
+          member_count: n,
+          slot: 1,
+          status: "ONLINE",
+          status_allowed: 1,
+          chat_allowed: 1,
+          mentions_allowed: 1,
+          expires_at: new Date(Date.now() + 86400000).toISOString(),
+          revoked_at: null,
+          announce: 0,
+          user_is_admin: 1,
+          excluded: 0,
+        })),
+      },
+    }),
+  );
+  await page.goto("/#/join/worker");
+  await page.getByLabel("Full name", { exact: true }).fill("Easy use QA");
+  await page
+    .getByLabel("Email address", { exact: true })
+    .fill(`easy-${Date.now()}-${info.project.name}@example.test`);
+  await page
+    .getByLabel("Password", { exact: true })
+    .fill("Synthetic-private-long-password-2026!");
+  await page.getByRole("checkbox").check();
+  await page
+    .getByRole("button", { name: "Create account", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Welcome to Pappy." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Your WhatsApp is connected." }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".quick-start")
+      .getByRole("link", { name: "Send a post", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator(".quick-start")
+      .getByRole("link", { name: "Connect my WhatsApp", exact: true }),
+  ).toHaveCount(0);
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: `docs/screenshots/easy-connected-overview-${info.project.name}.png`,
+    fullPage: true,
+  });
+  await page.goto("/#/app/broadcasts");
+  await expect(
+    page.getByRole("heading", { name: "Send a post to your groups." }),
+  ).toBeVisible();
+  const small = page.getByRole("checkbox", {
+    name: "Select SYNTHETIC small group 42 on number 1",
+  });
+  await expect(small).toBeEnabled();
+  await small.check();
+  await expect(small).toBeChecked();
+  await expect(
+    page.getByRole("button", { name: "Send my post to 1 group", exact: true }),
+  ).toBeEnabled();
+  await expect(page.getByText("Can get posts · no paid reward")).toHaveCount(2);
+  expect(
+    (
+      await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+        .analyze()
+    ).violations,
+  ).toEqual([]);
+  const wallet = await (
+    await page.request.get(baseURL + "/api/workspace")
+  ).json();
+  expect(wallet.wallet.earned_milli).toBe(0);
+  await page.screenshot({
+    path: `docs/screenshots/easy-small-groups-${info.project.name}.png`,
+    fullPage: true,
+  });
+});

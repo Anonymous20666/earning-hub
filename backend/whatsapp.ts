@@ -615,7 +615,7 @@ export class WhatsAppManager {
     return {
       approved: false,
       expiresMinutes: 15,
-      instructions: `PappyPay permission request: approve ${scopes.status ? "group-status posts; " : ""}${scopes.chat ? "group-chat posts; " : ""}${scopes.mentions ? "mention-all notifications; " : ""}from this account for approved broadcasts for 30 days, or until revoked. Only approve if you administer this group and agree. To approve, send this exact command IN THIS GROUP within 15 minutes:\n!pappypay approve ${token}`,
+      instructions: `Hello admin. May this WhatsApp number post in this group?\nPlease allow: ${scopes.status ? "group status posts; " : ""}${scopes.chat ? "group chat posts; " : ""}${scopes.mentions ? "notifying all members; " : ""}for 30 days. Permission can be removed at any time.\nIf you are a group admin and agree, send this exact command INSIDE THIS GROUP within 15 minutes:\n!pappypay approve ${token}`,
     };
   }
   private grant(

@@ -562,7 +562,7 @@ export function failUnsentDelivery(
     if (reservedRef) {
       const next = one(
         db,
-        `SELECT id FROM (SELECT id,reserved_at created FROM delivery_jobs WHERE user_id=? AND status IN('RESERVED','SENDING','UNKNOWN') UNION ALL SELECT r.id,r.created_at created FROM broadcast_runs r WHERE r.user_id=? AND r.purpose='PAID_CAMPAIGN' AND EXISTS(SELECT 1 FROM broadcast_targets t JOIN broadcast_placements bp ON bp.target_id=t.id WHERE t.run_id=r.id AND bp.status IN('RESERVED','SENDING','ACCEPTED','UNKNOWN'))) ORDER BY created,id LIMIT 1`,
+        `SELECT id FROM (SELECT id,reserved_at created FROM delivery_jobs WHERE user_id=? AND status IN('RESERVED','SENDING','UNKNOWN') UNION ALL SELECT r.id,r.created_at created FROM broadcast_runs r WHERE r.user_id=? AND r.purpose='PAID_CAMPAIGN' AND EXISTS(SELECT 1 FROM broadcast_targets t JOIN broadcast_placements bp ON bp.target_id=t.id WHERE t.run_id=r.id AND bp.reward_milli>0 AND bp.status IN('RESERVED','SENDING','ACCEPTED','UNKNOWN'))) ORDER BY created,id LIMIT 1`,
         j.user_id,
         j.user_id,
       );
@@ -731,7 +731,7 @@ export function reconcileTreasury(db: Database): {
     ),
     placementsMatchCredits: !one(
       db,
-      `SELECT p.id FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id WHERE p.status='CONFIRMED' AND r.purpose='PAID_CAMPAIGN' AND NOT EXISTS(SELECT 1 FROM ledger l WHERE l.idempotency_key='placement:'||p.id AND l.user_id=r.user_id AND l.amount_milli=p.reward_milli AND l.kind IN('VERIFIED_STATUS_DELIVERY','VERIFIED_CHAT_DELIVERY')) LIMIT 1`,
+      `SELECT p.id FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id JOIN broadcast_runs r ON r.id=t.run_id WHERE p.status='CONFIRMED' AND p.reward_milli>0 AND r.purpose='PAID_CAMPAIGN' AND NOT EXISTS(SELECT 1 FROM ledger l WHERE l.idempotency_key='placement:'||p.id AND l.user_id=r.user_id AND l.amount_milli=p.reward_milli AND l.kind IN('VERIFIED_STATUS_DELIVERY','VERIFIED_CHAT_DELIVERY')) LIMIT 1`,
     ),
     referralsMatchCredits: !one(
       db,

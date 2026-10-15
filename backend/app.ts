@@ -234,7 +234,7 @@ export function createApp(
       Promise.resolve(fn(req, res, next)).catch(next);
   app.get("/api/health", (_req, res) => {
     db.prepare("SELECT 1").get();
-    res.json({ status: "ok", version: "0.3.0", mode: "pre-launch" });
+    res.json({ status: "ok", version: "0.4.0", mode: "pre-launch" });
   });
   app.get("/api/status", (_req, res) =>
     res.json({
@@ -524,12 +524,10 @@ export function createApp(
   const assetFolder = options.assetFolder || path.resolve("data/wa-assets");
   const integration = (res: express.Response) => {
     if (!wa) {
-      res
-        .status(503)
-        .json({
-          error:
-            "WhatsApp is not configured on this server. No pairing or send was started.",
-        });
+      res.status(503).json({
+        error:
+          "WhatsApp is not configured on this server. No pairing or send was started.",
+      });
       return false;
     }
     return true;
@@ -615,11 +613,9 @@ export function createApp(
         typeof req.body.enabled !== "boolean" ||
         (req.body.enabled && req.body.authorisePaid !== true)
       ) {
-        res
-          .status(400)
-          .json({
-            error: "Explicit future paid-campaign authorisation required",
-          });
+        res.status(400).json({
+          error: "Explicit future paid-campaign authorisation required",
+        });
         return;
       }
       const result = db
@@ -789,11 +785,9 @@ export function createApp(
           )
           .get(a.id)
       ) {
-        res
-          .status(409)
-          .json({
-            error: "Cancel or finish broadcasts using this media first",
-          });
+        res.status(409).json({
+          error: "Cancel or finish broadcasts using this media first",
+        });
         return;
       }
       fs.rmSync(path.join(assetFolder, a.id), { force: true });

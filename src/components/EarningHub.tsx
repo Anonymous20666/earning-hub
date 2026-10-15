@@ -100,8 +100,8 @@ export function EarningHub({
             <div>
               <strong>Two numbers. One owner. No double counting.</strong>
               <p>
-                A shared group counts once per campaign. Excluding a group never
-                makes your number leave it.
+                If both numbers are in the same group, the post goes there once.
+                Hiding a group here does not make you leave it in WhatsApp.
               </p>
             </div>
             <button
@@ -115,24 +115,49 @@ export function EarningHub({
           </div>
           <div className="earning-stats">
             <Stat
-              label="Group memberships"
-              value={data.summary.memberships}
-              note="Across both numbers"
+              label="Groups found"
+              value={
+                new Set(
+                  data.groups
+                    .filter((g: any) => g.isMember)
+                    .map((g: any) => g.groupJid),
+                ).size
+              }
+              note="All sizes are included"
             />
             <Stat
-              label="Unique qualifying groups"
-              value={data.summary.uniqueQualified}
-              note="100+ members & posting allowed"
+              label="Groups with 100+ members"
+              value={
+                new Set(
+                  data.groups
+                    .filter((g: any) => g.isMember && g.memberCount >= 100)
+                    .map((g: any) => g.groupJid),
+                ).size
+              }
+              note="May earn from paid posts"
             />
             <Stat
-              label="Duplicate memberships"
-              value={data.summary.duplicateMemberships}
-              note="Qualifying overlaps removed"
+              label="Groups on both numbers"
+              value={
+                data.groups.filter((g: any) => g.isMember).length -
+                new Set(
+                  data.groups
+                    .filter((g: any) => g.isMember)
+                    .map((g: any) => g.groupJid),
+                ).size
+              }
+              note="We only send to them once"
             />
             <Stat
-              label="Consent-approved groups"
-              value={data.summary.approvedUnique}
-              note="Current permission on record"
+              label="Groups with permission"
+              value={
+                new Set(
+                  data.groups
+                    .filter((g: any) => g.isMember && g.approved && !g.excluded)
+                    .map((g: any) => g.groupJid),
+                ).size
+              }
+              note="The admin has allowed posting"
             />
           </div>
           {!hideNumberSlots && (
@@ -187,23 +212,21 @@ export function EarningHub({
           <section className="panel">
             <div className="panel-heading">
               <div>
-                <span className="eyebrow">YOUR REAL INVENTORY</span>
-                <h2>Groups, without the guesswork.</h2>
+                <span className="eyebrow">YOUR GROUPS</span>
+                <h2>All your groups. Small ones too.</h2>
                 <p>
-                  Tier: {data.tier.tier.toLowerCase()} · {data.tier.goldUnits}{" "}
-                  full 100-group units · {data.tier.remainderGroups} remainder.
-                  Tiers do not cap earnings.
+                  Small groups can receive posts. They just do not earn paid
+                  rewards until they reach 100 members.
                 </p>
               </div>
             </div>
             {!data.groups.some((g: any) => g.isMember) ? (
               <div className="earning-empty">
                 <Users size={30} />
-                <h3>No groups scanned yet.</h3>
+                <h3>No groups found yet.</h3>
                 <p>
-                  Only groups returned by a connected provider will appear.
-                  Having a group is not the same as having permission to
-                  advertise in it.
+                  Connect your number above, then tap Find my groups. You will
+                  need the group admin’s permission before posting.
                 </p>
               </div>
             ) : (
@@ -214,7 +237,7 @@ export function EarningHub({
                     <tr>
                       <th>Group</th>
                       <th>Members</th>
-                      <th>Qualification</th>
+                      <th>Paid reward</th>
                       <th>Permission</th>
                       <th>Control</th>
                     </tr>
@@ -243,7 +266,9 @@ export function EarningHub({
                                 ? "Excluded"
                                 : q.qualified
                                   ? `${coins(q.rewardMilli)} Coins`
-                                  : q.reason}
+                                  : g.memberCount < 100
+                                    ? "Can get posts · 0 Coins (under 100 members)"
+                                    : q.reason}
                             </td>
                             <td>{g.approved ? "Approved" : "Not approved"}</td>
                             <td>
@@ -263,9 +288,9 @@ export function EarningHub({
               </div>
             )}
             <div className="earning-footnote">
-              Qualified membership value is an estimate, not an available
-              balance. Paid delivery also requires current consent, fresh
-              metadata, allocated funds and verified provider confirmation.
+              Your own posts are free and never earn Coins. Paid jobs are not
+              open yet. When they open, only confirmed posts in groups with 100+
+              members can earn.
             </div>
           </section>
           <a className="earning-link" href="#/app/calculator">

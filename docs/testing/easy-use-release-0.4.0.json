@@ -1,0 +1,50 @@
+{
+  "release": "0.4.0",
+  "date": "2026-10-15",
+  "origin": "https://pappy-earnig-hub.duckdns.org",
+  "automated": {
+    "tests": 139,
+    "passed": 138,
+    "failed": 0,
+    "skipped": 1,
+    "skipReason": "Dedicated Redis is not configured for this run"
+  },
+  "browser": {
+    "desktopMobilePassed": 24,
+    "failed": 0,
+    "newCoverage": [
+      "reduced motion and pause/play",
+      "connected owner gets next step, not re-pair instruction",
+      "42/99-member groups selectable without earning",
+      "larger controls/mobile group cards",
+      "WCAG automated checks and no document overflow"
+    ]
+  },
+  "publicReadOnly": {
+    "passed": 23,
+    "accountsCreated": 0,
+    "testPostsSent": 0
+  },
+  "preservation": {
+    "accountWalletLedgerUnchanged": true,
+    "pairedIdentityAndOwnershipHistoryUnchanged": true,
+    "encryptedAuthRetained": true,
+    "existingSlotReconnectedOnline": true,
+    "groupsPreserved": 2,
+    "groupsUnder100": 2,
+    "privateKeyFileStill0600Root": true
+  },
+  "money": {
+    "cashMilli": 0,
+    "dispatchEnabled": false,
+    "payoutsEnabled": false,
+    "under100RewardMilli": 0,
+    "paidReceiptAdapterImplemented": false
+  },
+  "implementation": "docs/EASY-USE-0.4.0.md",
+  "image": "sha256:bb00fd527648a33485aaad7c4c2c5e4f1750b9c9b4192005ba03a1b94bcc494a",
+  "container": "46176e2fda62f1ec17ea19bf93439b6d7691df4ee75019df93fb09fd69796a8b",
+  "verifiedBackup": "pappy-2026-10-15T04-47-13-931Z.sqlite",
+  "rollbackContainer": "pappy-earning-hub-rollback-20261015T044702Z",
+  "notes": "Owner pairing and saved-session reconnect observed. No agent test posts, paid proof, cash or earnings fabricated. UI display mocks used only in isolated local QA."
+}
