@@ -1,3 +1,4 @@
+import { PreviewEngine } from "./previewEngine";
 import {
   personalAccountIds,
   setPersonalIgnore,
@@ -83,6 +84,12 @@ export function createApp(
   } = {},
 ) {
   const app = express();
+  const previewEngine = options.personalPreviewer
+    ? undefined
+    : new PreviewEngine({ db });
+  app.locals.previewEngine = previewEngine;
+  const previewer =
+    options.personalPreviewer ?? ((url: string) => previewEngine!.get(url));
   app.disable("x-powered-by");
   app.use(
     helmet({
@@ -241,7 +248,7 @@ export function createApp(
       Promise.resolve(fn(req, res, next)).catch(next);
   app.get("/api/health", (_req, res) => {
     db.prepare("SELECT 1").get();
-    res.json({ status: "ok", version: "0.10.0", mode: "pre-launch" });
+    res.json({ status: "ok", version: "0.11.0", mode: "pre-launch" });
   });
   app.get("/api/status", (_req, res) =>
     res.json({
@@ -826,12 +833,7 @@ export function createApp(
             await wa!.scan(req.account.id, slot.id);
         }
         res.json(
-          await preparePersonalDraft(
-            db,
-            req.account.id,
-            req.body,
-            options.personalPreviewer,
-          ),
+          await preparePersonalDraft(db, req.account.id, req.body, previewer),
         );
       } catch (e: any) {
         res.status(400).json({ error: e.message });
@@ -897,12 +899,7 @@ export function createApp(
         res
           .status(201)
           .json(
-            await createPersonalRun(
-              db,
-              req.account.id,
-              req.body,
-              options.personalPreviewer,
-            ),
+            await createPersonalRun(db, req.account.id, req.body, previewer),
           );
       } catch (e: any) {
         res.status(400).json({ error: e.message });

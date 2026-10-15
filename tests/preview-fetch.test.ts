@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import https from "node:https";
+import { gzipSync, brotliCompressSync, deflateSync } from "node:zlib";
 import { EventEmitter } from "node:events";
 import { Readable } from "node:stream";
 import sharp from "sharp";
@@ -15,7 +16,13 @@ const origin = "https://93.184.216.34";
 async function mockOrigin(
   routes: Record<
     string,
-    { status?: number; type?: string; location?: string; body: Buffer | string }
+    {
+      status?: number;
+      type?: string;
+      encoding?: string;
+      location?: string;
+      body: Buffer | string;
+    }
   >,
   fn: (paths: string[]) => Promise<void>,
 ) {
@@ -46,7 +53,8 @@ async function mockOrigin(
       ]);
       res.statusCode = route.status || 200;
       res.headers = {
-        "content-type": route.type || "text/html",
+        "content-type": route.type ?? "text/html",
+        "content-encoding": route.encoding,
         location: route.location,
       };
       res.once("close", () => req.emit("close"));
@@ -192,4 +200,75 @@ test("small useful real images are proportionally enlarged for native cards, but
     .png()
     .toBuffer();
   await assert.rejects(() => normalizePreviewImage(pixel), /too small/);
+});
+
+test("missing/generic MIME is accepted only with real validated image bytes; alternate images survive unsupported, private and tiny candidates", async () => {
+  const bytes = await sharp({
+    create: { width: 640, height: 320, channels: 3, background: "#173e2b" },
+  })
+    .png()
+    .toBuffer();
+  await mockOrigin(
+    {
+      "/page": {
+        body: '<meta property=og:title content="Him"><meta property=og:description content="Channel • 2 followers"><meta property=og:image content="https://127.0.0.1/private"><meta property=og:image content="/bad"><meta property=og:image content="/missing-mime">',
+      },
+      "/bad": {
+        type: "application/octet-stream",
+        body: "<html>not an image</html>",
+      },
+      "/missing-mime": { type: "", body: bytes },
+      "/generic": { type: "application/octet-stream", body: bytes },
+      "/svg": { type: "image/svg+xml", body: "<svg/>" },
+    },
+    async (paths) => {
+      const p = await safePreview(origin + "/page");
+      assert.equal(p.title, "Him");
+      assert.equal(p.previewType, 5);
+      assert.ok(p.thumbnailBase64);
+      assert.equal(
+        paths.some((p) => p.includes("127.0.0.1")),
+        false,
+      );
+      assert.equal(paths.length, 3);
+      const generic = await fetchPublicResource(origin + "/generic", "image");
+      assert.deepEqual(generic.body, bytes);
+      await assert.rejects(
+        () => fetchPublicResource(origin + "/svg", "image"),
+        /supported/,
+      );
+    },
+  );
+});
+test("gzip, brotli and deflate HTML are decoded with a strict decoded-size cap; invalid compression fails", async () => {
+  for (const [encoding, compress] of [
+    ["gzip", gzipSync],
+    ["br", brotliCompressSync],
+    ["deflate", deflateSync],
+  ] as const) {
+    await mockOrigin(
+      {
+        "/page": {
+          encoding,
+          body: compress(
+            Buffer.from(
+              "<title>Compressed title</title>" + "x".repeat(1200000),
+            ),
+          ),
+        },
+        "/bad": { encoding, body: "not compressed" },
+      },
+      async () => {
+        const resource = await fetchPublicResource(origin + "/page", "html");
+        assert.equal(resource.body.length, 1048576);
+        assert.equal(
+          (await safePreview(origin + "/page")).title,
+          "Compressed title",
+        );
+        await assert.rejects(() =>
+          fetchPublicResource(origin + "/bad", "html"),
+        );
+      },
+    );
+  }
 });

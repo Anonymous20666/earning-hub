@@ -1,0 +1,18 @@
+
+> pappy-earning-hub@0.11.0 build
+> vite build
+
+vite v8.3.4 building client environment for production...
+transforming...
+✓ 1681 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                         3.97 kB │ gzip:  1.05 kB
+dist/assets/index-CA_1RfIj.css        109.79 kB │ gzip: 23.49 kB
+dist/assets/EarningGuide-CqOeAX89.js    6.36 kB │ gzip:  2.55 kB
+dist/assets/Auth-Cceg7ge_.js            7.01 kB │ gzip:  2.77 kB
+dist/assets/EarningHub-CaZat0hy.js     26.42 kB │ gzip:  8.06 kB
+dist/assets/Workspace-DY3_-9YH.js      80.47 kB │ gzip: 22.40 kB
+dist/assets/index-B2IUkr9b.js         259.66 kB │ gzip: 82.32 kB
+
+✓ built in 439ms

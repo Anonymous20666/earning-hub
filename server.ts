@@ -1,3 +1,4 @@
+import { previewImagePool } from "./backend/previewPool";
 import { WhatsAppManager } from "./backend/whatsapp";
 import { startPersonalDispatcher } from "./backend/personalDispatch";
 import "dotenv/config";
@@ -69,6 +70,8 @@ for (const signal of ["SIGINT", "SIGTERM"])
     server.close(async () => {
       await stopPersonal();
       await whatsapp?.close();
+      app.locals.previewEngine?.close();
+      await previewImagePool.close();
       db.close();
       process.exit(0);
     });

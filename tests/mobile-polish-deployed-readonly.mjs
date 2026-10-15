@@ -18,9 +18,9 @@ try {
   page.on("pageerror", (e) => errors.push(e.message));
   assert.equal(
     (await (await page.request.get(origin + "/api/health")).json()).version,
-    "0.10.0",
+    "0.11.0",
   );
-  checks.push("HTTPS health v0.10.0");
+  checks.push("HTTPS health v0.11.0");
   await page.emulateMedia({ reducedMotion: "reduce" });
   for (const width of [360, 393, 430]) {
     await page.setViewportSize({ width, height: 851 });

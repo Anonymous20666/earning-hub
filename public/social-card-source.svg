@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#102f23"/><stop offset="1" stop-color="#1c4b34"/></linearGradient><radialGradient id="glow"><stop stop-color="#d7f69a" stop-opacity=".12"/><stop offset="1" stop-color="#d7f69a" stop-opacity="0"/></radialGradient></defs>
+<rect width="1200" height="630" fill="url(#bg)"/><circle cx="1080" cy="220" r="440" fill="url(#glow)"/>
+<path d="M840 0V630M1020 0V630M0 470H1200" stroke="#d7f69a" opacity=".055"/>
+<rect x="64" y="56" width="58" height="58" rx="15" fill="#d7f69a"/><path d="M81 99V71h14a8 8 0 0 1 0 16h-7M88 78h6M88 91v8" fill="none" stroke="#173e2b" stroke-width="5"/>
+<text x="140" y="95" font-family="DejaVu Sans,sans-serif" font-size="27" font-weight="700" fill="#f9f9ec">Pappy Earning Hub</text>
+<rect x="925" y="63" width="207" height="42" rx="21" fill="#d7f69a" fill-opacity=".12" stroke="#d7f69a" stroke-opacity=".35"/>
+<circle cx="949" cy="84" r="4" fill="#d7f69a"/><text x="968" y="91" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#d7f69a">PRE-LAUNCH</text>
+<text x="64" y="244" font-family="DejaVu Sans,sans-serif" font-size="68" font-weight="700" letter-spacing="-3" fill="#f9f9ec">Your WhatsApp.</text>
+<text x="64" y="328" font-family="DejaVu Sans,sans-serif" font-size="68" font-weight="700" letter-spacing="-3" fill="#d7f69a">Ready for more.</text>
+<text x="68" y="391" font-family="DejaVu Sans,sans-serif" font-size="25" fill="#d2dfd4">Connect. Learn how funded posts earn Coins.</text>
+<g transform="translate(865 194)"><rect width="267" height="226" rx="25" fill="#f1f5e9"/><rect x="20" y="20" width="227" height="112" rx="13" fill="#d7f69a"/><circle cx="133" cy="76" r="33" fill="#173e2b"/><path d="m117 76 11 11 23-24" fill="none" stroke="#d7f69a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><text x="22" y="166" font-family="DejaVu Sans,sans-serif" font-size="17" font-weight="700" fill="#173e2b">Confirmed work.</text><text x="22" y="193" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#4f6656">Clear rewards.</text></g>
+<text x="68" y="525" font-family="DejaVu Sans,sans-serif" font-size="20" fill="#f1f5e9">Paid jobs and cashout are not open yet. Pairing alone does not pay.</text>
+<text x="68" y="570" font-family="DejaVu Sans,sans-serif" font-size="17" fill="#a8c1af">pappy-earnig-hub.duckdns.org</text>
+</svg>

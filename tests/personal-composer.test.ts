@@ -1287,3 +1287,158 @@ test("stopping after DOUBLE's status leg preserves its send pause before a newly
     f.close();
   }
 });
+
+test("1000 distinct groups with 1–1000 members reuse one prepared full preview, preserve pacing and never earn personal rewards", async () => {
+  const f = fixture();
+  const { PreviewEngine } = await import("../backend/previewEngine");
+  let fetches = 0;
+  const bytes = await sharp({
+    create: { width: 640, height: 320, channels: 3, background: "#173e2b" },
+  })
+    .jpeg()
+    .toBuffer();
+  const engine = new PreviewEngine({
+    db: f.db,
+    fetcher: async (url) => {
+      fetches++;
+      return {
+        "matched-text": url,
+        title: "SYNTHETIC full card",
+        description: "SYNTHETIC 1000-group test only",
+        previewType: 5,
+        thumbnailBase64: bytes.toString("base64"),
+        inlineThumbnailBase64: bytes.toString("base64"),
+        thumbnailWidth: 640,
+        thumbnailHeight: 320,
+      };
+    },
+  });
+  try {
+    const groups = Array.from({ length: 1000 }, (_, i) => ({
+      jid: `120363${String(i + 10000).padStart(12, "0")}@g.us`,
+      subject: `SYNTHETIC scale group ${i + 1}`,
+      memberCount: i + 1,
+      announce: false,
+      userIsAdmin: false,
+    }));
+    syncProviderInventory(f.db, f.accounts[0], groups, true);
+    const post = {
+      ...input("https://example.com/scale"),
+      accountIds: [f.accounts[0]],
+      delaySeconds: 10,
+    };
+    const first = await preparePersonalDraft(f.db, "owner", post, (url) =>
+      engine.get(url),
+    );
+    assert.equal(first.plan.targets.length, 1000);
+    assert.equal(first.plan.targets[0].members, 1);
+    assert.equal(first.plan.targets[999].members, 1000);
+    await preparePersonalDraft(f.db, "owner", post, (url) => engine.get(url));
+    assert.equal(fetches, 1);
+    const run = await submitPersonalDraft(f.db, "owner", first.draftId, true);
+    const seen = new Set<string>();
+    let now = Date.now(),
+      sent = 0;
+    const t = {
+      refreshGroup: async (_a: string, j: string) => ({
+        ...groups.find((g) => g.jid === j)!,
+        isMember: true,
+        userIsAdmin: false,
+        adminIds: new Set<string>(),
+      }),
+      messageId: async () => `SYNTHETIC-scale-${++sent}`,
+      send: async (_a: string, j: string, c: any, id: string) => {
+        assert.ok(c.linkPreview.thumbnailBase64);
+        assert.equal(c.linkPreview.title, "SYNTHETIC full card");
+        assert.ok(!seen.has(j));
+        seen.add(j);
+        return { key: { id } };
+      },
+    };
+    for (let i = 0; i < 1000; i++) {
+      assert.ok(await dispatchDuePlacement(f.db, t, "/no-assets", () => now));
+      if (i < 999)
+        assert.equal(
+          await dispatchDuePlacement(f.db, t, "/no-assets", () => now + 9999),
+          null,
+        );
+      now += 10000;
+    }
+    assert.equal(seen.size, 1000);
+    assert.equal(fetches, 1);
+    assert.equal(personalRunFeed(f.db, "owner", run.id).run.status, "FINISHED");
+    assert.equal(
+      (
+        f.db
+          .prepare(
+            "SELECT COALESCE(SUM(reward_milli),0) reward FROM broadcast_placements p JOIN broadcast_targets t ON t.id=p.target_id WHERE t.run_id=?",
+          )
+          .get(run.id) as any
+      ).reward,
+      0,
+    );
+    assert.equal(f.db.prepare("PRAGMA foreign_key_check").all().length, 0);
+  } finally {
+    engine.close();
+    f.close();
+  }
+});
+
+test("parallel dispatch locks an owner before async group lookup; another owner progresses and the same owner cannot duplicate", async () => {
+  const f = fixture();
+  let release!: () => void;
+  const barrier = new Promise<void>((r) => (release = r));
+  try {
+    const other = recordProviderPairing(f.db, {
+      userId: "other",
+      slot: 1,
+      providerJid: "2348000000088@s.whatsapp.net",
+      hashKey: "a".repeat(64),
+    });
+    syncProviderInventory(
+      f.db,
+      other.id,
+      [
+        {
+          jid: "120363000000000088@g.us",
+          subject: "SYNTHETIC other",
+          memberCount: 1,
+          announce: false,
+          userIsAdmin: false,
+        },
+      ],
+      true,
+    );
+    for (const owner of ["owner", "other"]) {
+      const d = await preparePersonalDraft(f.db, owner, input());
+      await submitPersonalDraft(f.db, owner, d.draftId, true);
+    }
+    const calls: any[] = [],
+      base = transport(calls);
+    let blocked = false;
+    const t = {
+      ...base,
+      refreshGroup: async (a: string) => {
+        if (a === f.accounts[0]) {
+          blocked = true;
+          await barrier;
+        }
+        return base.refreshGroup();
+      },
+    };
+    const now = Date.now(),
+      one = dispatchDuePlacement(f.db, t, "/none", () => now);
+    assert.equal(blocked, true);
+    assert.ok(await dispatchDuePlacement(f.db, t, "/none", () => now));
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].a, other.id);
+    assert.equal(await dispatchDuePlacement(f.db, t, "/none", () => now), null);
+    release();
+    await one;
+    assert.equal(calls.length, 2);
+    assert.equal(calls[1].a, f.accounts[0]);
+  } finally {
+    release?.();
+    f.close();
+  }
+});

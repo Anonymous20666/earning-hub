@@ -1,0 +1,7 @@
+{"publicUrl":"https://whatsapp.com/channel/0029VbDhb0RB4hdT1Dgr4n1Z","title":"Him","descriptionPresent":true,"hasImage":true,"previewType":5,"width":640,"height":640,"ms":1014}
+{"publicUrl":"https://github.com/nodejs/node","title":"GitHub - nodejs/node: Node.js JavaScript runtime ✨🐢🚀✨","descriptionPresent":true,"hasImage":true,"previewType":5,"width":1000,"height":500,"ms":3050}
+{"publicUrl":"https://developer.mozilla.org/en-US/","title":"MDN Web Docs","descriptionPresent":true,"hasImage":true,"previewType":5,"width":1000,"height":1000,"ms":123}
+{"publicUrl":"https://www.whatsapp.com/","title":"WhatsApp | Secure and Reliable Free Private Messaging and Calling","descriptionPresent":true,"hasImage":true,"previewType":5,"width":630,"height":630,"ms":600}
+{"publicUrl":"https://example.com/","title":"Example Domain","descriptionPresent":false,"hasImage":false,"previewType":0,"ms":35}
+{"publicUrl":"https://pappy-earnig-hub.duckdns.org/","title":"Pappy Earning Hub — Connect WhatsApp. Get ready to earn.","descriptionPresent":true,"hasImage":true,"previewType":5,"width":1000,"height":525,"ms":152}
+{"cacheMetrics":{"hits":1,"misses":6,"joined":0,"stored":5,"partial":1,"busy":0,"peakActive":1},"threads":[2],"noMessages":true}

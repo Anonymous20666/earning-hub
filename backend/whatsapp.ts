@@ -1,3 +1,4 @@
+import { PreviewUploadCache } from "./previewUploadCache";
 import { personalImagePreview } from "./personalMedia";
 import { recordPersonalProviderErrors } from "./personalAcknowledgements";
 import { createHmac, createHash, randomBytes, randomUUID } from "node:crypto";
@@ -715,10 +716,7 @@ export class WhatsAppManager {
         .run(stamp(), r.id);
     });
   }
-  private previewUploads = new WeakMap<
-    object,
-    Map<string, { at: number; promise: Promise<any> }>
-  >();
+  private previewUploads = new PreviewUploadCache();
   private async inviteInfoWithDeadline(sock: any, code: string) {
     let timer: ReturnType<typeof setTimeout>;
     return Promise.race([
@@ -816,38 +814,23 @@ export class WhatsAppManager {
         typeof p.prepareWAMessageMedia === "function"
       ) {
         const key = createHash("sha256").update(bytes).digest("hex");
-        let cache = this.previewUploads.get(sock);
-        if (!cache) {
-          cache = new Map();
-          this.previewUploads.set(sock, cache);
-        }
-        if ((cache.get(key)?.at || 0) < Date.now() - 5 * 60000)
-          cache.delete(key);
-        if (!cache.has(key)) {
-          if (cache.size >= 30) cache.clear();
-          cache.set(key, {
-            at: Date.now(),
-            promise: p
-              .prepareWAMessageMedia(
-                { image: bytes },
-                {
-                  upload: sock.waUploadToServer,
-                  mediaTypeOverride: "thumbnail-link",
-                  mediaUploadTimeoutMs: 15000,
-                },
-              )
-              .then((m: any) => m.imageMessage)
-              .catch(() => undefined),
-          });
-        }
-        const image = await cache.get(key)!.promise;
+        const image = await this.previewUploads.get(sock, key, async () => {
+          const result = await p.prepareWAMessageMedia(
+            { image: bytes },
+            {
+              upload: sock.waUploadToServer,
+              mediaTypeOverride: "thumbnail-link",
+              mediaUploadTimeoutMs: 15000,
+            },
+          );
+          return result.imageMessage;
+        });
         if (image)
           info.highQualityThumbnail = {
             ...image,
             width: info.thumbnailWidth || image.width,
             height: info.thumbnailHeight || image.height,
           };
-        else cache.delete(key);
       }
 
       delete info.thumbnailWidth;
@@ -908,7 +891,7 @@ export class WhatsAppManager {
   }
   async close() {
     this.closing = true;
-    this.previewUploads = new WeakMap();
+    this.previewUploads.clear();
     for (const [id, r] of this.live) {
       if (r.timer) clearTimeout(r.timer);
       r.socket?.end(new Error("Service stopping"));

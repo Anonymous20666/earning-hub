@@ -1,0 +1,9 @@
+
+Running 4 tests using 1 worker
+
+  ✓  1 [desktop] › tests/browser/preview-engine.spec.ts:4:1 › public share metadata serves a real local image, correct robots policy and no invented social identity (431ms)
+  ✓  2 [desktop] › tests/browser/preview-engine.spec.ts:31:1 › review displays a real thumbnail or an honest retry warning, with no fake thumbnail and no post sent (3.1s)
+  ✓  3 [mobile] › tests/browser/preview-engine.spec.ts:4:1 › public share metadata serves a real local image, correct robots policy and no invented social identity (368ms)
+  ✓  4 [mobile] › tests/browser/preview-engine.spec.ts:31:1 › review displays a real thumbnail or an honest retry warning, with no fake thumbnail and no post sent (3.4s)
+
+  4 passed (9.1s)

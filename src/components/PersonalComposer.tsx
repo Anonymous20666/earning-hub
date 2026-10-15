@@ -662,6 +662,13 @@ export function PersonalBroadcasts({ revision = 0 }: { revision?: number }) {
                   <div>
                     <strong>{draft.preview.title}</strong>
                     <p>{draft.preview.description}</p>
+                    {!draft.preview.image && (
+                      <p role="status">
+                        A thumbnail could not be prepared this time. Your link
+                        and text will still be sent. You can go back and review
+                        again before posting.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

@@ -1,4 +1,6 @@
-import sharp from "sharp";
+import { createBrotliDecompress, createUnzip } from "node:zlib";
+import { extractPreviewMetadata, decodePreviewText } from "./previewMetadata";
+import { previewImagePool } from "./previewPool";
 import https from "node:https";
 import { lookup } from "node:dns/promises";
 import { BlockList, isIP } from "node:net";
@@ -88,10 +90,18 @@ export type SafePreview = {
   thumbnailWidth?: number;
   thumbnailHeight?: number;
 };
+
+const previewAgent = new https.Agent({
+  keepAlive: true,
+  maxSockets: 4,
+  maxTotalSockets: 16,
+  maxFreeSockets: 2,
+  timeout: 2000,
+});
 export async function fetchPublicResource(
   input: string,
   kind: "html" | "image",
-  deadline = Date.now() + 12000,
+  deadline = Date.now() + 16000,
   redirects = 0,
 ): Promise<{ body: Buffer; url: string }> {
   if (Date.now() >= deadline) throw Error("Preview request timed out");
@@ -105,7 +115,7 @@ export async function fetchPublicResource(
         new Promise<never>((_, reject) => {
           timer = setTimeout(
             () => reject(Error("Preview DNS lookup timed out")),
-            Math.min(4000, deadline - Date.now()),
+            Math.max(1, Math.min(4000, deadline - Date.now())),
           );
         }),
       ]).finally(() => clearTimeout(timer));
@@ -114,80 +124,165 @@ export async function fetchPublicResource(
       Error("Destination resolves to a private or reserved address"),
       { code: "UNSAFE_DESTINATION" },
     );
-  const pin = addresses[0],
-    limit = kind === "html" ? 262144 : 2097152;
-  const result = await new Promise<{ body: Buffer; location?: string }>(
-    (resolve, reject) => {
-      const req = https.get(
-        u,
-        {
-          lookup: ((_h: any, _o: any, cb: any) =>
-            _o?.all
-              ? cb(null, [pin])
-              : cb(null, pin.address, pin.family)) as any,
-          headers: {
-            Accept:
-              kind === "html"
-                ? "text/html,application/xhtml+xml"
-                : "image/jpeg,image/png,image/webp,image/gif",
-            "User-Agent": "PappyPay-LinkPreview/0.5",
-          },
-          timeout: Math.max(1, Math.min(5000, deadline - Date.now())),
-        },
-        (res) => {
-          const status = res.statusCode || 0,
-            type = String(res.headers["content-type"] || "")
-              .split(";")[0]
-              .toLowerCase();
-          if (status >= 300 && status < 400) {
-            resolve({ body: Buffer.alloc(0), location: res.headers.location });
-            res.destroy();
-            return;
-          }
-          if (
-            status !== 200 ||
-            (kind === "html"
-              ? !["text/html", "application/xhtml+xml"].includes(type)
-              : ![
-                  "image/jpeg",
-                  "image/png",
-                  "image/webp",
-                  "image/gif",
-                ].includes(type))
-          ) {
-            res.destroy();
-            reject(
-              Error("Destination did not return supported public " + kind),
-            );
-            return;
-          }
-          const chunks: Buffer[] = [];
-          let length = 0;
-          res.on("data", (chunk: Buffer) => {
-            if (length + chunk.length > limit) {
-              if (kind === "html") {
-                chunks.push(chunk.subarray(0, Math.max(0, limit - length)));
-                resolve({ body: Buffer.concat(chunks) });
+  addresses.sort((a, b) => a.family - b.family);
+  const limit = kind === "html" ? 1048576 : 2097152;
+  let result: { body: Buffer; location?: string } | undefined, lastError: any;
+  for (const pin of addresses.slice(0, 2)) {
+    try {
+      result = await new Promise<{ body: Buffer; location?: string }>(
+        (resolve, reject) => {
+          const req = https.get(
+            u,
+            {
+              agent: previewAgent,
+              lookup: ((_h: any, o: any, cb: any) =>
+                o?.all
+                  ? cb(null, [pin])
+                  : cb(null, pin.address, pin.family)) as any,
+              headers: {
+                Accept:
+                  kind === "html"
+                    ? "text/html,application/xhtml+xml"
+                    : "image/jpeg,image/png,image/webp,image/gif,application/octet-stream;q=0.5",
+                "Accept-Encoding": "gzip, deflate, br",
+                "Accept-Language": "en-US,en;q=0.8",
+                "User-Agent":
+                  "PappyPay-LinkPreview/0.11 (+https://pappy-earnig-hub.duckdns.org)",
+              },
+              timeout: Math.max(1, Math.min(5000, deadline - Date.now())),
+            },
+            (res) => {
+              const status = res.statusCode || 0,
+                type = String(res.headers["content-type"] || "")
+                  .split(";")[0]
+                  .trim()
+                  .toLowerCase();
+              if ([301, 302, 303, 307, 308].includes(status)) {
+                if (!res.headers.location) {
+                  res.destroy();
+                  reject(Error("Redirect has no destination"));
+                  return;
+                }
+                resolve({
+                  body: Buffer.alloc(0),
+                  location: res.headers.location,
+                });
                 res.destroy();
-              } else req.destroy(Error("Preview image exceeds 2 MiB"));
-              return;
-            }
-            length += chunk.length;
-            chunks.push(chunk);
-          });
-          res.on("end", () => resolve({ body: Buffer.concat(chunks) }));
-          res.on("error", reject);
+                return;
+              }
+              const allowed =
+                kind === "html"
+                  ? [
+                      "text/html",
+                      "application/xhtml+xml",
+                      "",
+                      "application/octet-stream",
+                    ]
+                  : [
+                      "image/jpeg",
+                      "image/png",
+                      "image/webp",
+                      "image/gif",
+                      "",
+                      "application/octet-stream",
+                      "binary/octet-stream",
+                    ];
+              if (status !== 200 || !allowed.includes(type)) {
+                res.destroy();
+                reject(
+                  Error("Destination did not return supported public " + kind),
+                );
+                return;
+              }
+              const encoding = String(
+                res.headers["content-encoding"] || "identity",
+              ).toLowerCase();
+              if (!["identity", "gzip", "deflate", "br"].includes(encoding)) {
+                res.destroy();
+                reject(Error("Unsupported preview compression"));
+                return;
+              }
+              const source =
+                encoding === "br"
+                  ? res.pipe(createBrotliDecompress())
+                  : encoding === "gzip" || encoding === "deflate"
+                    ? res.pipe(createUnzip())
+                    : res;
+              let raw = 0,
+                length = 0,
+                settled = false;
+              const chunks: Buffer[] = [];
+              res.on("data", (chunk: Buffer) => {
+                raw += chunk.length;
+                if (raw > 2097152 && !settled) {
+                  settled = true;
+                  req.destroy(
+                    Error("Compressed preview exceeds resource limit"),
+                  );
+                }
+              });
+              const finish = () => {
+                if (settled) return;
+                settled = true;
+                const body = Buffer.concat(chunks);
+                if (
+                  kind === "html" &&
+                  !["text/html", "application/xhtml+xml"].includes(type) &&
+                  !/<(?:!doctype\s+html|html|head|meta|title)\b/i.test(
+                    body.subarray(0, 2048).toString("utf8"),
+                  )
+                ) {
+                  reject(
+                    Error("Destination did not return supported public html"),
+                  );
+                  return;
+                }
+                resolve({ body });
+              };
+              source.on("data", (chunk: Buffer) => {
+                if (settled) return;
+                if (length + chunk.length > limit) {
+                  if (kind === "html") {
+                    chunks.push(chunk.subarray(0, Math.max(0, limit - length)));
+                    length = limit;
+                    finish();
+                    source.destroy();
+                    res.destroy();
+                  } else {
+                    settled = true;
+                    req.destroy(Error("Preview image exceeds 2 MiB"));
+                  }
+                  return;
+                }
+                length += chunk.length;
+                chunks.push(chunk);
+              });
+              source.on("end", finish);
+              source.on("error", (e) => {
+                res.destroy();
+                reject(e);
+              });
+              res.on("error", reject);
+            },
+          );
+          const end = setTimeout(
+            () => req.destroy(Error("Preview request timed out")),
+            Math.max(1, Math.min(6000, deadline - Date.now())),
+          );
+          req.on("close", () => clearTimeout(end));
+          req.on("error", reject);
+          req.on("timeout", () =>
+            req.destroy(Error("Preview request timed out")),
+          );
         },
       );
-      const end = setTimeout(
-        () => req.destroy(Error("Preview request timed out")),
-        Math.max(1, Math.min(6000, deadline - Date.now())),
-      );
-      req.on("close", () => clearTimeout(end));
-      req.on("error", reject);
-      req.on("timeout", () => req.destroy(Error("Preview request timed out")));
-    },
-  );
+      break;
+    } catch (e) {
+      lastError = e;
+      if (Date.now() >= deadline) break;
+    }
+  }
+  if (!result) throw lastError || Error("Preview request failed");
   if (result.location) {
     if (redirects >= 3) throw Error("Too many redirects");
     return fetchPublicResource(
@@ -199,172 +294,42 @@ export async function fetchPublicResource(
   }
   return { body: result.body, url: u.href };
 }
-export async function fetchPublicHtml(
-  input: string,
-  redirects = 0,
-): Promise<string> {
+export async function fetchPublicHtml(input: string, redirects = 0) {
   return (
-    await fetchPublicResource(input, "html", Date.now() + 12000, redirects)
+    await fetchPublicResource(input, "html", Date.now() + 16000, redirects)
   ).body.toString("utf8");
 }
-// Metadata is plain text, never trusted HTML. Bounded decoding handles WhatsApp's
-// nested amp/hex entities; strip tags AFTER decoding so encoded markup cannot escape.
-export function cleanPreviewText(input: string): string {
-  const named: Record<string, string> = {
-    amp: "&",
-    quot: '"',
-    apos: "'",
-    lt: "<",
-    gt: ">",
-    nbsp: " ",
-    copy: "©",
-    reg: "®",
-    trade: "™",
-    ndash: "–",
-    mdash: "—",
-    hellip: "…",
-    bull: "•",
-  };
-  let text = input.slice(0, 16384);
-  for (let pass = 0; pass < 5; pass++) {
-    const decoded = text.replace(
-      /&(?:#(x[0-9a-f]+|[0-9]+)|([a-z]+));/gi,
-      (original, numeric, name) => {
-        if (!numeric) return named[String(name).toLowerCase()] ?? original;
-        const value = /^x/i.test(numeric)
-          ? parseInt(numeric.slice(1), 16)
-          : Number(numeric);
-        return Number.isSafeInteger(value) &&
-          value > 0 &&
-          value <= 0x10ffff &&
-          !(value >= 0xd800 && value <= 0xdfff)
-          ? String.fromCodePoint(value)
-          : "";
-      },
-    );
-    if (decoded === text) break;
-    text = decoded;
-  }
-  return text
-    .replace(/<[^>]*>/g, "")
-    .replace(
-      /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u202a-\u202e\u2066-\u2069]/g,
-      "",
-    )
-    .replace(/[\ud800-\udfff]/gu, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-const clean = cleanPreviewText;
-function meta(html: string) {
-  const out: Record<string, string> = {};
-  for (const tag of html.match(/<meta\b[^<>]*>/gi) || []) {
-    const attrs: Record<string, string> = {};
-    for (const m of tag
-      .slice(0, 8192)
-      .matchAll(/(?:^|\s)([\w:-]{1,64})\s*=\s*(["'])([\s\S]*?)\2/g))
-      attrs[m[1].toLowerCase()] = m[3];
-    const key = (attrs.property || attrs.name || "").toLowerCase();
-    if (key && attrs.content && !out[key]) out[key] = clean(attrs.content);
-  }
-  return out;
-}
+export const cleanPreviewText = decodePreviewText;
 export function previewFromHtml(html: string, url: string): SafePreview {
-  const m = meta(html),
-    title = clean(
-      m["og:title"] ||
-        m["twitter:title"] ||
-        html.match(/<title\b[^<>]{0,1024}>([^<]{0,4096})<\/title>/i)?.[1] ||
-        "",
-    ).slice(0, 150),
-    description = clean(
-      m["og:description"] || m["twitter:description"] || m.description || "",
-    ).slice(0, 250);
-  if (!title) throw Error("No preview title was found");
-  return { "matched-text": url, title, description };
+  const metadata = extractPreviewMetadata(html);
+  if (!metadata.title) throw Error("No preview title was found");
+  return {
+    "matched-text": url,
+    title: metadata.title,
+    description: metadata.description,
+  };
 }
 export async function normalizePreviewImage(bytes: Buffer) {
-  const magic = bytes.subarray(0, 12);
-  if (
-    !(
-      magic.subarray(0, 3).equals(Buffer.from([255, 216, 255])) ||
-      magic
-        .subarray(0, 8)
-        .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) ||
-      ["GIF87a", "GIF89a"].includes(magic.subarray(0, 6).toString()) ||
-      (magic.subarray(0, 4).toString() === "RIFF" &&
-        magic.subarray(8, 12).toString() === "WEBP")
-    )
-  )
-    throw Error("Unsupported thumbnail bytes");
-  const image = sharp(bytes, { limitInputPixels: 16000000 }),
-    info = await image.metadata();
-  if (!["jpeg", "png", "webp", "gif"].includes(info.format || ""))
-    throw Error("Unsupported thumbnail");
-  if ((info.width || 0) < 48 || (info.height || 0) < 48)
-    throw Error("Website image is too small for a useful preview");
-  const upscale = Math.max(info.width || 0, info.height || 0) < 600;
-  let { data, info: output } = await image
-    .rotate()
-    .resize({
-      width: upscale ? 640 : 1000,
-      height: upscale ? 640 : 1000,
-      fit: "inside",
-      withoutEnlargement: !upscale,
-    })
-    .jpeg({ quality: 82 })
-    .toBuffer({ resolveWithObject: true });
-  if (data.length > 350000) {
-    const compact = await sharp(data)
-      .resize({
-        width: 640,
-        height: 640,
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .jpeg({ quality: 72 })
-      .toBuffer({ resolveWithObject: true });
-    data = compact.data;
-    output = compact.info;
-  }
-  if (data.length > 350000) throw Error("Thumbnail too large");
-  const inline = await sharp(data)
-    .resize({
-      width: 320,
-      height: 320,
-      fit: "inside",
-      withoutEnlargement: true,
-    })
-    .jpeg({ quality: 65 })
-    .toBuffer();
-  return {
-    inlineThumbnailBase64: inline.toString("base64"),
-    thumbnailBase64: data.toString("base64"),
-    thumbnailWidth: output.width,
-    thumbnailHeight: output.height,
-  };
+  return previewImagePool.run(bytes);
 }
 export async function safePreview(url: string): Promise<SafePreview> {
-  const deadline = Date.now() + 12000,
+  const deadline = Date.now() + 16000,
     page = await fetchPublicResource(url, "html", deadline),
     html = page.body.toString("utf8"),
     preview = previewFromHtml(html, url),
-    m = meta(html),
-    candidate =
-      m["og:image:secure_url"] ||
-      m["og:image"] ||
-      m["twitter:image"] ||
-      m["twitter:image:src"];
+    metadata = extractPreviewMetadata(html);
   preview.canonicalUrl = page.url;
   preview.previewType = 0;
-  if (candidate) {
+  for (const candidate of metadata.images) {
+    if (Date.now() >= deadline) break;
     try {
       const imageUrl = new URL(candidate, page.url).href,
         bytes = (await fetchPublicResource(imageUrl, "image", deadline)).body;
       Object.assign(preview, await normalizePreviewImage(bytes));
       preview.previewType = 5;
+      break;
     } catch {
-      /* Never pretend a missing/blocked/invalid image is a video or a working thumbnail. */
+      /* Try another real candidate. Never invent an image or relax SSRF/byte validation. */
     }
   }
   return preview;

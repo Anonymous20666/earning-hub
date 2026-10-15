@@ -1,0 +1,64 @@
+(node:72) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Preflight: no active personal work, foreign keys clean, 32 preserved fingerprints
+
+> pappy-earning-hub@0.10.0 backup
+> tsx backend/backup.ts
+
+Backup verified: /app/data/backups/pappy-2026-10-15T12-57-19-443Z.sqlite
+(node:113) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm notice
+npm notice New major version of npm available! 10.9.9 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
+pappy-earning-hub
+c7180a636862cb55f0983e266896d9114230eb449ce6e3f8cfcdd78a4c40d5cd
+All application runtime environment values preserved (not printed)
+{"status":"ok","version":"0.11.0","mode":"pre-launch"}
+(node:70) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"preservedFingerprints":32,"authBefore":904,"authAfter":904,"foreignKeyErrors":0,"migrations":[{"version":1},{"version":2},{"version":3},{"version":4},{"version":5},{"version":6},{"version":7},{"version":8}],"existingAccountsOnline":true}
+/etc/pappy-earning-hub/whatsapp.env: OK
+
+> pappy-earning-hub@0.11.0 treasury
+> tsx backend/treasury-cli.ts reconcile
+
+{
+  "ok": true,
+  "checks": {
+    "cashConserved": true,
+    "payableMatchesWallets": true,
+    "bonusMatchesWallets": true,
+    "reservationsMatch": true,
+    "cashMatchesReceipts": true,
+    "walletsMatchEarnedLedger": true,
+    "campaignAllocationsMatchJobs": true,
+    "deliveriesMatchCredits": true,
+    "placementsMatchCredits": true,
+    "referralsMatchCredits": true
+  },
+  "treasury": {
+    "id": 1,
+    "cash_milli": 0,
+    "available_milli": 0,
+    "reserved_milli": 0,
+    "payable_milli": 0,
+    "bonus_backing_milli": 0
+  },
+  "expected": {
+    "payableMilli": 0,
+    "bonusMilli": 0,
+    "reservedMilli": 0
+  }
+}
+(node:111) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm notice
+npm notice New major version of npm available! 10.9.9 -> 12.2.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+npm notice To update run: npm install -g npm@12.2.0
+npm notice
+Previous container preserved: pappy-earning-hub-rollback-20261015T125718Z
+Release image: pappy-earning-hub:link-previews-0.11.0

@@ -2,7 +2,11 @@
 
 A **pre-launch** worker / advertiser marketplace with a real, server-backed account and planning foundation. A real **personal WhatsApp owner-testing pilot** is available when explicitly configured. Paid earning, paid dispatch and payments remain **off**.
 
-## Current posting update (v0.10.0)
+## Current link-preview update (v0.11.0)
+
+Validated channel images now work when a CDN omits Content-Type. Complete previews only (title, description, both real thumbnails and dimensions) are cached privately and reused across reviews/users and throughout each run. Two bounded image-worker threads and two different-owner dispatch lanes avoid one slow owner blocking everyone. HTTPS/DNS/redirect/byte/pixel protections, immutable reviews and no-replay sending remain. The website has a local 1200×630 social card and applicable OG/Twitter/JSON-LD metadata, with pre-launch/noindex disclosures retained. See [implementation, limits and executed verification](docs/LINK-PREVIEWS-0.11.0.md). This is not a guarantee that every website/provider will return or display a thumbnail.
+
+## Previous posting update (v0.10.0)
 
 Choose a 10–60 second pause between groups (10 by default), see the next group and live countdown, and read clear Sent/failed outcomes. The calculator placeholder now has real line breaks. Image processing retains more detail and provides larger previews; WhatsApp may still compress media. Personal posting quotas remain removed; all financial rules and OFF gates stay unchanged. See [implementation and verification notes](docs/POSTING-PACING-MEDIA-0.10.0.md).
 

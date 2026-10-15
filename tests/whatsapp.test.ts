@@ -460,6 +460,8 @@ test("native link preview uses real JPEG buffers, thumbnail-link upload, per-soc
       return {
         imageMessage: {
           directPath: "/synthetic",
+          fileSha256: Buffer.alloc(32),
+          fileEncSha256: Buffer.alloc(32),
           width: 640,
           height: 320,
           mediaKey: Buffer.alloc(32),
@@ -499,8 +501,9 @@ test("native link preview uses real JPEG buffers, thumbnail-link upload, per-soc
       },
     };
     const original = JSON.stringify(body);
-    await f.manager.send(accountId, jid, body, "SYNTHETIC-1");
-    await f.manager.send(accountId, jid, body, "SYNTHETIC-2");
+    for (let i = 1; i <= 1000; i++)
+      await f.manager.send(accountId, jid, body, `SYNTHETIC-${i}`);
+    assert.equal(messages.length, 1000);
     assert.equal(uploads, 1);
     assert.equal(JSON.stringify(body), original);
     assert.equal(messages[0].o.backgroundColor, "#183C32");

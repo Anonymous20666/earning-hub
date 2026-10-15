@@ -1,0 +1,3 @@
+(node:1) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"syntheticOfflineRuntime":true,"decodedInputPixels":16000000,"previewJobs":16,"simultaneousFullImageJobs":1,"healthRequests":40,"maximumHealthMs":166.3,"workerThreads":[3,2],"durationMs":4301.3,"peakProcessRssMiB":451.1,"cgroupMemoryMax":"536870912","cgroupMemoryPeak":"434909184","cpuMax":"100000","noNetwork":true,"noMessages":true}

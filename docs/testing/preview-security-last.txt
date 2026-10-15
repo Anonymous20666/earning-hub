@@ -1,0 +1,151 @@
+TAP version 13
+# (node:36815) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: 1000 simultaneous same-link preparations coalesce into one full fetch; cache results are defensive copies
+ok 1 - 1000 simultaneous same-link preparations coalesce into one full fetch; cache results are defensive copies
+  ---
+  duration_ms: 43.601303
+  type: 'test'
+  ...
+# Subtest: 1000 distinct-link load has bounded active work, explicit backpressure, and no unbounded queue
+ok 2 - 1000 distinct-link load has bounded active work, explicit backpressure, and no unbounded queue
+  ---
+  duration_ms: 33.11957
+  type: 'test'
+  ...
+# Subtest: failed, text-only, missing-description and incomplete-image results never become positive cache entries
+ok 3 - failed, text-only, missing-description and incomplete-image results never become positive cache entries
+  ---
+  duration_ms: 0.929173
+  type: 'test'
+  ...
+# Subtest: signed query ordering is not merged; exact matched text is restored; TTL and bounded LRU force a fresh preparation
+ok 4 - signed query ordering is not merged; exact matched text is restored; TTL and bounded LRU force a fresh preparation
+  ---
+  duration_ms: 2.680549
+  type: 'test'
+  ...
+# Subtest: complete normalized thumbnails survive engine restart privately in SQLite; partial/corrupt entries are not reused
+ok 5 - complete normalized thumbnails survive engine restart privately in SQLite; partial/corrupt entries are not reused
+  ---
+  duration_ms: 5.832129
+  type: 'test'
+  ...
+# Subtest: durable cache obeys its byte budget and does not store raw pages or remote image addresses
+ok 6 - durable cache obeys its byte budget and does not store raw pages or remote image addresses
+  ---
+  duration_ms: 8.460009
+  type: 'test'
+  ...
+# Subtest: two real worker threads normalize in parallel, cap thumbnails, reject invalid bytes and close cleanly
+ok 7 - two real worker threads normalize in parallel, cap thumbnails, reject invalid bytes and close cleanly
+  ---
+  duration_ms: 214.815255
+  type: 'test'
+  ...
+# Subtest: worker overload rejects extra work and shutdown settles pending promises
+ok 8 - worker overload rejects extra work and shutdown settles pending promises
+  ---
+  duration_ms: 13.07391
+  type: 'test'
+  ...
+# Subtest: 1000 concurrent native-thumbnail consumers share one upload but not across sockets; failures use separate short cooldown
+ok 9 - 1000 concurrent native-thumbnail consumers share one upload but not across sockets; failures use separate short cooldown
+  ---
+  duration_ms: 16.092803
+  type: 'test'
+  ...
+# Subtest: native upload LRU does not flush unrelated complete uploads, and expiry causes fresh upload
+ok 10 - native upload LRU does not flush unrelated complete uploads, and expiry causes fresh upload
+  ---
+  duration_ms: 2.3564
+  type: 'test'
+  ...
+# Subtest: metadata understands unquoted/reordered OG, Twitter, itemprop, image_src, safe JSON-LD and bounded entities
+ok 11 - metadata understands unquoted/reordered OG, Twitter, itemprop, image_src, safe JSON-LD and bounded entities
+  ---
+  duration_ms: 2.822153
+  type: 'test'
+  ...
+# Subtest: website metadata has a real local 1200×630 social card and truthful applicable metadata without fake handles or indexing
+ok 12 - website metadata has a real local 1200×630 social card and truthful applicable metadata without fake handles or indexing
+  ---
+  duration_ms: 2.862672
+  type: 'test'
+  ...
+# Subtest: worker timeout/crash rejects safely and a replacement worker can process the next job
+ok 13 - worker timeout/crash rejects safely and a replacement worker can process the next job
+  ---
+  duration_ms: 129.341482
+  type: 'test'
+  ...
+# Subtest: metadata scanning ignores script/comment fake tags and bounds malformed HTML instead of rescanning unclosed scripts
+ok 14 - metadata scanning ignores script/comment fake tags and bounds malformed HTML instead of rescanning unclosed scripts
+  ---
+  duration_ms: 16.012867
+  type: 'test'
+  ...
+# {"syntheticHealthLoad":true,"callers":1032,"preparations":33,"healthChecks":40,"maximumHealthMs":110,"peakPreviewJobs":4,"threads":[8,9]}
+# Subtest: health endpoint stays responsive in the same process during bounded worker preview load, including 1000 same-link callers
+ok 15 - health endpoint stays responsive in the same process during bounded worker preview load, including 1000 same-link callers
+  ---
+  duration_ms: 589.188278
+  type: 'test'
+  ...
+# Subtest: safe fetch follows only validated public redirects, reads real OG images and returns native-image metadata
+ok 16 - safe fetch follows only validated public redirects, reads real OG images and returns native-image metadata
+  ---
+  duration_ms: 132.480948
+  type: 'test'
+  ...
+# Subtest: an OG image pointing at metadata/private IPs is rejected before any request; text title remains usable
+ok 17 - an OG image pointing at metadata/private IPs is rejected before any request; text title remains usable
+  ---
+  duration_ms: 1.365751
+  type: 'test'
+  ...
+# Subtest: redirects to private HTTPS destinations are never followed
+ok 18 - redirects to private HTTPS destinations are never followed
+  ---
+  duration_ms: 0.899582
+  type: 'test'
+  ...
+# Subtest: mislabelled SVG and oversized images do not create invented thumbnails
+ok 19 - mislabelled SVG and oversized images do not create invented thumbnails
+  ---
+  duration_ms: 4.194904
+  type: 'test'
+  ...
+# Subtest: large HTML is bounded at 256 KiB of head data, redirect loops and expired budgets fail closed
+ok 20 - large HTML is bounded at 256 KiB of head data, redirect loops and expired budgets fail closed
+  ---
+  duration_ms: 2.922935
+  type: 'test'
+  ...
+# Subtest: small useful real images are proportionally enlarged for native cards, but tracking pixels are not thumbnails
+ok 21 - small useful real images are proportionally enlarged for native cards, but tracking pixels are not thumbnails
+  ---
+  duration_ms: 25.473659
+  type: 'test'
+  ...
+# Subtest: missing/generic MIME is accepted only with real validated image bytes; alternate images survive unsupported, private and tiny candidates
+ok 22 - missing/generic MIME is accepted only with real validated image bytes; alternate images survive unsupported, private and tiny candidates
+  ---
+  duration_ms: 17.010226
+  type: 'test'
+  ...
+# Subtest: gzip, brotli and deflate HTML are decoded with a strict decoded-size cap; invalid compression fails
+ok 23 - gzip, brotli and deflate HTML are decoded with a strict decoded-size cap; invalid compression fails
+  ---
+  duration_ms: 101.403526
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1952.206481

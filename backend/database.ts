@@ -1,3 +1,4 @@
+import { migratePreviewCache } from "./previewEngine";
 import { migratePersonalPacing } from "./personalPacing";
 import { migrateNativePostingSchema } from "./nativePostingSchema";
 import { migrateReferralSchema } from "./referralSchema";
@@ -58,6 +59,7 @@ export function openDatabase(filename: string) {
   migrateReferralSchema(db);
   migrateNativePostingSchema(db);
   migratePersonalPacing(db);
+  migratePreviewCache(db);
   return db;
 }
 export type Database = ReturnType<typeof openDatabase>;

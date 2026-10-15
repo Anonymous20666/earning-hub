@@ -1,2 +1,4 @@
+# Public share metadata and images can be fetched. Search indexing remains off in the page robots meta.
 User-agent: *
-Disallow: /
+Allow: /
+Disallow: /api/
