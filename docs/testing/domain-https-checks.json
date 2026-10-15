@@ -1,0 +1,11 @@
+{
+  "origin": "https://pappy-earnig-hub.duckdns.org",
+  "testedAt": "2026-10-15T01:46:36.862Z",
+  "certificateValidation": "Browser default verification enabled; no TLS bypass",
+  "results": [
+    "worker: HTTPS registration, secure session, reload, workflow, logout and login passed",
+    "advertiser: HTTPS registration, secure session, reload, workflow, logout and login passed",
+    "Public home loads at 390px without horizontal overflow",
+    "Public home loads at 1440px without horizontal overflow"
+  ]
+}

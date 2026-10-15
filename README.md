@@ -64,9 +64,21 @@ Data: `/var/lib/pappy-earning-hub/pappy.sqlite` on the VPS; directory `0700`, da
 
 The original repository snapshot is also preserved at `/root/earning-hub-backups/original-20261015.tar.gz`. It is an unsafe prototype, not a production fallback for public exposure.
 
-## Temporary review access
+## Permanent HTTPS design review
 
-Arena's live preview uses a temporary SSH tunnel to the VPS application. The preview hostname is access-gated by Arena; a direct unauthenticated request returns 403 at that gate. Application checks were performed through the SSH tunnel. A permanent public domain / certificate / nginx vhost has not been provisioned. The existing hostnames serve unrelated applications and were not repurposed.
+Canonical URL: **https://pappy-earnig-hub.duckdns.org** (the founder's exact spelling).
+
+A dedicated nginx virtual host redirects HTTP to HTTPS and proxies to the loopback-only container. The Let's Encrypt certificate expires on 13 January 2027. Existing certbot cron renewal and a domain-specific nginx reload hook are configured; renewal dry-run including the hook passed on 15 October 2026.
+
+The canonical origin is enforced for authenticated state changes. `TRUST_PROXY_HOPS=1` is enabled only because this dedicated nginx proxy overwrites `X-Forwarded-For` with the actual client address and the container is not publicly reachable. Do not enable that trust setting behind an unknown proxy or a publicly exposed container.
+
+```bash
+APP_ORIGIN=https://pappy-earnig-hub.duckdns.org TRUST_PROXY_HOPS=1 bash deploy/release.sh
+```
+
+Actual public HTTPS browser checks passed for registration, sessions, wallet display, saved advertiser drafts, logout/login and desktop/mobile home rendering. Temporary test accounts were removed. No certificate verification bypass was used. The old temporary Arena tunnel is no longer required.
+
+This is a public **design-review/pre-launch** deployment, not permission to enable live messaging or money movement. The founder will review the design and agree the operational workflows separately.
 
 ## Administration
 

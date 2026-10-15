@@ -1,0 +1,3 @@
+Certbot renewal dry-run for pappy-earnig-hub.duckdns.org passed on 2026-10-15, including domain-specific nginx deploy hook.
+Certificate expires: 2027-01-13.
+Existing certbot cron schedule active; no systemd skip condition.

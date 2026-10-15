@@ -35,3 +35,7 @@ Date: 15 October 2026. Scope: Mission 01.
 Design principle, not copied branding: visual hierarchy, quieter navigation and reducing unnecessary separators in Linear's 2026 refresh [1](https://linear.app/now/behind-the-latest-design-refresh). Dashboard context and audience-specific density informed the overview structure [3](https://linear.app/now/dashboards-best-practices).
 
 Node's official cryptography documentation describes scrypt as a memory/computation-expensive password derivation function [1](https://nodejs.org/api/crypto.html). Actual chosen parameters are visible in the implementation and tests, not a certification claim.
+
+## Follow-up: founder-authorised HTTPS review domain
+
+On 15 October 2026 the founder supplied `pappy-earnig-hub.duckdns.org` and requested a certificate. DNS resolves to the authorised VPS. A dedicated nginx vhost, Let's Encrypt certificate, HTTPS redirect, certificate reload hook and canonical application origin are now configured. The renewal dry-run and real public HTTPS browser sign-in/workflow checks passed. This supersedes the temporary-preview and missing-domain decisions above. It does not change the pre-launch business scope or approve messaging/payment implementation; those designs are still to be agreed.

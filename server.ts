@@ -14,6 +14,9 @@ const app = createApp(db, {
   development: !production,
   origin: process.env.APP_ORIGIN || undefined,
 });
+// Enable only behind the dedicated nginx proxy, which overwrites X-Forwarded-For.
+// The container's host listener must remain bound to 127.0.0.1.
+if (process.env.TRUST_PROXY_HOPS === "1") app.set("trust proxy", 1);
 if (production) {
   app.use(express.static(path.resolve("dist"), { index: false, maxAge: "1h" }));
   app.get("*", (_req, res) => {

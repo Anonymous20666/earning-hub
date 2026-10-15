@@ -151,3 +151,20 @@ From the founder / authorised owners:
 5. Run a small consent-based pilot; measure activation and real delivery economics before growth spend.
 
 **Bottom line:** this mission replaced a misleading simulation with a coherent, tested and deployed pre-launch product foundation. It does not yet deliver the original platform's real earning, messaging or payment capability, and those blockers are explicit rather than disguised by the redesign.
+
+---
+
+## Subsequent update — permanent HTTPS design review
+
+At the founder's request on 15 October 2026, the domain **https://pappy-earnig-hub.duckdns.org** was connected to this VPS deployment. This supersedes the missing-domain and temporary-access limitations in the original report; other launch blockers remain.
+
+- Public DNS points to 188.93.146.195.
+- Let's Encrypt issued a trusted certificate valid until **13 January 2027**.
+- HTTP redirects to HTTPS. A dedicated nginx vhost leaves unrelated sites unchanged.
+- Existing cron renewal is active, with a domain-specific nginx reload hook. A certbot renewal dry-run including that hook passed.
+- The canonical API origin is updated; secure session cookies and sanitised one-hop proxy handling were checked.
+- Public HTTPS browser checks passed for both account roles: registration, reload persistence, wallet/draft workflow, logout and login. Desktop (1440px) and mobile (390px) home checks passed. No TLS verification bypass was used.
+- Temporary verification accounts were removed by exact IDs; no default admin or public demo accounts were added.
+- All 50 backend/financial/persistence tests and TypeScript checks were rerun successfully after the proxy configuration change.
+
+The founder explicitly clarified that this remains a **design review**, and that the full product's operational workflows will be discussed and designed separately. No live earning, messaging or payment functionality was enabled by this deployment change. Evidence: `docs/testing/domain-https-checks.json` and the public-domain screenshots.

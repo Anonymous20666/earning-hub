@@ -21,5 +21,6 @@ docker run -d --name "$NAME" --restart unless-stopped \
   --log-opt max-size=10m --log-opt max-file=3 \
   -p 127.0.0.1:3107:3107 \
   -e APP_ORIGIN="$APP_ORIGIN" -e COOKIE_SECURE=true \
+  -e TRUST_PROXY_HOPS="${TRUST_PROXY_HOPS:-0}" \
   -v "$DATA:/app/data" "$IMAGE"
 echo 'Started isolated pre-launch app. Verify /api/health and container health before accepting the release.'

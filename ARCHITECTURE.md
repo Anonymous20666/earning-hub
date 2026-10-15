@@ -39,3 +39,7 @@ Sessions use 256-bit random tokens; only token hashes are stored. Passwords use 
 Messaging and payment operations return an explicit unavailable response. No third-party account credentials are present and no simulated result is substituted. The dashboard reports actual server records, with zero deliveries and zero earned Coins until a real verified delivery pipeline exists. Administrator controls are limited to operations actually implemented; there is no money-moving or verification-override UI.
 
 This is a functional **pre-launch foundation**, not an operational earning network, a complete financial ledger, a distributed deployment or a production-security certification. See the mission report for release gates.
+
+## HTTPS review hosting update
+
+The permanent design-review entry point is `https://pappy-earnig-hub.duckdns.org` -> dedicated nginx TLS vhost -> VPS loopback listener -> container. The temporary SSH tunnel is no longer required. Certificate renewal and nginx reload are configured and the renewal dry-run passed. `APP_ORIGIN` is the permanent domain; `TRUST_PROXY_HOPS=1` is enabled only with nginx overwriting inbound forwarding headers. The pre-launch scope and unavailable-provider boundaries are unchanged.
