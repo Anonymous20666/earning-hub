@@ -1,0 +1,13 @@
+(node:8470) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 2 tests using 1 worker
+
+(node:8482) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [desktop] › tests/browser/growth-remix.spec.ts:8:1 › saved growth campaign previews fresh URL remixes, unchanged links, copying, readable fallback and honest missing thumbnails without sending (3.2s)
+(node:8587) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  2 [mobile] › tests/browser/growth-remix.spec.ts:8:1 › saved growth campaign previews fresh URL remixes, unchanged links, copying, readable fallback and honest missing thumbnails without sending (3.2s)
+
+  2 passed (8.2s)

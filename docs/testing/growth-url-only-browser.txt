@@ -1,0 +1,17 @@
+(node:2972) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 6 tests using 1 worker
+
+(node:2984) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  1 [desktop] › tests/browser/growth.spec.ts:56:1 › advertiser saves and edits a real draft, accepts explicit terms and submits without a payment or send (7.0s)
+  ✓  2 [desktop] › tests/browser/growth.spec.ts:119:1 › Telegram channel plans support 100000 net subscribers without country targeting or an instant checkout claim (2.8s)
+  ✓  3 [desktop] › tests/browser/journeys.spec.ts:174:1 › advertiser creates, estimates, edits and deletes a persisted draft (3.9s)
+(node:3210) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✓  4 [mobile] › tests/browser/growth.spec.ts:56:1 › advertiser saves and edits a real draft, accepts explicit terms and submits without a payment or send (6.9s)
+  ✓  5 [mobile] › tests/browser/growth.spec.ts:119:1 › Telegram channel plans support 100000 net subscribers without country targeting or an instant checkout claim (2.7s)
+  ✓  6 [mobile] › tests/browser/journeys.spec.ts:174:1 › advertiser creates, estimates, edits and deletes a persisted draft (3.4s)
+
+  6 passed (29.2s)

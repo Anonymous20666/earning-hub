@@ -12,3 +12,6 @@ data/
 .env
 playwright-report/
 test-results/
+
+# Private reference artwork is not part of the public website.
+docs/screenshots/remix-studio-*.png

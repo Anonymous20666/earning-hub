@@ -101,8 +101,7 @@ export function validateDraft(body: any): DraftInput {
     return body[key];
   };
   const title = text("title", 3, 120),
-    targetUrl = text("targetUrl", 10, 1000),
-    caption = text("caption", 5, 2000);
+    targetUrl = text("targetUrl", 10, 1000);
   let url: URL;
   try {
     url = new URL(targetUrl);
@@ -125,6 +124,8 @@ export function validateDraft(body: any): DraftInput {
       "Use a WhatsApp or Telegram destination matching the selected platform",
     );
   const pathway = choice("pathway", ["DIRECT_SESSION", "SMART_VERIFIED"]);
+  // Smart growth promotes the destination itself; keep the legacy storage field empty.
+  const caption = pathway === "SMART_VERIFIED" ? "" : text("caption", 5, 2000);
   const mode = choice("mode", ["ALLSTATUS_1X", "ALLCHAT_2X_VIP"]);
   const tier = choice("tier", ["BRONZE", "SILVER", "GOLD"]);
   const countryFilter = choice("countryFilter", [

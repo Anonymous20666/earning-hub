@@ -1,0 +1,184 @@
+TAP version 13
+# (node:41442) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: growth endpoints reject anonymous callers and worker/admin cross-role access
+ok 1 - growth endpoints reject anonymous callers and worker/admin cross-role access
+  ---
+  duration_ms: 1386.583293
+  type: 'test'
+  ...
+# Subtest: draft APIs enforce CSRF, ownership, idempotency and body-bound replay
+ok 2 - draft APIs enforce CSRF, ownership, idempotency and body-bound replay
+  ---
+  duration_ms: 40.979199
+  type: 'test'
+  ...
+# Subtest: no advertiser endpoints accept counts, manual paid flags or live launch; report excludes participant identities
+ok 3 - no advertiser endpoints accept counts, manual paid flags or live launch; report excludes participant identities
+  ---
+  duration_ms: 41.428606
+  type: 'test'
+  ...
+# Subtest: staff configuration and voluntary availability work without changing cash or existing broadcast settings
+ok 4 - staff configuration and voluntary availability work without changing cash or existing broadcast settings
+  ---
+  duration_ms: 12.900093
+  type: 'test'
+  ...
+# Subtest: unauthenticated webhook cannot move money and uncertified Squad webhook fails closed
+ok 5 - unauthenticated webhook cannot move money and uncertified Squad webhook fails closed
+  ---
+  duration_ms: 6.921618
+  type: 'test'
+  ...
+# (node:41464) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: decimal major amounts convert exactly to integer kobo, not binary float multiplication
+ok 6 - decimal major amounts convert exactly to integer kobo, not binary float multiplication
+  ---
+  duration_ms: 1.260972
+  type: 'test'
+  ...
+# Subtest: configuration errors create no intent and cannot use production keys or insecure origins
+ok 7 - configuration errors create no intent and cannot use production keys or insecure origins
+  ---
+  duration_ms: 18.597898
+  type: 'test'
+  ...
+# Subtest: concurrent Squad initialization shares one intent; retries reuse checkout; verified sandbox never credits treasury
+ok 8 - concurrent Squad initialization shares one intent; retries reuse checkout; verified sandbox never credits treasury
+  ---
+  duration_ms: 43.043477
+  type: 'test'
+  ...
+# Subtest: uncertain initialization locks backup; reference, currency, and amount mismatches cannot mark paid
+ok 9 - uncertain initialization locks backup; reference, currency, and amount mismatches cannot mark paid
+  ---
+  duration_ms: 12.335993
+  type: 'test'
+  ...
+# Subtest: authoritative failure permits Kora backup, authenticated webhook re-queries server and is idempotent
+ok 10 - authoritative failure permits Kora backup, authenticated webhook re-queries server and is idempotent
+  ---
+  duration_ms: 17.014324
+  type: 'test'
+  ...
+# Subtest: provider redirect and oversized response fail closed without a checkout or ledger mutation
+ok 11 - provider redirect and oversized response fail closed without a checkout or ledger mutation
+  ---
+  duration_ms: 30.860985
+  type: 'test'
+  ...
+# (node:41482) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: four products enforce integer ranges, HTTPS links, terms and Telegram restrictions
+ok 12 - four products enforce integer ranges, HTTPS links, terms and Telegram restrictions
+  ---
+  duration_ms: 18.317448
+  type: 'test'
+  ...
+# Subtest: save is idempotent, body-bound, owner-bound and optimistic revision protected
+ok 13 - save is idempotent, body-bound, owner-bound and optimistic revision protected
+  ---
+  duration_ms: 9.010284
+  type: 'test'
+  ...
+# Subtest: submission requires current terms; submitted details cannot be edited; events append only
+ok 14 - submission requires current terms; submitted details cannot be edited; events append only
+  ---
+  duration_ms: 6.859551
+  type: 'test'
+  ...
+# Subtest: manual verification retains staff-only evidence without presenting provider certification
+ok 15 - manual verification retains staff-only evidence without presenting provider certification
+  ---
+  duration_ms: 7.732984
+  type: 'test'
+  ...
+# Subtest: verification expiry blocks progression and leaves service contacts busy until removal
+ok 16 - verification expiry blocks progression and leaves service contacts busy until removal
+  ---
+  duration_ms: 7.701069
+  type: 'test'
+  ...
+# Subtest: inventory is fresh, permissioned, opted-in, voluntary, shared-group deduplicated and fair across workers
+ok 17 - inventory is fresh, permissioned, opted-in, voluntary, shared-group deduplicated and fair across workers
+  ---
+  duration_ms: 8.675866
+  type: 'test'
+  ...
+# Subtest: country inventory is unavailable until explicit policy and permitted matching sample, never silently broadened
+ok 18 - country inventory is unavailable until explicit policy and permitted matching sample, never silently broadened
+  ---
+  duration_ms: 7.101084
+  type: 'test'
+  ...
+# Subtest: unset prices, insufficient worker reserve and margin fail closed; accepted quotes stay immutable
+ok 19 - unset prices, insufficient worker reserve and margin fail closed; accepted quotes stay immutable
+  ---
+  duration_ms: 10.791441
+  type: 'test'
+  ...
+# Subtest: baseline pending, re-requests, approval and out-of-order events never double count or erase legitimate credit
+ok 20 - baseline pending, re-requests, approval and out-of-order events never double count or erase legitimate credit
+  ---
+  duration_ms: 7.128027
+  type: 'test'
+  ...
+# Subtest: unknown phone is not guessed; later trusted region metadata can credit once, non-matches suggest rejection
+ok 21 - unknown phone is not guessed; later trusted region metadata can credit once, non-matches suggest rejection
+  ---
+  duration_ms: 6.581951
+  type: 'test'
+  ...
+# Subtest: timestamp offsets normalize to UTC; channel growth uses latest minus baseline rather than positive-change sums
+ok 22 - timestamp offsets normalize to UTC; channel growth uses latest minus baseline rather than positive-change sums
+  ---
+  duration_ms: 11.189993
+  type: 'test'
+  ...
+# Subtest: target fulfillment stops unstarted batches, retains legitimate requests, and requires service access removal
+ok 23 - target fulfillment stops unstarted batches, retains legitimate requests, and requires service access removal
+  ---
+  duration_ms: 38.058149
+  type: 'test'
+  ...
+# Subtest: deadline pauses; only buyer consent resumes; decline never spends, resets target, or invents a refund
+ok 24 - deadline pauses; only buyer consent resumes; decline never spends, resets target, or invents a refund
+  ---
+  duration_ms: 7.8044
+  type: 'test'
+  ...
+# Subtest: voluntary shifts validate role and expire without modifying legacy paid opt-in
+ok 25 - voluntary shifts validate role and expire without modifying legacy paid opt-in
+  ---
+  duration_ms: 5.71462
+  type: 'test'
+  ...
+# Subtest: unresolvable +1 regions are unavailable for group qualification; declared evidence cannot masquerade as a permitted prefix sample
+ok 26 - unresolvable +1 regions are unavailable for group qualification; declared evidence cannot masquerade as a permitted prefix sample
+  ---
+  duration_ms: 5.553596
+  type: 'test'
+  ...
+# Subtest: primary and backup cannot be duplicate registrations of the same service phone
+ok 27 - primary and backup cannot be duplicate registrations of the same service phone
+  ---
+  duration_ms: 4.825819
+  type: 'test'
+  ...
+# Subtest: growth planning keeps the exact 100-member earning minimum and has no 100-group owner ceiling
+ok 28 - growth planning keeps the exact 100-member earning minimum and has no 100-group owner ceiling
+  ---
+  duration_ms: 12.393823
+  type: 'test'
+  ...
+1..28
+# tests 28
+# suites 0
+# pass 28
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3292.137848

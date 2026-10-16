@@ -183,9 +183,7 @@ test("advertiser creates, estimates, edits and deletes a persisted draft", async
   await page
     .getByLabel("Destination URL", { exact: true })
     .fill("https://chat.whatsapp.com/review-only-destination");
-  await page
-    .getByLabel("Your campaign message", { exact: true })
-    .fill("Review-only campaign draft. No messages will be sent.");
+  await expect(page.getByLabel("Your campaign message", { exact: true })).toHaveCount(0);
   await page
     .getByRole("button", { name: "Check estimate", exact: true })
     .click();

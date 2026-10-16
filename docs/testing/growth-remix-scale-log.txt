@@ -1,0 +1,20 @@
+(node:8358) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "syntheticOnly": true,
+  "liveSends": 0,
+  "livePayments": 0,
+  "latinGroups": 10000,
+  "uniqueLatinTexts": 10000,
+  "nonLatinGroups": 1000,
+  "uniqueNonLatinTexts": 1000,
+  "providerFetchesForLatinOrder": 1,
+  "latinAllocationMs": 2774,
+  "maxSampledEventLoopDelayMs": 20,
+  "peakRssMiB": 164.6,
+  "imageBytes": 40141,
+  "storedAssetRows": 2,
+  "storedPlacementRows": 11000,
+  "foreignKeyErrors": [],
+  "note": "One local Node process; yielded every 25 allocations. No WhatsApp socket, image-generation API, provider send, delivery proof or 1000-user SLA is tested."
+}

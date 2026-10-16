@@ -1,3 +1,5 @@
+import { GrowthAvailability } from "./GrowthAvailability";
+import { GrowthCampaigns } from "./GrowthCampaigns";
 import { QuickStart } from "./QuickStart";
 import { WhatsAppConnections, PersonalBroadcasts } from "./WhatsApp";
 import { EarningHub, TreasuryPanel } from "./EarningHub";
@@ -283,12 +285,16 @@ export function Workspace({
           ["calculator", "Earning calculator", Coins],
           ["referrals", "Referrals", Link2],
         ]
-      : [["campaigns", "Campaigns", Send]]),
+      : [
+          ["growth", "Grow a community", Globe2],
+          ["campaigns", "Campaigns", Send],
+        ]),
     ["support", "Support", LifeBuoy],
     ["settings", "Account settings", Settings],
     ...(admin
       ? [
           ["treasury", "Funding & campaigns", Wallet],
+          ["growth-admin", "Growth operations", Globe2],
           ["admin", "Administration", ShieldCheck],
         ]
       : []),
@@ -357,6 +363,14 @@ export function Workspace({
     treasury: [
       "Funding before promises.",
       "Verified cash, reserved budgets and earned obligations.",
+    ],
+    growth: [
+      "Your growth campaigns.",
+      "Plan a target. Review the evidence. Stay in control.",
+    ],
+    "growth-admin": [
+      "Growth operations.",
+      "Review real plans, access and inventory before spending.",
     ],
     campaigns: [
       "Good growth starts with a plan.",
@@ -602,6 +616,24 @@ export function Workspace({
           ) : (
             data && (
               <>
+                {page === "overview" && !worker && (
+                  <section className="workspace-banner">
+                    <Globe2 size={22} />
+                    <div>
+                      <strong>
+                        Plan WhatsApp or Telegram community growth
+                      </strong>
+                      <p>
+                        Choose new qualifying requests or net channel growth.
+                        Self-service and managed review are available; live
+                        spending is off.
+                      </p>
+                      <a className="text-button" href="#/app/growth">
+                        Open growth planning <ArrowRight size={15} />
+                      </a>
+                    </div>
+                  </section>
+                )}
                 {page === "overview" && (
                   <>
                     {worker && <QuickStart revision={earningRevision} />}
@@ -985,7 +1017,10 @@ export function Workspace({
                   </>
                 )}
                 {page === "connections" && worker && (
-                  <WhatsAppConnections revision={earningRevision} />
+                  <>
+                    <WhatsAppConnections revision={earningRevision} />
+                    <GrowthAvailability />
+                  </>
                 )}
                 {page === "broadcasts" && worker && (
                   <PersonalBroadcasts revision={earningRevision} />
@@ -999,6 +1034,8 @@ export function Workspace({
                 {page === "treasury" && admin && (
                   <TreasuryPanel revision={earningRevision} />
                 )}
+                {page === "growth" && !worker && <GrowthCampaigns />}
+                {page === "growth-admin" && admin && <GrowthCampaigns admin />}
                 {page === "campaigns" && !worker && (
                   <>
                     <div className="workspace-banner">
@@ -1450,6 +1487,7 @@ function CampaignForm({
           }
         />
       </label>
+      {draft.pathway === "DIRECT_SESSION" ? (
       <label>
         Your campaign message
         <textarea
@@ -1462,6 +1500,7 @@ function CampaignForm({
           placeholder="What would you like your audience to know?"
         />
       </label>
+      ) : <p className="muted">Smart promotion posts the destination URL itself. No promotional caption is needed.</p>}
       <div className="form-grid">
         <label>
           Broadcast mode

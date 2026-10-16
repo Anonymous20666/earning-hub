@@ -1,3 +1,5 @@
+import { migrateGrowthCreative } from "./growthCreativeSchema";
+import { migrateGrowthSchema } from "./growthSchema";
 import { migratePreviewCache } from "./previewEngine";
 import { migratePersonalPacing } from "./personalPacing";
 import { migrateNativePostingSchema } from "./nativePostingSchema";
@@ -60,6 +62,8 @@ export function openDatabase(filename: string) {
   migrateNativePostingSchema(db);
   migratePersonalPacing(db);
   migratePreviewCache(db);
+  migrateGrowthSchema(db);
+  migrateGrowthCreative(db);
   return db;
 }
 export type Database = ReturnType<typeof openDatabase>;

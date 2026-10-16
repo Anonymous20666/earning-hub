@@ -1,3 +1,6 @@
+import { GrowthCreativeEngine } from "./growthCreative";
+import { GrowthPaymentGateway } from "./growthPayments";
+import { registerGrowthRoutes, growthWebhookRouter } from "./growthRoutes";
 import { PreviewEngine } from "./previewEngine";
 import {
   personalAccountIds,
@@ -84,6 +87,9 @@ export function createApp(
   } = {},
 ) {
   const app = express();
+  const growthPayments = new GrowthPaymentGateway(db, {
+    origin: options.origin,
+  });
   const previewEngine = options.personalPreviewer
     ? undefined
     : new PreviewEngine({ db });
@@ -115,6 +121,7 @@ export function createApp(
           },
     }),
   );
+  app.use("/api/growth-hooks", growthWebhookRouter(growthPayments));
   // Explicit origin and custom-header checks prevent cross-site state changes. No CORS is enabled.
   app.use("/api", (req, res, next) => {
     res.setHeader("Cache-Control", "no-store");
@@ -242,6 +249,14 @@ export function createApp(
       }
       next();
     };
+  registerGrowthRoutes(
+    app,
+    db,
+    protectedRoute,
+    role,
+    growthPayments,
+    new GrowthCreativeEngine(db, { get: previewer }),
+  );
   const asyncRoute =
     (fn: any): express.RequestHandler =>
     (req, res, next) =>

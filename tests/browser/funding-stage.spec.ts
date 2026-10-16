@@ -85,7 +85,10 @@ test("earning pages show exact illustration, empty real inventory, and a real pe
     /ref=[a-f0-9]{20}$/,
   );
   const link = await page.getByLabel("Your referral link").inputValue();
-  const friend = await browser.newContext({ viewport: page.viewportSize()! });
+  const friend = await browser.newContext({
+    viewport: page.viewportSize()!,
+    extraHTTPHeaders: info.project.use.extraHTTPHeaders,
+  });
   const friendPage = await friend.newPage();
   await friendPage.goto(link);
   await expect(friendPage.getByLabel("Referral code (optional)")).toHaveValue(
